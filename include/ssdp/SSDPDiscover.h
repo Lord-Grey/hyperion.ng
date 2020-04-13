@@ -36,6 +36,8 @@ public:
 	///
 	const QString getFirstService(const searchType& type = STY_WEBSERVER,const QString& st = "urn:hyperion-project.org:device:basic:1", const int& timeout_ms = 3000);
 
+	void setPort ( quint16 ssdp_port) { _ssdpPort = ssdp_port; }
+
 signals:
 	///
 	/// @brief Emits whenever a new service has ben found, search started with searchForService()
@@ -54,4 +56,7 @@ private:
 	QUdpSocket* _udpSocket;
 	QString _searchTarget;
 	QStringList _usnList;
+
+	QHostAddress _ssdpAddr;
+	quint16		 _ssdpPort;
 };

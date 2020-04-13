@@ -1,0 +1,64 @@
+{
+	"type":"object",
+	"required":true,
+	"properties":{
+		"switchOffOnBlack": {
+			"type": "boolean",
+			"title":"edt_dev_spec_switchOffOnBlack_title",
+			"default" : false,
+			"propertyOrder" : 1
+		},
+		"transEffect": {
+			"type": "integer",
+			"title":"edt_dev_spec_transeffect_title",
+			"enum" : [0, 1],
+			"default" : 0,
+			"options" : {
+				"enum_titles" : ["edt_conf_enum_transeffect_sudden", "edt_conf_enum_transeffect_smooth"]
+			},
+			"minimum" : 0,
+			"maximum" : 2,
+			"propertyOrder" : 2
+		},
+		"transTime": {
+			"type": "integer",
+			"title":"edt_dev_spec_transistionTime_title",
+			"default": 500,
+			"append" : "ms",
+			"minimum": 30,
+			"maximum": 5000,
+			"options": {
+				"dependencies": {
+					"transEffect": 1
+				}
+			},
+			"propertyOrder" : 3
+		},
+		"addresses": {
+			"type": "array",
+			"title":"edt_dev_spec_lightid_title",
+			"minItems": 1,
+			"uniqueItems" : true,
+			"items" : {
+				"type" : "string",
+				"minimum" : 0,
+				"title" : "edt_dev_spec_targetIpHost_title"
+			},
+			"propertyOrder" : 4
+		},
+		"debugLevel": {
+			"type": "integer",
+			"title":"edt_dev_spec_debugLevel_title",
+			"enum" : [0, 1, 2, 3],
+			"default" : 0,
+			"options" : {
+				"enum_titles" : ["edt_conf_enum_dl_nodebug", "edt_conf_enum_dl_verbose1", "edt_conf_enum_dl_verbose2", "edt_conf_enum_dl_verbose3"]
+			},
+			"minimum" : 0,
+			"maximum" : 3,
+			"access" : "expert",
+			"propertyOrder" : 5
+		}
+	},
+	"additionalProperties": true
+}

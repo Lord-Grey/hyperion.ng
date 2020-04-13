@@ -4,22 +4,23 @@
 #include <QUdpSocket>
 #include <QUrl>
 
-static const QHostAddress SSDP_ADDR("239.255.255.250");
-static const quint16      SSDP_PORT(1900);
+#include <iostream>
 
 // as per upnp spec 1.1, section 1.2.2.
 // TODO: Make IP and port below another #define and replace message below
 static const QString UPNP_DISCOVER_MESSAGE = "M-SEARCH * HTTP/1.1\r\n"
-                                          "HOST: 239.255.255.250:1900\r\n"
+										  "HOST: %1:%2\r\n"
                                           "MAN: \"ssdp:discover\"\r\n"
 										  "MX: 1\r\n"
-                                          "ST: %1\r\n"
+										  "ST: %3\r\n"
                                           "\r\n";
 
 SSDPDiscover::SSDPDiscover(QObject* parent)
 	: QObject(parent)
 	, _log(Logger::getInstance("SSDPDISCOVER"))
 	, _udpSocket(new QUdpSocket(this))
+	, _ssdpAddr("239.255.255.250")
+	, _ssdpPort(1900)
 {
 
 }
@@ -182,9 +183,10 @@ void SSDPDiscover::readPendingDatagrams()
 
 void SSDPDiscover::sendSearch(const QString& st)
 {
-	const QString msg = UPNP_DISCOVER_MESSAGE.arg(st);
+	const QString msg = QString(UPNP_DISCOVER_MESSAGE).arg(_ssdpAddr.toString()).arg(_ssdpPort).arg(st);
 
-    _udpSocket->writeDatagram(msg.toUtf8(),
-							 QHostAddress(SSDP_ADDR),
-							 SSDP_PORT);
+	//std::cout << "Search request: " << msg.toStdString() << std::endl << std::flush;
+	Debug(_log,"Search request: [%s]", QSTRING_CSTR(msg));
+
+	_udpSocket->writeDatagram(msg.toUtf8(), _ssdpAddr, _ssdpPort);
 }
