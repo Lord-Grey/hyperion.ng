@@ -2,10 +2,16 @@
 	"type":"object",
 	"required":true,
 	"properties":{
-		"switchOffOnBlack": {
-			"type": "boolean",
-			"title":"edt_dev_spec_switchOffOnBlack_title",
-			"default" : false,
+		"colorModel": {
+			"type": "integer",
+			"title":"Output Type",
+			"enum" : [0, 1],
+			"default" : 0,
+			"options" : {
+				"enum_titles" : ["HSV", "edt_conf_enum_rgb"]
+			},
+			"minimum" : 0,
+			"maximum" : 1,
 			"propertyOrder" : 1
 		},
 		"transEffect": {
@@ -17,7 +23,7 @@
 				"enum_titles" : ["edt_conf_enum_transeffect_sudden", "edt_conf_enum_transeffect_smooth"]
 			},
 			"minimum" : 0,
-			"maximum" : 2,
+			"maximum" : 1,
 			"propertyOrder" : 2
 		},
 		"transTime": {
@@ -46,6 +52,16 @@
 			},
 			"propertyOrder" : 4
 		},
+		"latchTime": {
+			"type": "integer",
+			"title":"edt_dev_spec_latchtime_title",
+			"default": 0,
+			"append" : "edt_append_ms",
+			"minimum": 0,
+			"maximum": 1000,
+			"access" : "expert",
+			"propertyOrder" : 5
+		},
 		"debugLevel": {
 			"type": "integer",
 			"title":"edt_dev_spec_debugLevel_title",
@@ -57,7 +73,7 @@
 			"minimum" : 0,
 			"maximum" : 3,
 			"access" : "expert",
-			"propertyOrder" : 5
+			"propertyOrder" : 6
 		}
 	},
 	"additionalProperties": true

@@ -1,4 +1,4 @@
-#include "LedDeviceYeelight.h"
+﻿#include "LedDeviceYeelight.h"
 
 // ssdp discover
 #include <ssdp/SSDPDiscover.h>
@@ -8,6 +8,7 @@
 
 #include <QtNetwork>
 #include <QTcpServer>
+#include <QColor>
 
 static const bool verbose  = false;
 
@@ -23,6 +24,7 @@ static const char CONFIG_ON_OFF_BLACK [] = "switchOffOnBlack";
 static const char CONFIG_RESTORE_STATE [] = "restoreOriginalState";
 static const char CONFIG_LIGHT_ADDRESSES [] = "addresses";
 
+static const char CONFIG_COLOR_MODEL [] = "colorModel";
 static const char CONFIG_TRANS_EFFECT [] = "transEffect";
 static const char CONFIG_TRANS_TIME [] = "transTime";
 static const char CONFIG_DEBUGLEVEL [] = "debugLevel";
@@ -36,11 +38,15 @@ static const char API_COMMAND_METHOD[] = "method";
 static const char API_COMMAND_PARAMS[] = "params";
 static const char API_COMMAND_PROPS[] = "props";
 
+static const char API_PARAM_CLASS_COLOR[] = "color";
+static const char API_PARAM_CLASS_HSV[] = "hsv";
+
 static const char API_PROP_NAME[] = "name";
 static const char API_PROP_MODEL[] = "model";
 static const char API_PROP_FWVER[] = "fw_ver";
 
 static const char API_PROP_POWER[] = "power";
+static const char API_PROP_MUSIC[] = "music_on";
 static const char API_PROP_RGB[] = "rgb";
 static const char API_PROP_CT[] = "ct";
 static const char API_PROP_BRIGHT[] = "bright";
@@ -61,7 +67,7 @@ const int SSDP_PORT = 1982; // timout in ms
 const int SSDP_TIMEOUT = 5000; // timout in ms
 
 YeelightLight::YeelightLight( Logger *log, const QString &hostname, unsigned short port = API_DEFAULT_PORT)
-	  :_log(log)
+	:_log(log)
 	  ,_debugLevel(0)
 	  ,_isInError(false)
 	  ,_host (hostname)
@@ -69,9 +75,10 @@ YeelightLight::YeelightLight( Logger *log, const QString &hostname, unsigned sho
 	  ,_tcpSocket(nullptr)
 	  ,_correlationID(0)
 	  ,_tcpStreamSocket(nullptr)
-	  ,_color(0)
+	  ,_colorRgbValue(0)
 	  ,_transitionEffect(API_EFFECT_SMOOTH)
 	  ,_transitionDuration(API_PARAM_DURATION)
+	  ,_isOn(false)
 	  ,_isInMusicMode(false)
 {
 	_name = hostname;
@@ -156,6 +163,7 @@ bool YeelightLight::writeCommand( const QJsonDocument &command )
 
 bool YeelightLight::writeCommand( const QJsonDocument &command, QJsonArray &result )
 {
+	log (3,"writeCommand()","isON[%d], isInMusicMode[%d]", _isOn, _isInMusicMode );
 	if (_debugLevel >= 2)
 	{
 		QString help = command.toJson(QJsonDocument::Compact);
@@ -167,34 +175,40 @@ bool YeelightLight::writeCommand( const QJsonDocument &command, QJsonArray &resu
 	if ( ! _isInError && _tcpSocket->isOpen() )
 	{
 		qint64 bytesWritten = _tcpSocket->write( command.toJson(QJsonDocument::Compact) + "\r\n");
-
-		if ( ! _tcpSocket->waitForBytesWritten(WRITE_TIMEOUT) )
+		if (bytesWritten == -1 )
 		{
-			QString errorReason = QString ("(%1) %2").arg(_tcpSocket->error()).arg( _tcpSocket->errorString());
-			log ( 2, "Error:", "bytesWritten: [%d], %s", bytesWritten, QSTRING_CSTR(errorReason));
-			this->setInError ( errorReason );
+			this->setInError( QString ("Write Error: %1").arg(_tcpSocket->errorString()) );
 		}
 		else
 		{
-			log ( 3, "Success:", "Bytes written   [%d]", bytesWritten );
-		}
-
-		if ( _tcpSocket->waitForReadyRead(READ_TIMEOUT) )
-		{
-			do
+			if ( ! _tcpSocket->waitForBytesWritten(WRITE_TIMEOUT) )
 			{
-				log ( 3, "Reading:", "Bytes available [%d]", _tcpSocket->bytesAvailable() );
-				while ( _tcpSocket->canReadLine() )
-				{
-					QByteArray response = _tcpSocket->readLine();
-					result = handleResponse( _correlationID, response );
-				}
-				log ( 3, "Info:", "Trying to read more resposes");
+				QString errorReason = QString ("(%1) %2").arg(_tcpSocket->error()).arg( _tcpSocket->errorString());
+				log ( 2, "Error:", "bytesWritten: [%d], %s", bytesWritten, QSTRING_CSTR(errorReason));
+				this->setInError ( errorReason );
 			}
-			while ( _tcpSocket->waitForReadyRead(500) );
-		}
+			else
+			{
+				log ( 3, "Success:", "Bytes written   [%d]", bytesWritten );
+			}
 
-		log ( 3, "Info:", "No more responses available");
+			if ( _tcpSocket->waitForReadyRead(READ_TIMEOUT) )
+			{
+				do
+				{
+					log ( 3, "Reading:", "Bytes available [%d]", _tcpSocket->bytesAvailable() );
+					while ( _tcpSocket->canReadLine() )
+					{
+						QByteArray response = _tcpSocket->readLine();
+						result = handleResponse( _correlationID, response );
+					}
+					log ( 3, "Info:", "Trying to read more resposes");
+				}
+				while ( _tcpSocket->waitForReadyRead(500) );
+			}
+
+			log ( 3, "Info:", "No more responses available");
+		}
 
 		if ( ! _isInError )
 		{
@@ -203,7 +217,7 @@ bool YeelightLight::writeCommand( const QJsonDocument &command, QJsonArray &resu
 	}
 	else
 	{
-		log ( 3, "Info:", "Skip write. Device is in error");
+		log ( 2, "Info:", "Skip write. Device is in error");
 	}
 
 	log (2,"writeCommand() rc","%d", rc );
@@ -212,6 +226,7 @@ bool YeelightLight::writeCommand( const QJsonDocument &command, QJsonArray &resu
 
 bool YeelightLight::streamCommand( const QJsonDocument &command )
 {
+	log (3,"streamCommand()","isON[%d], isInMusicMode[%d]", _isOn, _isInMusicMode );
 	if (_debugLevel >= 2)
 	{
 		QString help = command.toJson(QJsonDocument::Compact);
@@ -223,29 +238,33 @@ bool YeelightLight::streamCommand( const QJsonDocument &command )
 	if ( ! _isInError && _tcpStreamSocket->isOpen() )
 	{
 		qint64 bytesWritten = _tcpStreamSocket->write( command.toJson(QJsonDocument::Compact) + "\r\n");
-
-		if ( ! _tcpStreamSocket->waitForBytesWritten(WRITE_TIMEOUT) )
+		if (bytesWritten == -1 )
 		{
-			QString errorReason = QString ("(%1) %2").arg(_tcpStreamSocket->error()).arg( _tcpStreamSocket->errorString());
-			log ( 2, "Error:", "bytesWritten: [%d], %s", bytesWritten, QSTRING_CSTR(errorReason));
-			this->setInError ( errorReason );
+			this->setInError( QString ("Streaming Error %1").arg(_tcpStreamSocket->errorString()) );
 		}
 		else
 		{
-			log ( 3, "Success:", "Bytes written   [%d]", bytesWritten );
-			rc = true;
+			if ( ! _tcpStreamSocket->waitForBytesWritten(WRITE_TIMEOUT) )
+			{
+				QString errorReason = QString ("(%1) %2").arg(_tcpStreamSocket->error()).arg( _tcpStreamSocket->errorString());
+				log ( 2, "Error:", "bytesWritten: [%d], %s", bytesWritten, QSTRING_CSTR(errorReason));
+				this->setInError ( errorReason );
+			}
+			else
+			{
+				log ( 3, "Success:", "Bytes written   [%d]", bytesWritten );
+				rc = true;
+			}
 		}
 	}
 	else
 	{
-		log ( 3, "Info:", "Skip write. Device is in error");
+		log ( 2, "Info:", "Skip write. Device is in error");
 	}
 
-	log (2,"streamCommand() rc","%d", rc );
+	log (2,"streamCommand() rc","%d, isON[%d], isInMusicMode[%d]", rc, _isOn, _isInMusicMode );
 	return rc;
 }
-
-
 
 QJsonArray YeelightLight::handleResponse(int correlationID, QByteArray const &response )
 {
@@ -378,7 +397,7 @@ bool YeelightLight::getProperties()
 	log (3,"getProperties()","" );
 
 	QJsonArray propertylist;
-	propertylist << "name" << "model" << "power" << "rgb" << "bright" << "ct" << "fw_ver";
+	propertylist << API_PROP_NAME << API_PROP_MODEL << API_PROP_POWER << API_PROP_RGB << API_PROP_BRIGHT << API_PROP_CT << API_PROP_FWVER;
 
 	QJsonDocument command = getCommand( API_METHOD_GETPROP, propertylist );
 
@@ -404,6 +423,49 @@ bool YeelightLight::getProperties()
 	return rc;
 }
 
+bool YeelightLight::isInMusicMode( bool deviceCheck)
+{
+	bool inMusicMode = false;
+
+	if ( deviceCheck )
+	{
+		// Get status from device directly
+		QJsonArray propertylist;
+		propertylist << API_PROP_MUSIC;
+
+		QJsonDocument command = getCommand( API_METHOD_GETPROP, propertylist );
+
+		QJsonArray result;
+		bool rc = writeCommand( command, result );
+
+		if( rc && !result.empty())
+		{
+			inMusicMode = result.at(0).toString() == "1" ? true : false;
+		}
+	}
+	else
+	{
+		// Test indirectly avoiding command quota
+		if ( _tcpStreamSocket != nullptr)
+		{
+			if ( _tcpStreamSocket->state() == QAbstractSocket::ConnectedState )
+			{
+				log (3,"isInMusicMode", "Yes, as socket in ConnectedState");
+				inMusicMode = true;
+			}
+			else
+			{
+				log (2,"isInMusicMode", "No, %s", QSTRING_CSTR(_tcpStreamSocket->errorString()) );
+			}
+		}
+	}
+	_isInMusicMode = inMusicMode;
+
+	log (3,"isInMusicMode()","%d", _isInMusicMode );
+
+	return _isInMusicMode;
+}
+
 void YeelightLight::mapProperties(const QMap<QString, QString> propertyList)
 {
 	log (3,"mapProperties()","" );
@@ -417,7 +479,7 @@ void YeelightLight::mapProperties(const QMap<QString, QString> propertyList)
 	_fw_ver	= propertyList[API_PROP_FWVER];
 
 	_power	= propertyList[API_PROP_POWER];
-	_color	= propertyList[API_PROP_RGB].toInt();
+	_colorRgbValue	= propertyList[API_PROP_RGB].toInt();
 	_bright	= propertyList[API_PROP_BRIGHT].toInt();
 	_ct		= propertyList[API_PROP_CT].toInt();
 	log (2,"mapProperties() rc","void" );
@@ -430,21 +492,26 @@ bool YeelightLight::setPower(bool on)
 
 bool YeelightLight::setPower(bool on, API_EFFECT effect, int duration, API_MODE mode)
 {
-	log (3,"setPower()","" );
+	log (3,"setPower()","isON[%d], isInMusicMode[%d]", _isOn, _isInMusicMode );
 	QString powerParam = on ? API_METHOD_POWER_ON : API_METHOD_POWER_OFF;
 	QString effectParam = effect == API_EFFECT_SUDDEN ? API_PARAM_EFFECT_SUDDEN : API_PARAM_EFFECT_SMOOTH;
 
 	QJsonArray paramlist;
-	paramlist << powerParam << effectParam << duration << mode;
+	//paramlist << powerParam << effectParam << duration << mode;
+	paramlist << powerParam << effectParam << duration << 0;
 
 	bool rc = writeCommand( getCommand( API_METHOD_POWER, paramlist ) );
 
 	// If power off was sucessfull, automatically music-mode is off too
-	if ( rc && on == false)
+	if ( rc )
 	{
-		_isInMusicMode = false;
+		_isOn = on;
+		if ( on == false )
+		{
+			_isInMusicMode = false;
+		}
 	}
-	log (2,"setPower() rc","%d", rc );
+	log (2,"setPower() rc","%d, isON[%d], isInMusicMode[%d]", rc, _isOn, _isInMusicMode );
 
 	return rc;
 }
@@ -455,35 +522,95 @@ bool YeelightLight::setColorRGB(ColorRgb color)
 
 	int colorParam = (color.red * 65536) + (color.green * 256) + color.blue;
 
+	int brightnessParam = std::max( { color.red, color.green, color.blue } ) * 100 / 255;
+
 	if ( colorParam == 0)
 	{
 		colorParam = 1;
 	}
 
-	if ( colorParam != _color )
+	if ( colorParam != _colorRgbValue )
 	{
-		log ( 3, "Set Color RGB:", "{%c,%c,%c} -> [%]", color.red, color.green, color.blue, colorParam );
+		log ( 3, "Set Color RGB:", "{%u,%u,%u} -> [%d], [%d]", color.red, color.green, color.blue, colorParam, brightnessParam );
 		QJsonArray paramlist;
-		paramlist << colorParam;
+		paramlist << API_PARAM_CLASS_COLOR << colorParam << brightnessParam;
 
 		bool writeOK;
 		if ( _isInMusicMode )
 		{
-			writeOK = streamCommand( getCommand( API_METHOD_SETRGB, paramlist ) );
+			writeOK = streamCommand( getCommand( API_METHOD_SETSCENE, paramlist ) );
 		}
 		else
 		{
-			writeOK = writeCommand( getCommand( API_METHOD_SETRGB, paramlist ) );
+			writeOK = writeCommand( getCommand( API_METHOD_SETSCENE, paramlist ) );
 		}
 		if ( writeOK )
 		{
-			_color = colorParam;
+			_colorRgbValue = colorParam;
 		}
 		else
 		{
 			rc = false;
 		}
 	}
+	log (2,"setColorRGB() rc","%d, isON[%d], isInMusicMode[%d]", rc, _isOn, _isInMusicMode );
+	return rc;
+}
+
+bool YeelightLight::setColorHSV(ColorRgb colorRGB)
+{
+	bool rc = true;
+
+	QColor color(colorRGB.red, colorRGB.green, colorRGB.blue);
+
+	if ( color != _color )
+	{
+		int hue;
+		int sat;
+		int bri;
+
+		color.getHsv( &hue, &sat, &bri);
+
+		//Align to Yeelight number ranges (hue: 0-359, sat: 0-100, bri: 0-100)
+		if ( hue == -1)	hue = 0;
+		sat = sat * 100 / 255;
+		bri = bri * 100 / 255;
+
+		log ( 3, "Set Color HSV:", "{%d,%d,%d}", hue, sat, bri);
+
+		QJsonArray paramlist;
+		paramlist << API_PARAM_CLASS_HSV << hue << sat << bri;
+
+		bool writeOK;
+		if ( _isInMusicMode )
+		{
+			writeOK = streamCommand( getCommand( API_METHOD_SETSCENE, paramlist ) );
+		}
+		else
+		{
+			writeOK = writeCommand( getCommand( API_METHOD_SETSCENE, paramlist ) );
+		}
+
+		if ( writeOK )
+		{
+			_isOn = true;
+			if ( bri == 0 )
+			{
+				_isOn = false;
+				_isInMusicMode = false;
+			}
+			_color = color;
+		}
+		else
+		{
+			rc = false;
+		}
+	}
+	else
+	{
+		//log ( 3, "setColorHSV", "Skip update. Same Color as before");
+	}
+	log (2,"setColorHSV() rc","%d, isON[%d], isInMusicMode[%d]", rc, _isOn, _isInMusicMode );
 	return rc;
 }
 
@@ -502,7 +629,6 @@ void YeelightLight::setTransitionEffect ( API_EFFECT effect ,int duration )
 
 bool YeelightLight::setMusicMode(bool on, QHostAddress ipAddress, quint16 port)
 {
-	log (3,"setMusicMode()","" );
 	int musicModeParam = on ? API_METHOD_MUSIC_MODE_ON : API_METHOD_MUSIC_MODE_OFF;
 
 	QJsonArray paramlist;
@@ -519,10 +645,9 @@ bool YeelightLight::setMusicMode(bool on, QHostAddress ipAddress, quint16 port)
 		_isInMusicMode = on;
 	}
 
-	log (2,"setMusicMode() rc","%d", rc );
+	log (2,"setMusicMode() rc","%d, isInMusicMode[%d]", rc, _isInMusicMode );
 	return rc;
 }
-
 
 void YeelightLight::log(const int logLevel, const char* msg, const char* type, ...)
 {
@@ -546,7 +671,7 @@ void YeelightLight::log(const int logLevel, const char* msg, const char* type, .
 
 LedDeviceYeelight::LedDeviceYeelight(const QJsonObject &deviceConfig)
 	: LedDevice()
-	,_lightsCount (0)
+	  ,_lightsCount (0)
 {
 	_devConfig = deviceConfig;
 	_deviceReady = false;
@@ -568,7 +693,7 @@ LedDevice* LedDeviceYeelight::construct(const QJsonObject &deviceConfig)
 bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 {
 	// Overwrite non supported/required features
-	_devConfig["latchTime"]   = LATCH_TIME;
+	//_devConfig["latchTime"]   = LATCH_TIME;
 	if (deviceConfig["rewriteTime"].toInt(0) > 0)
 	{
 		Info (_log, "Yeelights do not require rewrites. Refresh time is ignored.");
@@ -586,10 +711,12 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 	Debug(_log, "LatchTime         : %d", this->getLatchTime());
 
 	//Get device specific configuration
+	_outputColorModel = deviceConfig[ CONFIG_COLOR_MODEL ].toString().toInt(0);
 	_transitionEffect = static_cast<API_EFFECT>( deviceConfig[ CONFIG_TRANS_EFFECT ].toString().toInt() );
 	_transitionDuration = deviceConfig[ CONFIG_TRANS_TIME ].toInt(API_PARAM_DURATION);
 	_debuglevel = deviceConfig[ CONFIG_DEBUGLEVEL ].toString().toInt(0);
 
+	Debug(_log, "colorModel        : %d", _outputColorModel);
 	Debug(_log, "Transitioneffect  : %d", _transitionEffect);
 	Debug(_log, "Transitionduration: %d", _transitionDuration);
 	Debug(_log, "Debuglevel        : %d", _debuglevel);
@@ -627,23 +754,23 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 
 		for (uint i = 0; i < configuredLedCount; ++i)
 		{
-				QString address = configuredAdresses[i].toString();
+			QString address = configuredAdresses[i].toString();
 
-				QStringList addressparts = address.split(":", QString::SkipEmptyParts);
+			QStringList addressparts = address.split(":", QString::SkipEmptyParts);
 
-				QString hostAddress = addressparts[0];
-				quint16 apiPort;
+			QString hostAddress = addressparts[0];
+			quint16 apiPort;
 
-				if ( addressparts.size() > 1)
-				{
-					apiPort = addressparts[1].toUShort();
-				}
-				else
-				{
-					apiPort   = API_DEFAULT_PORT;
-				}
+			if ( addressparts.size() > 1)
+			{
+				apiPort = addressparts[1].toUShort();
+			}
+			else
+			{
+				apiPort   = API_DEFAULT_PORT;
+			}
 
-				_lightsAddressMap.insert( hostAddress, apiPort );
+			_lightsAddressMap.insert( hostAddress, apiPort );
 		}
 
 
@@ -778,8 +905,6 @@ bool LedDeviceYeelight::discoverDevice()
 	discover.setPort(SSDP_PORT);
 	address = discover.getFirstService(STY_WEBSERVER, SSDP_ID, SSDP_TIMEOUT);
 
-	//address = "192.168.2.167";
-
 	if ( address.isEmpty() )
 	{
 		Warning(_log, "No Yeelight discovered");
@@ -806,8 +931,6 @@ bool LedDeviceYeelight::discoverDevice()
 		}
 
 		_lightsAddressMap.insert( hostAddress, apiPort );
-		//_lightsAddressMap.insert( "192.168.2.174", apiPort );
-
 		_ledCount = _lightsAddressMap.size();
 
 		if (getLedCount() == 0 )
@@ -855,14 +978,39 @@ int LedDeviceYeelight::write(const std::vector<ColorRgb> & ledValues)
 	DebugIf(verbose, _log, "enabled [%d], _deviceReady [%d]", this->enabled(), _deviceReady);
 	int rc = -1;
 
-	//Update on all Yeelights
-	// Iterate through lights and set colors.
+	//Update on all Yeelights by iterating through lights and set colors.
 	unsigned int idx = 0;
 	for (YeelightLight& light : _lights)
 	{
-		// Get color.
+		// Get color
 		ColorRgb color = ledValues.at(idx);
-		light.setColorRGB( color );
+
+		if ( light.isReady()  )
+		{
+			if ( !light.isInMusicMode() )
+			{
+				// TODO: Remove code, if switch-On/Off will move to open/close logic
+				light.setMusicMode(true, _musicModeServerAddress, _musicModeServerPort);
+
+				// Wait for callback of the device to establish streaming socket
+				if ( _tcpMusicModeServer->waitForNewConnection(CONNECT_STREAM_TIMEOUT) )
+				{
+					light.setStreamSocket( _tcpMusicModeServer->nextPendingConnection() );
+				}
+				else
+				{
+					light.setInError("Failed to get stream socket");
+				}
+			}
+			if ( _outputColorModel == 1 )
+			{
+				light.setColorRGB( color );
+			}
+			else
+			{
+				light.setColorHSV( color );
+			}
+		}
 		++idx;
 	}
 	rc = 0;
@@ -880,29 +1028,33 @@ int LedDeviceYeelight::switchOn()
 		//Switch on all Yeelights
 		for (YeelightLight& light : _lights)
 		{
-			light.setPower( true );
-
 			// TODO: Remove code, if switch-On/Off will move to open/close logic
-			light.setMusicMode(true, _musicModeServerAddress, _musicModeServerPort);
-			// Wait for callback of the device to establish streaming socket
-			if ( _tcpMusicModeServer->waitForNewConnection(CONNECT_STREAM_TIMEOUT) )
+			if ( !light.isInMusicMode() )
 			{
-				light.setStreamSocket( _tcpMusicModeServer->nextPendingConnection() );
-			}
-			else
-			{
-				Error( _log, "Failed to get stream socket for [%s]", QSTRING_CSTR(light.getName()) );
+				light.setMusicMode(true, _musicModeServerAddress, _musicModeServerPort);
+
+				// Wait for callback of the device to establish streaming socket
+				if ( _tcpMusicModeServer->waitForNewConnection(CONNECT_STREAM_TIMEOUT) )
+				{
+					light.setStreamSocket( _tcpMusicModeServer->nextPendingConnection() );
+				}
+				else
+				{
+					light.setInError("Failed to get stream socket");
+				}
 			}
 		}
 	}
 	int rc = 0;
-	DebugIf(verbose, _log, "rc [%d]", rc );
+
+	DebugIf(verbose, _log, "rc [%d], enabled [%d], _deviceReady [%d]", rc, this->enabled(), _deviceReady);
 	return 0;
 }
 
 int LedDeviceYeelight::switchOff()
 {
 	DebugIf(verbose, _log, "enabled [%d], _deviceReady [%d]", this->enabled(), _deviceReady);
+
 	//Set all LEDs to Black
 	int rc = LedDevice::switchOff();
 
@@ -911,10 +1063,10 @@ int LedDeviceYeelight::switchOff()
 		//Switch on all Yeelights
 		for (YeelightLight& light : _lights)
 		{
-			light.setMusicMode(false);
 			light.setPower( false );
 		}
 	}
-	DebugIf(verbose, _log, "rc [%d]", rc );
+
+	DebugIf(verbose, _log, "rc [void], enabled [%d], _deviceReady [%d]", this->enabled(), _deviceReady);
 	return rc;
 }

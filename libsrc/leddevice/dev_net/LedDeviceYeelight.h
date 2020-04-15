@@ -7,6 +7,7 @@
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <QTcpServer>
+#include <QColor>
 
 enum API_EFFECT{
 	API_EFFECT_SUDDEN,
@@ -34,6 +35,7 @@ static const int API_METHOD_MUSIC_MODE_ON = 1;
 static const int API_METHOD_MUSIC_MODE_OFF = 0;
 
 static const char API_METHOD_SETRGB[] = "set_rgb";
+static const char API_METHOD_SETSCENE[] = "set_scene";
 static const char API_METHOD_GETPROP[] = "get_prop";
 
 static const char API_PARAM_EFFECT_SUDDEN[] = "sudden";
@@ -73,39 +75,42 @@ public:
 	///
 	/// @param on
 	///
-	bool setPower(bool on);
+	bool setPower( bool on );
 
-	bool setPower(bool on, API_EFFECT effect, int duration, API_MODE mode = API_RGB_MODE);
+	bool setPower( bool on, API_EFFECT effect, int duration, API_MODE mode = API_RGB_MODE );
 
-	bool setColorRGB(ColorRgb color);
+	bool setColorRGB( ColorRgb color );
+	bool setColorHSV( ColorRgb color );
 
 	void setTransitionEffect ( API_EFFECT effect ,int duration = API_PARAM_DURATION );
 
-	bool setMusicMode(bool on, QHostAddress ipAddress = {} , quint16 port = 0);
+	bool setMusicMode( bool on, QHostAddress ipAddress = {} , quint16 port = 0 );
 
 	bool getProperties();
 
 	QString getName()const { return _name; }
 
 	bool isReady() const { return !_isInError; }
-
-	void setDebuglevel ( int level ) { _debugLevel = level; }
-
-//	bool isPowerOn() const;
-//	ColorRgb getColor() const;
-
-
-//	QString getOriginalState();
-
-private:
-
-	QJsonArray handleResponse(int correlationID, QByteArray const &response );
+	bool isOn() const { return _isOn; }
+	bool isInMusicMode( bool deviceCheck = false );
 
 	/// Set device in error state
 	///
 	/// @param errorMsg The error message to be logged
 	///
 	void setInError( const QString& errorMsg );
+
+	void setDebuglevel ( int level ) { _debugLevel = level; }
+
+	//	bool isPowerOn() const;
+	//	ColorRgb getColor() const;
+
+
+	//	QString getOriginalState();
+
+private:
+
+	QJsonArray handleResponse(int correlationID, QByteArray const &response );
 
 	void saveOriginalState(const QJsonObject& values);
 
@@ -132,9 +137,11 @@ private:
 	QTcpSocket*	 _tcpStreamSocket;
 
 	QString _name;
-	int _color;
+	int _colorRgbValue;
 	int _bright;
 	int _ct;
+
+	QColor _color;
 
 	API_EFFECT _transitionEffect;
 	int _transitionDuration;
@@ -143,6 +150,7 @@ private:
 	QString _power;
 	QString _fw_ver;
 
+	bool _isOn;
 	bool _isInMusicMode;
 
 	/// Array of the Yeelight properties
@@ -238,6 +246,7 @@ private:
 	std::vector<YeelightLight> _lights;
 	unsigned int _lightsCount;
 
+	int _outputColorModel;
 	API_EFFECT _transitionEffect;
 	int _transitionDuration;
 	int _debuglevel;
