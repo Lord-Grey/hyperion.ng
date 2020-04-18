@@ -10,9 +10,8 @@
 #include <QColor>
 
 enum API_EFFECT{
-	API_EFFECT_SUDDEN,
-	API_EFFECT_SMOOTH
-
+	API_EFFECT_SMOOTH,
+	API_EFFECT_SUDDEN
 };
 
 enum API_MODE{
@@ -40,7 +39,8 @@ static const char API_METHOD_GETPROP[] = "get_prop";
 
 static const char API_PARAM_EFFECT_SUDDEN[] = "sudden";
 static const char API_PARAM_EFFECT_SMOOTH[] = "smooth";
-static const int  API_PARAM_DURATION = 500;
+static const int  API_PARAM_DURATION = 50;
+static const int  API_PARAM_DURATION_POWERONOFF = 1000;
 
 /**
  * Simple class to hold the id, the latest color, the color space and the original state.
@@ -80,9 +80,12 @@ public:
 	bool setPower( bool on, API_EFFECT effect, int duration, API_MODE mode = API_RGB_MODE );
 
 	bool setColorRGB( ColorRgb color );
+	bool setColorRGB2( ColorRgb color );
 	bool setColorHSV( ColorRgb color );
 
 	void setTransitionEffect ( API_EFFECT effect ,int duration = API_PARAM_DURATION );
+
+	void setBrightnessConfig (double factor, int min, int max, int threshold);
 
 	bool setMusicMode( bool on, QHostAddress ipAddress = {} , quint16 port = 0 );
 
@@ -101,12 +104,6 @@ public:
 	void setInError( const QString& errorMsg );
 
 	void setDebuglevel ( int level ) { _debugLevel = level; }
-
-	//	bool isPowerOn() const;
-	//	ColorRgb getColor() const;
-
-
-	//	QString getOriginalState();
 
 private:
 
@@ -145,6 +142,13 @@ private:
 
 	API_EFFECT _transitionEffect;
 	int _transitionDuration;
+
+	double _brightnessFactor;
+	int _brightnessMin;
+	int _brightnessMax;
+	int _brightnessThreshold;
+
+	QString _transitionEffectParam;
 
 	QString _model;
 	QString _power;
@@ -249,6 +253,13 @@ private:
 	int _outputColorModel;
 	API_EFFECT _transitionEffect;
 	int _transitionDuration;
+
+	/// The brightness factor to multiply on color change.
+	double _brightnessFactor;
+	int _brightnessMin;
+	int _brightnessMax;
+	int _brightnessThreshold;
+
 	int _debuglevel;
 
 	QHostAddress _musicModeServerAddress;
