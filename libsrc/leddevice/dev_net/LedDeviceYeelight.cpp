@@ -19,7 +19,7 @@ const int CONNECT_TIMEOUT = 1000;	// device connect timout in ms
 const int CONNECT_STREAM_TIMEOUT = 1000; // device streaming connect timout in ms
 
 // Configuration settings
-static const char CONFIG_LIGHT_ADDRESSES [] = "addresses";
+static const char CONFIG_LIGHTS [] = "lights";
 
 static const char CONFIG_COLOR_MODEL [] = "colorModel";
 static const char CONFIG_TRANS_EFFECT [] = "transEffect";
@@ -29,7 +29,7 @@ static const char CONFIG_DEBUGLEVEL [] = "debugLevel";
 static const char CONFIG_BRIGHTNESSFACTOR[] = "brightnessFactor";
 static const char CONFIG_BRIGHTNESS_MIN[] = "brightnessMin";
 static const char CONFIG_BRIGHTNESS_MAX[] = "brightnessMax";
-static const char CONFIG_BRIGHTNESS_THRESHOLD[] = "brightnessThreshold";
+static const char CONFIG_EXTRA_TIME_DARKNESS[] = "extraTimeDarkness";
 
 // Yeelights API
 static const quint16 API_DEFAULT_PORT = 55443;
@@ -83,7 +83,7 @@ YeelightLight::YeelightLight( Logger *log, const QString &hostname, unsigned sho
 	  ,_brightnessFactor(1.0)
 	  ,_brightnessMin(0)
 	  ,_brightnessMax(100)
-	  ,_brightnessThreshold(0)
+	  ,_extraTimeDarkness(API_PARAM_EXTRA_TIME_DARKNESS)
 	  ,_transitionEffectParam(API_PARAM_EFFECT_SMOOTH)
 	  ,_isOn(false)
 	  ,_isInMusicMode(false)
@@ -476,10 +476,13 @@ void YeelightLight::mapProperties(const QMap<QString, QString> propertyList)
 {
 	log (3,"mapProperties()","" );
 
-	_name	= propertyList[API_PROP_NAME];
 	if ( _name.isEmpty() )
 	{
-		_name = _host;
+		_name	= propertyList[API_PROP_NAME];
+		if ( _name.isEmpty() )
+		{
+			_name = _host;
+		}
 	}
 	_model	= propertyList[API_PROP_MODEL];
 	_fw_ver	= propertyList[API_PROP_FWVER];
@@ -573,6 +576,7 @@ bool YeelightLight::setColorHSV(ColorRgb colorRGB)
 		int hue;
 		int sat;
 		int bri;
+		int duration;
 
 		color.getHsv( &hue, &sat, &bri);
 
@@ -581,21 +585,23 @@ bool YeelightLight::setColorHSV(ColorRgb colorRGB)
 		sat = sat * 100 / 255;
 		bri = bri * 100 / 255;
 
-		if ( bri <= _brightnessThreshold )
+		if ( bri < _brightnessMin )
 		{
-			log ( 2, "Set Color HSV:", "Turn off, brigthness [%d] <= threshold [%d]", bri, _brightnessThreshold );
+			log ( 2, "Set Color HSV:", "Turn off, brigthness [%d] < _brightnessMin [%d]", bri, _brightnessMin );
 			// Set brightness to 0
 			bri = 0;
+			duration = _transitionDuration + _extraTimeDarkness;
 		}
 		else
 		{
 			bri = ( qMin( _brightnessMax, (int) (_brightnessFactor * qMax( _brightnessMin, bri ) ) ) );
+			duration = _transitionDuration;
 		}
 
-		log ( 2, "Set Color HSV:", "{%u,%u,%u}, [%d], [%d]", hue, sat, bri, _transitionEffect, _transitionDuration );
+		log ( 2, "Set Color HSV:", "{%u,%u,%u}, [%d], [%d]", hue, sat, bri, _transitionEffect, duration );
 
 		QJsonArray paramlist;
-		paramlist << API_PARAM_CLASS_HSV << hue << sat << bri << _transitionEffectParam << _transitionDuration;
+		paramlist << API_PARAM_CLASS_HSV << hue << sat << bri << _transitionEffectParam << duration;
 
 		bool writeOK;
 		if ( _isInMusicMode )
@@ -651,7 +657,7 @@ void YeelightLight::setBrightnessConfig (double factor, int min, int max, int th
 	_brightnessFactor = factor;
 	_brightnessMin = min;
 	_brightnessMax = max;
-	_brightnessThreshold = threshold;
+	_extraTimeDarkness = threshold;
 }
 
 bool YeelightLight::setMusicMode(bool on, QHostAddress ipAddress, quint16 port)
@@ -705,7 +711,7 @@ LedDeviceYeelight::LedDeviceYeelight(const QJsonObject &deviceConfig)
 	  ,_brightnessFactor(1.0)
 	  ,_brightnessMin(0)
 	  ,_brightnessMax(100)
-	  ,_brightnessThreshold(0)
+	  ,_extraTimeDarkness(0)
 	  ,_debuglevel(0)
 	  ,_musicModeServerPort(0)
 {
@@ -765,33 +771,38 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 	else
 		_debuglevel = deviceConfig[ CONFIG_DEBUGLEVEL ].toInt(0);
 
-	_brightnessFactor       = _devConfig[CONFIG_BRIGHTNESSFACTOR].toDouble(1.0);
-	_brightnessMin          = _devConfig[CONFIG_BRIGHTNESS_MIN].toInt(0);
-	_brightnessMax          = _devConfig[CONFIG_BRIGHTNESS_MAX].toInt(100);
-	_brightnessThreshold    = _devConfig[CONFIG_BRIGHTNESS_THRESHOLD].toInt(0);
+	_brightnessFactor	= _devConfig[CONFIG_BRIGHTNESSFACTOR].toDouble(1.0);
+	_brightnessMin		= _devConfig[CONFIG_BRIGHTNESS_MIN].toInt(0);
+	_brightnessMax		= _devConfig[CONFIG_BRIGHTNESS_MAX].toInt(100);
+	_extraTimeDarkness	= _devConfig[CONFIG_EXTRA_TIME_DARKNESS].toInt(0);
 
 	QString outputColorModel = _outputColorModel == 1 ? "RGB": "HSV";
 	QString transitionEffect = _transitionEffect == API_EFFECT_SMOOTH ? API_PARAM_EFFECT_SMOOTH : API_PARAM_EFFECT_SUDDEN;
 
-	Debug(_log, "colorModel        : %d", _outputColorModel);
+	Debug(_log, "colorModel        : %s", QSTRING_CSTR(outputColorModel));
 	Debug(_log, "Transitioneffect  : %s", QSTRING_CSTR(transitionEffect));
 	Debug(_log, "Transitionduration: %d", _transitionDuration);
 
-	Debug(_log, "Brightn. Threshold: %d", _brightnessThreshold );
+	Debug(_log, "Extra time darkn. : %d", _extraTimeDarkness );
 	Debug(_log, "Brightn. Min      : %d", _brightnessMin );
 	Debug(_log, "Brightn. Max      : %d", _brightnessMax );
 	Debug(_log, "Brightn. Factor   : %.2f", _brightnessFactor );
 
 	Debug(_log, "Debuglevel        : %d", _debuglevel);
 
-	QJsonArray configuredAdresses   = _devConfig[CONFIG_LIGHT_ADDRESSES].toArray();
-	uint configuredYeelightsCount = static_cast<uint>( configuredAdresses.size() );
+	QJsonArray configuredYeelightLights   = _devConfig[CONFIG_LIGHTS].toArray();
+	uint configuredYeelightsCount = static_cast<uint>( configuredYeelightLights.size() );
 
 	Debug(_log, "Light configured  : %d", configuredYeelightsCount );
 
-	// Check. if enough yeelights were found.
-	uint configuredLedCount = this->getLedCount();
-
+	int i = 1;
+	foreach (const QJsonValue & light, configuredYeelightLights)
+	{
+		QString ip = light.toObject().value("ip").toString();
+		QString name = light.toObject().value("name").toString();
+		Debug(_log, "Light [%d] - %s (%s)", i, QSTRING_CSTR(name), QSTRING_CSTR(ip) );
+		++i;
+	}
 
 	if ( isInitOK )
 	{
@@ -799,6 +810,8 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 		discoverDevice();
 	}
 
+	// Check. if enough yeelights were found.
+	uint configuredLedCount = this->getLedCount();
 	if (configuredYeelightsCount < configuredLedCount )
 	{
 		QString errorReason = QString("Not enough Yeelights [%1] for configured LEDs [%2] found!")
@@ -817,7 +830,7 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 
 		for (int i = 0; i < static_cast<int>( configuredLedCount ); ++i)
 		{
-			QString address = configuredAdresses[i].toString();
+			QString address = configuredYeelightLights[i].toObject().value("ip").toString();
 
 			QStringList addressparts = address.split(":", QString::SkipEmptyParts);
 
@@ -902,7 +915,7 @@ int LedDeviceYeelight::open()
 				for (YeelightLight& light : _lights)
 				{
 					light.setTransitionEffect( _transitionEffect, _transitionDuration );
-					light.setBrightnessConfig( _brightnessFactor, _brightnessMin, _brightnessMax, _brightnessThreshold );
+					light.setBrightnessConfig( _brightnessFactor, _brightnessMin, _brightnessMax, _extraTimeDarkness );
 					light.setDebuglevel(_debuglevel);
 
 					light.open();

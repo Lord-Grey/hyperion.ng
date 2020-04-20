@@ -12,6 +12,7 @@
 			},
 			"minimum" : 0,
 			"maximum" : 1,
+			"access" : "advanced",
 			"propertyOrder" : 1
 		},
 		"transEffect": {
@@ -24,15 +25,18 @@
 			},
 			"minimum" : 0,
 			"maximum" : 1,
+			"access" : "advanced",
 			"propertyOrder" : 2
 		},
 		"transTime": {
 			"type": "integer",
 			"title":"edt_dev_spec_transistionTime_title",
+			"desc" : "Transtime description",
 			"default": 40,
 			"append" : "ms",
 			"minimum": 30,
 			"maximum": 5000,
+			"access" : "advanced",
 			"options": {
 				"dependencies": {
 					"transEffect": 0
@@ -40,13 +44,14 @@
 			},
 			"propertyOrder" : 3
 		},
-		"brightnessThreshold": {
+		"extraTimeDarkness": {
 			"type": "integer",
-			"title":"edt_dev_spec_brightnessThreshold_title",
+			"title":"ExtraTime Darkness",
 			"default" : 0,
-			"step": 1,
+			"step": 10,
 			"minimum" : 0,
-			"maximum" : 100,
+			"maximum" : 1000,
+			"append" : "ms",
 			"access" : "advanced",
 			"propertyOrder" : 4
 		},
@@ -57,38 +62,59 @@
 			"step": 0.25,
 			"minimum" : 0.5,
 			"maximum" : 10.0,
-			"access" : "advanced",
+			"access" : "expert",
 			"propertyOrder" : 5
 		},
 		"brightnessMin": {
 			"type": "integer",
 			"title":"edt_dev_spec_brightnessMin_title",
-			"default" : 0,
+			"default" : 1,
 			"step": 1,
-			"minimum" : 0,
-			"maximum" : 100,
+			"minimum" : 1,
+			"maximum" : 99,
+			"append" : "%",
 			"access" : "advanced",
 			"propertyOrder" : 6
 		},
 		"brightnessMax": {
 			"type": "integer",
 			"title":"edt_dev_spec_brightnessMax_title",
-			"default" : 1.0,
+			"default" : 100,
 			"step": 1,
 			"minimum" : 0,
 			"maximum" : 100,
+			"append" : "%",
 			"access" : "advanced",
 			"propertyOrder" : 7
 		},
-		"addresses": {
+		"lights": {
 			"type": "array",
-			"title":"edt_dev_spec_lightid_title",
-			"minItems": 1,
+			"title":"edt_dev_spec_lights_title",
+			"propertyOrder" : 7,
+			"minimum" : 1,
 			"uniqueItems" : true,
 			"items" : {
-				"type" : "string",
-				"minimum" : 0,
-				"title" : "edt_dev_spec_targetIpHost_title"
+				"type" : "object",
+				"title" : "edt_dev_spec_lights_itemtitle",
+				"required" : true,
+				"properties" :
+				{
+					"ip" :
+					{
+						"type" : "string",
+						"minimum" : 7,
+						"title" : "edt_dev_spec_targetIpHost_title",
+						"required" : true,
+						"propertyOrder" : 1
+					},
+					"name" :
+					{
+						"type" : "string",
+						"title" : "Name",
+						"minimum" : 0,
+						"propertyOrder" : 2
+					}
+				}
 			},
 			"propertyOrder" : 8
 		},

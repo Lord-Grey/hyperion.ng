@@ -41,6 +41,7 @@ static const char API_PARAM_EFFECT_SUDDEN[] = "sudden";
 static const char API_PARAM_EFFECT_SMOOTH[] = "smooth";
 static const int  API_PARAM_DURATION = 50;
 static const int  API_PARAM_DURATION_POWERONOFF = 1000;
+static const int  API_PARAM_EXTRA_TIME_DARKNESS = 200;
 
 /**
  * Simple class to hold the id, the latest color, the color space and the original state.
@@ -91,6 +92,7 @@ public:
 
 	bool getProperties();
 
+	void setName( const QString& name )  { _name = name; }
 	QString getName()const { return _name; }
 
 	bool isReady() const { return !_isInError; }
@@ -146,7 +148,7 @@ private:
 	double _brightnessFactor;
 	int _brightnessMin;
 	int _brightnessMax;
-	int _brightnessThreshold;
+	int _extraTimeDarkness;
 
 	QString _transitionEffectParam;
 
@@ -258,7 +260,7 @@ private:
 	double _brightnessFactor;
 	int _brightnessMin;
 	int _brightnessMax;
-	int _brightnessThreshold;
+	int _extraTimeDarkness;
 
 	int _debuglevel;
 
