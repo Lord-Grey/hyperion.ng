@@ -451,6 +451,7 @@
 	"edt_conf_enum_dl_verbose3" : "Verbosity level 3",
 	"edt_dev_spec_brightnessThreshold_title": "Signal detection brightness minimum",
 	"edt_dev_spec_switchOffOnBlack_title" : "Switch off on black",
+	"edt_dev_spec_switchOffOnbelowMinBrightness" : "Switch-off, below minimum",
 	"edt_dev_spec_brightnessFactor_title" : "Brightness factor",
 	"edt_dev_spec_brightnessMin_title": "Brightness minimum",
 	"edt_dev_spec_brightnessMax_title": "Brightness maximum",

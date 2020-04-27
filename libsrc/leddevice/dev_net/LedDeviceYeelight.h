@@ -86,7 +86,7 @@ public:
 
 	void setTransitionEffect ( API_EFFECT effect ,int duration = API_PARAM_DURATION );
 
-	void setBrightnessConfig (double factor, int min, int max, int threshold);
+	void setBrightnessConfig (int min = 1, int max = 100, bool switchoff = false,  int extraTime = 0, double factor = 1);
 
 	bool setMusicMode( bool on, QHostAddress ipAddress = {} , quint16 port = 0 );
 
@@ -144,11 +144,12 @@ private:
 
 	API_EFFECT _transitionEffect;
 	int _transitionDuration;
-
-	double _brightnessFactor;
-	int _brightnessMin;
-	int _brightnessMax;
 	int _extraTimeDarkness;
+
+	int _brightnessMin;
+	bool _isBrightnessSwitchOffMinimum;
+	int _brightnessMax;
+	double _brightnessFactor;
 
 	QString _transitionEffectParam;
 
@@ -255,12 +256,13 @@ private:
 	int _outputColorModel;
 	API_EFFECT _transitionEffect;
 	int _transitionDuration;
+	int _extraTimeDarkness;
 
+	int _brightnessMin;
+	bool _isBrightnessSwitchOffMinimum;
+	int _brightnessMax;
 	/// The brightness factor to multiply on color change.
 	double _brightnessFactor;
-	int _brightnessMin;
-	int _brightnessMax;
-	int _extraTimeDarkness;
 
 	int _debuglevel;
 

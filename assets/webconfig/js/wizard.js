@@ -1211,9 +1211,10 @@ function beginWizardYeelight()
 
 		d.transEffect = parseFloat(conf_editor.getEditor("root.specificOptions.transEffect").getValue());
 		d.transTime = parseFloat(conf_editor.getEditor("root.specificOptions.transTime").getValue());
+		d.extraTimeDarkness = parseFloat(conf_editor.getEditor("root.specificOptions.extraTimeDarkness").getValue());
 
-		d.brightnessThreshold = parseFloat(conf_editor.getEditor("root.specificOptions.brightnessThreshold").getValue());
 		d.brightnessMin = parseFloat(conf_editor.getEditor("root.specificOptions.brightnessMin").getValue());
+		d.brigthnessSwitchOffOnMinimum = parseFloat(conf_editor.getEditor("root.specificOptions.brigthnessSwitchOffOnMinimum").getValue());
 		d.brightnessMax = parseFloat(conf_editor.getEditor("root.specificOptions.brightnessMax").getValue());
 		d.brightnessFactor = parseFloat(conf_editor.getEditor("root.specificOptions.brightnessFactor").getValue());
 

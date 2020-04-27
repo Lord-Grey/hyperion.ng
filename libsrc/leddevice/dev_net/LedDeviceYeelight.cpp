@@ -24,12 +24,13 @@ static const char CONFIG_LIGHTS [] = "lights";
 static const char CONFIG_COLOR_MODEL [] = "colorModel";
 static const char CONFIG_TRANS_EFFECT [] = "transEffect";
 static const char CONFIG_TRANS_TIME [] = "transTime";
+static const char CONFIG_EXTRA_TIME_DARKNESS[] = "extraTimeDarkness";
 static const char CONFIG_DEBUGLEVEL [] = "debugLevel";
 
-static const char CONFIG_BRIGHTNESSFACTOR[] = "brightnessFactor";
 static const char CONFIG_BRIGHTNESS_MIN[] = "brightnessMin";
+static const char CONFIG_BRIGHTNESS_SWITCHOFF[] = "brigthnessSwitchOffOnMinimum";
 static const char CONFIG_BRIGHTNESS_MAX[] = "brightnessMax";
-static const char CONFIG_EXTRA_TIME_DARKNESS[] = "extraTimeDarkness";
+static const char CONFIG_BRIGHTNESSFACTOR[] = "brightnessFactor";
 
 // Yeelights API
 static const quint16 API_DEFAULT_PORT = 55443;
@@ -80,10 +81,11 @@ YeelightLight::YeelightLight( Logger *log, const QString &hostname, unsigned sho
 	  ,_colorRgbValue(0)
 	  ,_transitionEffect(API_EFFECT_SMOOTH)
 	  ,_transitionDuration(API_PARAM_DURATION)
-	  ,_brightnessFactor(1.0)
-	  ,_brightnessMin(0)
-	  ,_brightnessMax(100)
 	  ,_extraTimeDarkness(API_PARAM_EXTRA_TIME_DARKNESS)
+	  ,_brightnessMin(0)
+	  ,_isBrightnessSwitchOffMinimum(false)
+	  ,_brightnessMax(100)
+	  ,_brightnessFactor(1.0)
 	  ,_transitionEffectParam(API_PARAM_EFFECT_SMOOTH)
 	  ,_isOn(false)
 	  ,_isInMusicMode(false)
@@ -530,18 +532,40 @@ bool YeelightLight::setColorRGB(ColorRgb color)
 
 	int colorParam = (color.red * 65536) + (color.green * 256) + color.blue;
 
-	int brightnessParam = std::max( { color.red, color.green, color.blue } ) * 100 / 255;
-
-	if ( colorParam == 0)
+	if ( colorParam == 0 )
 	{
 		colorParam = 1;
 	}
 
 	if ( colorParam != _colorRgbValue )
 	{
-		log ( 3, "Set Color RGB:", "{%u,%u,%u} -> [%d], [%d], [%d], [%d]", color.red, color.green, color.blue, colorParam, brightnessParam, _transitionEffect, _transitionDuration );
+		int bri = std::max( { color.red, color.green, color.blue } ) * 100 / 255;
+		int duration = _transitionDuration;
+
+		if ( bri < _brightnessMin )
+		{
+			if ( _isBrightnessSwitchOffMinimum )
+			{
+				log ( 2, "Set Color RGB:", "Turn off, brigthness [%d] < _brightnessMin [%d], _isBrightnessSwitchOffMinimum [%d]", bri, _brightnessMin, _isBrightnessSwitchOffMinimum );
+				// Set brightness to 0
+				bri = 0;
+				duration = _transitionDuration + _extraTimeDarkness;
+			}
+			else
+			{
+				//If not switchOff on MinimumBrightness, avoid switch-off
+				log ( 2, "Set Color RGB:", "Set brightness[%d] to minimum brigthness [%d], if not _isBrightnessSwitchOffMinimum [%d]", bri, _brightnessMin, _isBrightnessSwitchOffMinimum );
+				bri = _brightnessMin;
+			}
+		}
+		else
+		{
+			bri = ( qMin( _brightnessMax, (int) (_brightnessFactor * qMax( _brightnessMin, bri ) ) ) );
+		}
+
+		log ( 3, "Set Color RGB:", "{%u,%u,%u} -> [%d], [%d], [%d], [%d]", color.red, color.green, color.blue, colorParam, bri, _transitionEffect, _transitionDuration );
 		QJsonArray paramlist;
-		paramlist << API_PARAM_CLASS_COLOR << colorParam << brightnessParam << _transitionEffectParam << _transitionDuration;
+		paramlist << API_PARAM_CLASS_COLOR << colorParam << bri << _transitionEffectParam << duration;
 
 		bool writeOK;
 		if ( _isInMusicMode )
@@ -576,7 +600,7 @@ bool YeelightLight::setColorHSV(ColorRgb colorRGB)
 		int hue;
 		int sat;
 		int bri;
-		int duration;
+		int duration = _transitionDuration;
 
 		color.getHsv( &hue, &sat, &bri);
 
@@ -587,19 +611,25 @@ bool YeelightLight::setColorHSV(ColorRgb colorRGB)
 
 		if ( bri < _brightnessMin )
 		{
-			log ( 2, "Set Color HSV:", "Turn off, brigthness [%d] < _brightnessMin [%d]", bri, _brightnessMin );
-			// Set brightness to 0
-			bri = 0;
-			duration = _transitionDuration + _extraTimeDarkness;
+			if ( _isBrightnessSwitchOffMinimum )
+			{
+				log ( 2, "Set Color HSV:", "Turn off, brigthness [%d] < _brightnessMin [%d], _isBrightnessSwitchOffMinimum [%d]", bri, _brightnessMin, _isBrightnessSwitchOffMinimum );
+				// Set brightness to 0
+				bri = 0;
+				duration = _transitionDuration + _extraTimeDarkness;
+			}
+			else
+			{
+				//If not switchOff on MinimumBrightness, avoid switch-off
+				log ( 2, "Set Color HSV:", "Set brightness[%d] to minimum brigthness [%d], if not _isBrightnessSwitchOffMinimum [%d]", bri, _brightnessMin, _isBrightnessSwitchOffMinimum );
+				bri = _brightnessMin;
+			}
 		}
 		else
 		{
 			bri = ( qMin( _brightnessMax, (int) (_brightnessFactor * qMax( _brightnessMin, bri ) ) ) );
-			duration = _transitionDuration;
 		}
-
 		log ( 2, "Set Color HSV:", "{%u,%u,%u}, [%d], [%d]", hue, sat, bri, _transitionEffect, duration );
-
 		QJsonArray paramlist;
 		paramlist << API_PARAM_CLASS_HSV << hue << sat << bri << _transitionEffectParam << duration;
 
@@ -652,12 +682,13 @@ void YeelightLight::setTransitionEffect ( API_EFFECT effect ,int duration )
 
 }
 
-void YeelightLight::setBrightnessConfig (double factor, int min, int max, int threshold)
+void YeelightLight::setBrightnessConfig (int min, int max, bool switchoff,  int extraTime, double factor )
 {
-	_brightnessFactor = factor;
 	_brightnessMin = min;
+	_isBrightnessSwitchOffMinimum = switchoff;
 	_brightnessMax = max;
-	_extraTimeDarkness = threshold;
+	_brightnessFactor = factor;
+	_extraTimeDarkness = extraTime;
 }
 
 bool YeelightLight::setMusicMode(bool on, QHostAddress ipAddress, quint16 port)
@@ -708,10 +739,11 @@ LedDeviceYeelight::LedDeviceYeelight(const QJsonObject &deviceConfig)
 	  ,_outputColorModel(0)
 	  ,_transitionEffect(API_EFFECT_SMOOTH)
 	  ,_transitionDuration(API_PARAM_DURATION)
-	  ,_brightnessFactor(1.0)
-	  ,_brightnessMin(0)
-	  ,_brightnessMax(100)
 	  ,_extraTimeDarkness(0)
+	  ,_brightnessMin(0)
+	  ,_isBrightnessSwitchOffMinimum(false)
+	  ,_brightnessMax(100)
+	  ,_brightnessFactor(1.0)
 	  ,_debuglevel(0)
 	  ,_musicModeServerPort(0)
 {
@@ -765,16 +797,19 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 		_transitionEffect = static_cast<API_EFFECT>( deviceConfig[ CONFIG_TRANS_EFFECT ].toInt() );
 
 	_transitionDuration = deviceConfig[ CONFIG_TRANS_TIME ].toInt(API_PARAM_DURATION);
+	_extraTimeDarkness	= _devConfig[CONFIG_EXTRA_TIME_DARKNESS].toInt(0);
+
+	_brightnessMin		= _devConfig[CONFIG_BRIGHTNESS_MIN].toInt(0);
+	_isBrightnessSwitchOffMinimum = _devConfig[CONFIG_BRIGHTNESS_SWITCHOFF].toBool(false);
+	_brightnessMax		= _devConfig[CONFIG_BRIGHTNESS_MAX].toInt(100);
+	_brightnessFactor	= _devConfig[CONFIG_BRIGHTNESSFACTOR].toDouble(1.0);
+
 
 	if (  deviceConfig[ CONFIG_DEBUGLEVEL ].isString() )
 		_debuglevel = deviceConfig[ CONFIG_DEBUGLEVEL ].toString().toInt();
 	else
 		_debuglevel = deviceConfig[ CONFIG_DEBUGLEVEL ].toInt(0);
 
-	_brightnessFactor	= _devConfig[CONFIG_BRIGHTNESSFACTOR].toDouble(1.0);
-	_brightnessMin		= _devConfig[CONFIG_BRIGHTNESS_MIN].toInt(0);
-	_brightnessMax		= _devConfig[CONFIG_BRIGHTNESS_MAX].toInt(100);
-	_extraTimeDarkness	= _devConfig[CONFIG_EXTRA_TIME_DARKNESS].toInt(0);
 
 	QString outputColorModel = _outputColorModel == 1 ? "RGB": "HSV";
 	QString transitionEffect = _transitionEffect == API_EFFECT_SMOOTH ? API_PARAM_EFFECT_SMOOTH : API_PARAM_EFFECT_SUDDEN;
@@ -782,9 +817,10 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 	Debug(_log, "colorModel        : %s", QSTRING_CSTR(outputColorModel));
 	Debug(_log, "Transitioneffect  : %s", QSTRING_CSTR(transitionEffect));
 	Debug(_log, "Transitionduration: %d", _transitionDuration);
-
 	Debug(_log, "Extra time darkn. : %d", _extraTimeDarkness );
+
 	Debug(_log, "Brightn. Min      : %d", _brightnessMin );
+	Debug(_log, "Brightn. Min Off  : %d", _isBrightnessSwitchOffMinimum );
 	Debug(_log, "Brightn. Max      : %d", _brightnessMax );
 	Debug(_log, "Brightn. Factor   : %.2f", _brightnessFactor );
 
@@ -915,7 +951,7 @@ int LedDeviceYeelight::open()
 				for (YeelightLight& light : _lights)
 				{
 					light.setTransitionEffect( _transitionEffect, _transitionDuration );
-					light.setBrightnessConfig( _brightnessFactor, _brightnessMin, _brightnessMax, _extraTimeDarkness );
+					light.setBrightnessConfig( _brightnessMin, _brightnessMax, _isBrightnessSwitchOffMinimum, _extraTimeDarkness, _brightnessFactor );
 					light.setDebuglevel(_debuglevel);
 
 					light.open();
