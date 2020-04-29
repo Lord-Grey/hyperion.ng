@@ -223,6 +223,16 @@ protected:
 
 private:
 
+	struct yeelightAddress {
+		QString host;
+		quint16 port;
+
+		bool operator == (yeelightAddress const& a) const
+		{
+			return ((host == a.host) && (port == a.port));
+		}
+	};
+
 	///
 	/// Discover device via SSDP identifiers
 	///
@@ -232,7 +242,7 @@ private:
 
 	bool openMusicModeServer();
 
-	void updateLights(QMap<QString,quint16> map);
+	void updateLights(QVector<yeelightAddress>& list);
 
 	void setLightsCount( unsigned int lightsCount )	{ _lightsCount = lightsCount; }
 	uint getLightsCount() { return _lightsCount; }
@@ -247,7 +257,7 @@ private:
 	QString getCommand(const QString &method, const QString &params);
 
 	/// Array of the Yeelight addresses.
-	QMap<QString,quint16> _lightsAddressMap;
+	QVector<yeelightAddress> _lightsAddressList;
 
 	/// Array to save the lamps.
 	std::vector<YeelightLight> _lights;

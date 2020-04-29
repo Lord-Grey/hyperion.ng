@@ -560,7 +560,7 @@ bool YeelightLight::setColorRGB(ColorRgb color)
 		}
 		else
 		{
-			bri = ( qMin( _brightnessMax, (int) (_brightnessFactor * qMax( _brightnessMin, bri ) ) ) );
+			bri = ( qMin( _brightnessMax, static_cast<int> (_brightnessFactor * qMax( _brightnessMin, bri ) ) ) );
 		}
 
 		log ( 3, "Set Color RGB:", "{%u,%u,%u} -> [%d], [%d], [%d], [%d]", color.red, color.green, color.blue, colorParam, bri, _transitionEffect, _transitionDuration );
@@ -627,7 +627,7 @@ bool YeelightLight::setColorHSV(ColorRgb colorRGB)
 		}
 		else
 		{
-			bri = ( qMin( _brightnessMax, (int) (_brightnessFactor * qMax( _brightnessMin, bri ) ) ) );
+			bri = ( qMin( _brightnessMax, static_cast<int> (_brightnessFactor * qMax( _brightnessMin, bri ) ) ) );
 		}
 		log ( 2, "Set Color HSV:", "{%u,%u,%u}, [%d], [%d]", hue, sat, bri, _transitionEffect, duration );
 		QJsonArray paramlist;
@@ -882,11 +882,10 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 				apiPort   = API_DEFAULT_PORT;
 			}
 
-			_lightsAddressMap.insert( hostAddress, apiPort );
+			_lightsAddressList.append( {hostAddress, apiPort} );
 		}
 
-
-		updateLights (_lightsAddressMap );
+		updateLights (_lightsAddressList );
 
 	}
 	return isInitOK;
@@ -1024,7 +1023,7 @@ bool LedDeviceYeelight::discoverDevice()
 	}
 	else
 	{
-		_lightsAddressMap.clear();
+		_lightsAddressList.clear();
 
 		// Yeelight found
 		Info(_log, "Yeelight discovered at [%s]", QSTRING_CSTR( address ));
@@ -1043,8 +1042,8 @@ bool LedDeviceYeelight::discoverDevice()
 			apiPort   = API_DEFAULT_PORT;
 		}
 
-		_lightsAddressMap.insert( hostAddress, apiPort );
-		_ledCount = static_cast<uint>( _lightsAddressMap.size() );
+		_lightsAddressList.append( {hostAddress, apiPort} );
+		_ledCount = static_cast<uint>( _lightsAddressList.size() );
 
 		if (getLedCount() == 0 )
 		{
@@ -1060,26 +1059,29 @@ bool LedDeviceYeelight::discoverDevice()
 	return isDeviceFound;
 }
 
-void LedDeviceYeelight::updateLights(QMap<QString,quint16> map)
+void LedDeviceYeelight::updateLights(QVector<yeelightAddress>& list)
 {
-	if(!_lightsAddressMap.empty())
+	if(!_lightsAddressList.empty())
 	{
 		// search user lightid inside map and create light if found
 		_lights.clear();
 
-		_lights.reserve( static_cast<ulong>( _lightsAddressMap.size() ));
+		_lights.reserve( static_cast<ulong>( _lightsAddressList.size() ));
 
-		for(auto address : _lightsAddressMap.keys() )
+		for(auto yeelightAddress : _lightsAddressList )
 		{
+			QString host = yeelightAddress.host;
 
-			if (map.contains(address))
+			if ( list.contains(yeelightAddress) )
 			{
-				Debug(_log,"Add Yeelight %s:%u", QSTRING_CSTR(address), map.value(address) );
-				_lights.emplace_back( _log, address, map.value(address) );
+				quint16 port = yeelightAddress.port;
+
+				Debug(_log,"Add Yeelight %s:%u", QSTRING_CSTR(host), port );
+				_lights.emplace_back( _log, host, port );
 			}
 			else
 			{
-				Warning(_log,"Configured light-address %s is not available", QSTRING_CSTR(address) );
+				Warning(_log,"Configured light-address %s is not available", QSTRING_CSTR(host) );
 			}
 		}
 		setLightsCount ( static_cast<uint>( _lights.size() ));
