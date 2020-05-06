@@ -3,24 +3,31 @@
 // qt inc
 #include <QUdpSocket>
 #include <QUrl>
+#include <QRegularExpression>
+#include <QJsonObject>
 
 #include <iostream>
 
 // as per upnp spec 1.1, section 1.2.2.
-// TODO: Make IP and port below another #define and replace message below
 static const QString UPNP_DISCOVER_MESSAGE = "M-SEARCH * HTTP/1.1\r\n"
 										  "HOST: %1:%2\r\n"
                                           "MAN: \"ssdp:discover\"\r\n"
-										  "MX: 1\r\n"
-										  "ST: %3\r\n"
+										  "MX: %3\r\n"
+										  "ST: %4\r\n"
                                           "\r\n";
 
 SSDPDiscover::SSDPDiscover(QObject* parent)
 	: QObject(parent)
-	, _log(Logger::getInstance("SSDPDISCOVER"))
-	, _udpSocket(new QUdpSocket(this))
-	, _ssdpAddr("239.255.255.250")
-	, _ssdpPort(1900)
+	  , _log(Logger::getInstance("SSDPDISCOVER"))
+	  , _udpSocket(new QUdpSocket(this))
+	  , _ssdpAddr(DEFAULT_SEARCH_ADDRESS)
+	  , _ssdpPort(DEFAULT_SEARCH_PORT)
+	  , _ssdpMaxWaitResponseTime(1)
+	  , _ssdpTimeout(DEFAULT_SSDP_TIMEOUT)
+	  ,_filter(DEFAULT_FILTER)
+	  ,_filterHeader(DEFAULT_FILTER_HEADER)
+	  ,_regExFilter(_filter)
+	  ,_skipDupKeys(false)
 {
 
 }
@@ -181,12 +188,130 @@ void SSDPDiscover::readPendingDatagrams()
 	}
 }
 
+
+const QMap<QString, SSDPService> SSDPDiscover::getServices(const QString& searchTarget, const QString& key)
+{
+	_searchTarget = searchTarget;
+
+	Debug(_log, "Search for Service [%s], address [%s], port [%d]", QSTRING_CSTR(_searchTarget), QSTRING_CSTR(_ssdpAddr.toString()), _ssdpPort);
+
+	_services.clear();
+
+	// search
+	sendSearch(_searchTarget);
+
+	if ( _udpSocket->waitForReadyRead( 	_ssdpTimeout ) )
+	{
+		while (_udpSocket->waitForReadyRead(500))
+		{
+			QByteArray datagram;
+			while (_udpSocket->hasPendingDatagrams())
+			{
+
+				datagram.resize(_udpSocket->pendingDatagramSize());
+				QHostAddress sender;
+				quint16 senderPort;
+
+				_udpSocket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+
+				QString data(datagram);
+
+				//Debug(_log, "_data: [%s]", QSTRING_CSTR(data));
+
+				QMap<QString,QString> headers;
+				// parse request
+				QStringList entries = data.split("\n", QString::SkipEmptyParts);
+				for(auto entry : entries)
+				{
+					// http header parse skip
+					if(entry.contains("HTTP/1.1"))
+						continue;
+
+					// split into key:vale, be aware that value field may contain also a ":"
+					entry = entry.simplified();
+					int pos = entry.indexOf(":");
+					if(pos == -1)
+						continue;
+
+					headers[entry.left(pos).trimmed().toUpper()] = entry.mid(pos+1).trimmed();
+				}
+
+				QRegularExpressionMatch match = _regExFilter.match(headers[_filterHeader]);
+				if ( match.hasMatch() )
+				{
+					Debug(_log,"Found target [%s], plus record [%s] matches [%s:%s]", QSTRING_CSTR(_searchTarget), QSTRING_CSTR(headers[_filterHeader]), QSTRING_CSTR(_filterHeader), QSTRING_CSTR(_filter) );
+					Debug(_log, "_data: [%s]", QSTRING_CSTR(data));
+
+					QString mapKey = headers[key];
+
+					SSDPService service;
+					service.cacheControl = headers["CACHE-CONTROL"];
+					service.location = QUrl (headers["LOCATION"]);
+					service.server = headers["SERVER"];
+					service.searchTarget = headers["ST"];
+					service.uniqueServiceName = headers["USN"];
+
+					headers.remove("CACHE-CONTROL");
+					headers.remove("LOCATION");
+					headers.remove("SERVER");
+					headers.remove("ST");
+					headers.remove("USN");
+
+					service.otherHeaaders = headers;
+
+					if ( _skipDupKeys )
+					{
+						_services.insert(mapKey, service);
+					}
+					else
+					{
+						_services.insertMulti(mapKey, service);
+					}
+				}
+			}
+		}
+	}
+	_udpSocket->close();
+
+	if ( _services.empty() )
+	{
+		Debug(_log,"Search target [%s], no record(s) matching [%s:%s]", QSTRING_CSTR(_searchTarget), QSTRING_CSTR(_filterHeader), QSTRING_CSTR(_filter) );
+	}
+	else
+	{
+		Debug(_log," [%d] service record(s) found", _services.size() );
+	}
+	return _services;
+}
+
+
 void SSDPDiscover::sendSearch(const QString& st)
 {
-	const QString msg = QString(UPNP_DISCOVER_MESSAGE).arg(_ssdpAddr.toString()).arg(_ssdpPort).arg(st);
+	const QString msg = QString(UPNP_DISCOVER_MESSAGE).arg(_ssdpAddr.toString()).arg(_ssdpPort).arg(_ssdpMaxWaitResponseTime).arg(st);
 
 	//std::cout << "Search request: " << msg.toStdString() << std::endl << std::flush;
 	Debug(_log,"Search request: [%s]", QSTRING_CSTR(msg));
 
 	_udpSocket->writeDatagram(msg.toUtf8(), _ssdpAddr, _ssdpPort);
+
+}
+
+bool SSDPDiscover::setSearchFilter ( const QString& filter, const QString& filterHeader)
+{
+	bool rc = true;
+	QRegularExpression regEx( filter );
+	if (!regEx.isValid()) {
+		QString errorString = regEx.errorString();
+		int errorOffset = regEx.patternErrorOffset();
+
+		Error(_log,"Filtering regular expression [%s] error [%d]:[%s]",  QSTRING_CSTR(filter), errorOffset, QSTRING_CSTR(errorString) );
+		rc = false;
+	}
+	else
+	{
+		_filter = filter;
+		_filterHeader=filterHeader.toUpper();
+		_regExFilter = regEx;
+	}
+	return rc;
 }
