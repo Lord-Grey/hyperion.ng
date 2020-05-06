@@ -1206,8 +1206,8 @@ function beginWizardYeelight()
 		var d = window.serverConfig.device;
 		d.type = 'yeelight';
 		d.hardwareLedCount = lights.length;
-		d.colorOrder = 'rgb';
-		d.colorModel = 0;
+		d.colorOrder = parseFloat(conf_editor.getEditor("root.generalOptions.colorOrder").getValue());;;
+		d.colorModel = parseFloat(conf_editor.getEditor("root.specificOptions.colorModel").getValue());;
 
 		d.transEffect = parseFloat(conf_editor.getEditor("root.specificOptions.transEffect").getValue());
 		d.transTime = parseFloat(conf_editor.getEditor("root.specificOptions.transTime").getValue());
