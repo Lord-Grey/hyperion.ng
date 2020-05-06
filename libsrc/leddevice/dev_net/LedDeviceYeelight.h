@@ -28,7 +28,6 @@ static const char API_METHOD_POWER[] = "set_power";
 static const char API_METHOD_POWER_ON[] = "on";
 static const char API_METHOD_POWER_OFF[] = "off";
 
-// List of State Information
 static const char API_METHOD_MUSIC_MODE[] = "set_music";
 static const int API_METHOD_MUSIC_MODE_ON = 1;
 static const int API_METHOD_MUSIC_MODE_OFF = 0;
@@ -39,6 +38,7 @@ static const char API_METHOD_GETPROP[] = "get_prop";
 
 static const char API_PARAM_EFFECT_SUDDEN[] = "sudden";
 static const char API_PARAM_EFFECT_SMOOTH[] = "smooth";
+
 static const int  API_PARAM_DURATION = 50;
 static const int  API_PARAM_DURATION_POWERONOFF = 1000;
 static const int  API_PARAM_EXTRA_TIME_DARKNESS = 200;
@@ -162,6 +162,9 @@ private:
 
 	/// Array of the Yeelight properties
 	QMap<QString,QString> _properties;
+
+	/// timestamp of last write
+	qint64	_lastWriteTime;
 };
 
 ///
@@ -241,6 +244,7 @@ private:
 	bool discoverDevice();
 
 	bool openMusicModeServer();
+	bool closeMusicModeServer();
 
 	void updateLights(QVector<yeelightAddress>& list);
 

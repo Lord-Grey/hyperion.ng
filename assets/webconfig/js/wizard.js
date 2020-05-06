@@ -1206,19 +1206,19 @@ function beginWizardYeelight()
 		var d = window.serverConfig.device;
 		d.type = 'yeelight';
 		d.hardwareLedCount = lights.length;
-		d.colorOrder = parseFloat(conf_editor.getEditor("root.generalOptions.colorOrder").getValue());;;
-		d.colorModel = parseFloat(conf_editor.getEditor("root.specificOptions.colorModel").getValue());;
+		d.colorOrder = parseInt(conf_editor.getEditor("root.generalOptions.colorOrder").getValue());;;
+		d.colorModel = parseInt(conf_editor.getEditor("root.specificOptions.colorModel").getValue());;
 
-		d.transEffect = parseFloat(conf_editor.getEditor("root.specificOptions.transEffect").getValue());
-		d.transTime = parseFloat(conf_editor.getEditor("root.specificOptions.transTime").getValue());
-		d.extraTimeDarkness = parseFloat(conf_editor.getEditor("root.specificOptions.extraTimeDarkness").getValue());
+		d.transEffect = parseInt(conf_editor.getEditor("root.specificOptions.transEffect").getValue());
+		d.transTime = parseInt(conf_editor.getEditor("root.specificOptions.transTime").getValue());
+		d.extraTimeDarkness = parseInt(conf_editor.getEditor("root.specificOptions.extraTimeDarkness").getValue());
 
-		d.brightnessMin = parseFloat(conf_editor.getEditor("root.specificOptions.brightnessMin").getValue());
-		d.brigthnessSwitchOffOnMinimum = parseFloat(conf_editor.getEditor("root.specificOptions.brigthnessSwitchOffOnMinimum").getValue());
-		d.brightnessMax = parseFloat(conf_editor.getEditor("root.specificOptions.brightnessMax").getValue());
+		d.brightnessMin = parseInt(conf_editor.getEditor("root.specificOptions.brightnessMin").getValue());
+		d.brigthnessSwitchOffOnMinimum = JSON.parse(conf_editor.getEditor("root.specificOptions.brigthnessSwitchOffOnMinimum").getValue());
+		d.brightnessMax = parseInt(conf_editor.getEditor("root.specificOptions.brightnessMax").getValue());
 		d.brightnessFactor = parseFloat(conf_editor.getEditor("root.specificOptions.brightnessFactor").getValue());
 
-		d.latchTime = parseFloat(conf_editor.getEditor("root.specificOptions.latchTime").getValue());;
+		d.latchTime = parseInt(conf_editor.getEditor("root.specificOptions.latchTime").getValue());;
 		d.rewriteTime = 0;
 		d.debugLevel = parseInt(conf_editor.getEditor("root.specificOptions.debugLevel").getValue());
 

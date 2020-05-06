@@ -9,6 +9,9 @@
 #include <QtNetwork>
 #include <QTcpServer>
 #include <QColor>
+#include <QDateTime>
+
+#include <unistd.h>
 
 static const bool verbose  = false;
 
@@ -34,6 +37,7 @@ static const char CONFIG_BRIGHTNESSFACTOR[] = "brightnessFactor";
 
 // Yeelights API
 static const quint16 API_DEFAULT_PORT = 55443;
+static const quint16 API_QUOTA_TIME = 1000;
 
 // Yeelight API Command
 static const char API_COMMAND_ID[] = "id";
@@ -67,7 +71,6 @@ static const char API_ERROR_MESSAGE[] = "message";
 // Yeelight Hue ssdp services
 static const char SSDP_ID[] = "wifi_bulb";
 const int SSDP_PORT = 1982; // timout in ms
-const int SSDP_TIMEOUT = 5000; // timout in ms
 
 YeelightLight::YeelightLight( Logger *log, const QString &hostname, unsigned short port = API_DEFAULT_PORT)
 	:_log(log)
@@ -89,6 +92,7 @@ YeelightLight::YeelightLight( Logger *log, const QString &hostname, unsigned sho
 	  ,_transitionEffectParam(API_PARAM_EFFECT_SMOOTH)
 	  ,_isOn(false)
 	  ,_isInMusicMode(false)
+	  ,_lastWriteTime(QDateTime::currentMSecsSinceEpoch())
 {
 	_name = hostname;
 
@@ -125,25 +129,34 @@ bool YeelightLight::open()
 		_tcpSocket = new QTcpSocket();
 	}
 
-	_tcpSocket->connectToHost( _host, _port);
 
-	if ( _tcpSocket->waitForConnected( CONNECT_TIMEOUT ) )
+	if (  _tcpSocket->state() == QAbstractSocket::ConnectedState )
 	{
-		if ( _tcpSocket->state() != QAbstractSocket::ConnectedState )
-		{
-			this->setInError ( "Not connected!" );
-			rc = false;
-		}
-		else
-		{
-			log (3,"open()","Connected: %s", QSTRING_CSTR(_host));
-			rc = true;
-		}
+		log (3,"open()","Device is already connected, skip opening: [%d]", _tcpSocket->state());
+		rc = true;
 	}
 	else
 	{
-		this->setInError ( "Connection timeout!" );
-		rc = false;
+		_tcpSocket->connectToHost( _host, _port);
+
+		if ( _tcpSocket->waitForConnected( CONNECT_TIMEOUT ) )
+		{
+			if ( _tcpSocket->state() != QAbstractSocket::ConnectedState )
+			{
+				this->setInError ( "Not connected!" );
+				rc = false;
+			}
+			else
+			{
+				log (3,"open()","Connected: %s", QSTRING_CSTR(_host));
+				rc = true;
+			}
+		}
+		else
+		{
+			this->setInError ( "Connection timeout!" );
+			rc = false;
+		}
 	}
 	log (2,"open() rc","%d", rc );
 	return rc;
@@ -200,6 +213,18 @@ bool YeelightLight::writeCommand( const QJsonDocument &command, QJsonArray &resu
 			else
 			{
 				log ( 3, "Success:", "Bytes written   [%d]", bytesWritten );
+
+				// Avoid to overrun the Yeelight Command Quota
+				qint64 elapsedTime = QDateTime::currentMSecsSinceEpoch() - _lastWriteTime;
+
+				if ( elapsedTime < API_QUOTA_TIME )
+				{
+					int waitTime = API_QUOTA_TIME;
+					log ( 1, "writeCommand():", "Wait %dms, elapsedTime: %dms < quotaTime: %dms", waitTime, elapsedTime, API_QUOTA_TIME);
+
+					// Wait time (in ms) before doing next write to not overrun Yeelight command quota
+					usleep (waitTime * 1000);
+				}
 			}
 
 			if ( _tcpSocket->waitForReadyRead(READ_TIMEOUT) )
@@ -222,6 +247,7 @@ bool YeelightLight::writeCommand( const QJsonDocument &command, QJsonArray &resu
 
 		if ( ! _isInError )
 		{
+			_lastWriteTime = QDateTime::currentMSecsSinceEpoch();
 			rc = true;
 		}
 	}
@@ -256,9 +282,20 @@ bool YeelightLight::streamCommand( const QJsonDocument &command )
 		{
 			if ( ! _tcpStreamSocket->waitForBytesWritten(WRITE_TIMEOUT) )
 			{
-				QString errorReason = QString ("(%1) %2").arg(_tcpStreamSocket->error()).arg( _tcpStreamSocket->errorString());
+				int error = _tcpStreamSocket->error();
+				QString errorReason = QString ("(%1) %2").arg(error).arg( _tcpStreamSocket->errorString());
 				log ( 2, "Error:", "bytesWritten: [%d], %s", bytesWritten, QSTRING_CSTR(errorReason));
-				this->setInError ( errorReason );
+
+				if ( error == QAbstractSocket::RemoteHostClosedError )
+				{
+					log (1,"streamCommand()","RemoteHostClosedError -  Give it a retry");
+					_isInMusicMode = false;
+					rc = true;
+				}
+				else
+				{
+						this->setInError ( errorReason );
+				}
 			}
 			else
 			{
@@ -368,6 +405,8 @@ QJsonArray YeelightLight::handleResponse(int correlationID, QByteArray const &re
 						errorReason = QString ("(%1) %2").arg(errorCode).arg( errorMessage);
 						if ( errorCode != -1)
 							this->setInError ( errorReason );
+						else
+							Error(_log, "%s", QSTRING_CSTR(errorReason) );
 					}
 					else
 					{
@@ -843,7 +882,7 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 	if ( isInitOK )
 	{
 		//isInitOK =
-		discoverDevice();
+		//discoverDevice();
 	}
 
 	// Check. if enough yeelights were found.
@@ -864,6 +903,7 @@ bool LedDeviceYeelight::init(const QJsonObject &deviceConfig)
 			Warning(_log, "More Yeelights defined [%u] than configured LEDs [%u].", configuredYeelightsCount, configuredLedCount );
 		}
 
+		_lightsAddressList.clear();
 		for (int i = 0; i < static_cast<int>( configuredLedCount ); ++i)
 		{
 			QString address = configuredYeelightLights[i].toObject().value("ip").toString();
@@ -901,32 +941,50 @@ bool LedDeviceYeelight::openMusicModeServer()
 		_tcpMusicModeServer = new QTcpServer(this);
 	}
 
-	if (! _tcpMusicModeServer->listen())
+	if ( ! _tcpMusicModeServer->isListening() )
 	{
-		Error( _log, "Failed to open music mode server");
-	}
-	else
-	{
-		QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
-		// use the first non-localhost IPv4 address
-		for (int i = 0; i < ipAddressesList.size(); ++i) {
-			if (ipAddressesList.at(i) != QHostAddress::LocalHost &&
-				 ipAddressesList.at(i).toIPv4Address())
-			{
-				_musicModeServerAddress = ipAddressesList.at(i);
-				break;
-			}
-		}
-		if ( _musicModeServerAddress.isNull() )
+		if (! _tcpMusicModeServer->listen())
 		{
-			Error( _log, "Failed to resolve IP for music mode server");
+			Error( _log, "Failed to open music mode server");
 		}
 		else
 		{
-			_musicModeServerPort = _tcpMusicModeServer->serverPort();
-			Debug (_log, "The music mode server is running at %s:%u", QSTRING_CSTR(_musicModeServerAddress.toString()), _musicModeServerPort);
-			rc = true;
+			QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
+			// use the first non-localhost IPv4 address
+			for (int i = 0; i < ipAddressesList.size(); ++i) {
+				if (ipAddressesList.at(i) != QHostAddress::LocalHost &&
+					 ipAddressesList.at(i).toIPv4Address())
+				{
+					_musicModeServerAddress = ipAddressesList.at(i);
+					break;
+				}
+			}
+			if ( _musicModeServerAddress.isNull() )
+			{
+				Error( _log, "Failed to resolve IP for music mode server");
+			}
 		}
+	}
+
+	if ( _tcpMusicModeServer->isListening() )
+	{
+		_musicModeServerPort = _tcpMusicModeServer->serverPort();
+		Debug (_log, "The music mode server is running at %s:%u", QSTRING_CSTR(_musicModeServerAddress.toString()), _musicModeServerPort);
+		rc = true;
+	}
+	DebugIf(verbose, _log, "rc [%d], enabled [%d], _deviceReady [%d]", rc, this->enabled(), _deviceReady);
+	return rc;
+}
+
+bool LedDeviceYeelight::closeMusicModeServer()
+{
+	DebugIf(verbose, _log, "enabled [%d], _deviceReady [%d]", this->enabled(), _deviceReady);
+
+	bool rc = false;
+	if ( _tcpMusicModeServer != nullptr )
+	{
+		_tcpMusicModeServer->close();
+		rc = true;
 	}
 	DebugIf(verbose, _log, "rc [%d], enabled [%d], _deviceReady [%d]", rc, this->enabled(), _deviceReady);
 	return rc;
@@ -945,6 +1003,7 @@ int LedDeviceYeelight::open()
 		// Open/Start LedDevice based on configuration
 		if ( !_lights.empty() )
 		{
+			int lightsInError = 0;
 			if ( openMusicModeServer() )
 			{
 				for (YeelightLight& light : _lights)
@@ -957,15 +1016,14 @@ int LedDeviceYeelight::open()
 					if ( light.isReady())
 					{
 						light.getProperties();
-
 					}
 					else
 					{
 						Error( _log, "Failed to open [%s]", QSTRING_CSTR(light.getName()) );
-						//_lights.removeOne(light);
+						++lightsInError;
 					}
 				}
-				if ( ! _lights.empty() )
+				if ( lightsInError < static_cast<int>(_lights.size()) )
 				{
 					// Everything is OK -> enable device
 					_deviceReady = true;
@@ -1001,6 +1059,7 @@ void LedDeviceYeelight::close()
 		{
 			light.close();
 		}
+		closeMusicModeServer();
 	}
 	DebugIf(verbose, _log, "rc [void], enabled [%d], _deviceReady [%d]", this->enabled(), _deviceReady);
 }
@@ -1011,56 +1070,115 @@ bool LedDeviceYeelight::discoverDevice()
 
 	// device searching by ssdp
 	QString address;
+
+	//	Debug(_log, "Discover ALL");
+	////	discover.clearSearchFilter();
+	////	services = discover.getServices();
+
+	//	Debug(_log, "Discover Nanoleaf");
+	//	discover.clearSearchFilter();
+	//	services = discover.getServices("nanoleaf:nl29");
+
+	//	Debug(_log, "Discover Nanoleaf 2");
+	//	discover.clearSearchFilter();
+	//	discover.setSearchFilter("nanoleaf:nl29");
+	//	services = discover.getServices();
+
+	//	Debug(_log, "Discover X-User-Agent");
+	//	discover.clearSearchFilter();
+	//	discover.setSearchFilter("redsonic", "X-User-Agent");
+	//	services = discover.getServices();
+	//	//services = discover.getServices("ssdp:all", "server", "IpBridge", "location", SSDP_TIMEOUT);
+
+	//	//SERVER: OpenWRT/OpenWrt UPnP/1.1 MiniUPnPd/2.1.20190502
+	////	services = discover.getServices("ssdp:all","server", "(*)/(*)/MiniUPnPd/(*)", "location", SSDP_TIMEOUT);
+
+//		Debug(_log, "Discover Hue");
+//		discover.clearSearchFilter();
+//		discover.setSearchFilter("(.*)IpBridge(.*)", "SERVER");
+//		services = discover.getServices("upnp:rootdevice");
+
+
+	Debug(_log, "Discover Yeelights");
+
+	//discover.clearSearchFilter();
+	QMap<QString, SSDPService> services;
+
+	// Discover Yeelight Devices
 	SSDPDiscover discover;
-
-	// Discover first Yeelight Device
 	discover.setPort(SSDP_PORT);
-	address = discover.getFirstService(STY_WEBSERVER, SSDP_ID, SSDP_TIMEOUT);
+	discover.skipDuplicateKeys(true);
 
-	if ( address.isEmpty() )
+	if ( discover.setSearchFilter("yeelight(.*)", "LOCATION") )
 	{
-		Warning(_log, "No Yeelight discovered");
+		services = discover.getServices(SSDP_ID);
+	}
+
+	if ( !services.empty() )
+	{
+
+		//_lightsAddressList.clear();
+
+		QMap<QString, SSDPService>::iterator i;
+		for (i = services.begin(); i != services.end(); ++i)
+		{
+			// Yeelight found
+			Info(_log, "Yeelight discovered at [%s]", QSTRING_CSTR( i.key() ));
+
+			QUrl url (i.value().location);
+			QString hostAddress = url.host();
+			quint16 apiPort = url.port();
+
+			QHostInfo info = QHostInfo::fromName(hostAddress);
+			if (info.error() == QHostInfo::NoError )
+			{
+				Debug(_log, "Host [%s:%d]", QSTRING_CSTR(info.hostName()), apiPort );
+			}
+
+			//_lightsAddressList.append( {hostAddress, apiPort} );
+
+		}
+		//_lightsAddressList.append( {"192.168.2.171", API_DEFAULT_PORT} );
+
+
+		//	if ( address.isEmpty() )
+		//	{
+		//		Warning(_log, "No Yeelight discovered");
+		//	}
+		//	else
+		//	{
+
+
+		//		QStringList addressparts = address.split(":", QString::SkipEmptyParts);
+
+		//		QString hostAddress = addressparts[0];
+		//		quint16 apiPort;
+
+		//		if ( addressparts.size() > 1)
+		//		{
+		//			apiPort = addressparts[1].toUShort();
+		//		}
+		//		else
+		//		{
+		//			apiPort   = API_DEFAULT_PORT;
+		//		}
+
+		//_ledCount = static_cast<uint>( _lightsAddressList.size() );
+
+		Debug(_log, "Yeelights found      : %u", services.size() );
+		isDeviceFound = true;
 	}
 	else
 	{
-		_lightsAddressList.clear();
-
-		// Yeelight found
-		Info(_log, "Yeelight discovered at [%s]", QSTRING_CSTR( address ));
-
-		QStringList addressparts = address.split(":", QString::SkipEmptyParts);
-
-		QString hostAddress = addressparts[0];
-		quint16 apiPort;
-
-		if ( addressparts.size() > 1)
-		{
-			apiPort = addressparts[1].toUShort();
-		}
-		else
-		{
-			apiPort   = API_DEFAULT_PORT;
-		}
-
-		_lightsAddressList.append( {hostAddress, apiPort} );
-		_ledCount = static_cast<uint>( _lightsAddressList.size() );
-
-		if (getLedCount() == 0 )
-		{
-			setInError("No Yeelights found!");
-		}
-		else
-		{
-			Debug(_log, "Yeelights found      : %u", getLedCount() );
-		}
-
-		isDeviceFound = true;
+		setInError("No Yeelights found!");
 	}
+
 	return isDeviceFound;
 }
 
 void LedDeviceYeelight::updateLights(QVector<yeelightAddress>& list)
 {
+	DebugIf(verbose, _log, "enabled [%d], _deviceReady [%d]", this->enabled(), _deviceReady);
 	if(!_lightsAddressList.empty())
 	{
 		// search user lightid inside map and create light if found
@@ -1095,6 +1213,7 @@ int LedDeviceYeelight::write(const std::vector<ColorRgb> & ledValues)
 
 	//Update on all Yeelights by iterating through lights and set colors.
 	unsigned int idx = 0;
+	int lightsInError = 0;
 	for (YeelightLight& light : _lights)
 	{
 		// Get color
@@ -1114,7 +1233,8 @@ int LedDeviceYeelight::write(const std::vector<ColorRgb> & ledValues)
 				}
 				else
 				{
-					light.setInError("Failed to get stream socket");
+					Warning(_log, "Failed to get stream socket [%s]", QSTRING_CSTR(light.getName()) );
+					//light.setInError("Failed to get stream socket");
 				}
 			}
 			if ( _outputColorModel == 1 )
@@ -1126,9 +1246,22 @@ int LedDeviceYeelight::write(const std::vector<ColorRgb> & ledValues)
 				light.setColorHSV( color );
 			}
 		}
+		else
+		{
+			++lightsInError;
+		}
 		++idx;
 	}
-	rc = 0;
+
+	if ( ! (lightsInError < static_cast<int>(_lights.size())) )
+	{
+		this->setInError( "All Yeelights in error - stopping device!" );
+	}
+	else
+	{
+		// Minimum one Yeelight device is working, continue updating devices
+		rc = 0;
+	}
 
 	DebugIf(verbose, _log, "rc [%d]", rc );
 
@@ -1144,8 +1277,17 @@ int LedDeviceYeelight::switchOn()
 		for (YeelightLight& light : _lights)
 		{
 			light.setTransitionEffect (_transitionEffect, _transitionDuration);
+
+
+			if ( !light.isReady() )
+			{
+				Debug (_log, "Light is not ready, try opening again");
+				light.open();
+			}
+
 			// TODO: Remove code, if switch-On/Off will move to open/close logic
-			if ( !light.isInMusicMode() )
+			// TODO: Check, if isReady Test can be replaced by deleting non working devices from list
+			if ( light.isReady() && !light.isInMusicMode() )
 			{
 				//light.setPower(true, API_EFFECT_SMOOTH, 5000);
 
@@ -1175,7 +1317,7 @@ int LedDeviceYeelight::switchOff()
 
 	if ( _deviceReady)
 	{
-		//Switch on all Yeelights
+		//Switch off all Yeelights
 		for (YeelightLight& light : _lights)
 		{
 			light.setTransitionEffect (_transitionEffect, API_PARAM_DURATION_POWERONOFF);
