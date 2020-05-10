@@ -19,7 +19,7 @@ struct SSDPService {
 	QString server;
 	QString searchTarget;
 	QString uniqueServiceName;
-	QMap <QString,QString> otherHeaaders;
+	QMap <QString,QString> otherHeaders;
 };
 
 static const char	DEFAULT_SEARCH_ADDRESS[] = "239.255.255.250";
@@ -55,8 +55,9 @@ public:
 	///
 	const QString getFirstService(const searchType& type = STY_WEBSERVER,const QString& st = "urn:hyperion-project.org:device:basic:1", const int& timeout_ms = 3000);
 
-	const QMap<QString, SSDPService> getServices(const QString& searchTarget="ssdp:all", const QString& key="LOCATION");
-
+	int discoverServices(const QString& searchTarget="ssdp:all", const QString& key="LOCATION");
+	const QMap<QString, SSDPService> getServicesDiscovered () { return _services; }
+	QJsonArray getServicesDiscoveredJson();
 
 	void setAddress ( const QString& address) { _ssdpAddr = address; }
 	void setPort ( quint16 port) { _ssdpPort = port; }

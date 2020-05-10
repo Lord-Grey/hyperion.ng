@@ -24,6 +24,7 @@
 #include <utils/ColorSys.h>
 #include <utils/Process.h>
 #include <utils/JsonUtils.h>
+#include <ssdp/SSDPDiscover.h>
 
 // bonjour wrapper
 #include <bonjour/bonjourbrowserwrapper.h>
@@ -188,8 +189,10 @@ proceed:
 		handleVideoModeCommand(message, command, tan);
 	else if (command == "instance")
 		handleInstanceCommand(message, command, tan);
+	else if (command == "ssdp")
+		handleSsdpCommand(message, command, tan);
 
-	// BEGIN | The following commands are derecated but used to ensure backward compatibility with hyperion Classic remote control
+	// BEGIN | The following commands are deprecated but used to ensure backward compatibility with hyperion Classic remote control
 	else if (command == "clearall")
 		handleClearallCommand(message, command, tan);
 	else if (command == "transform" || command == "correction" || command == "temperature")
@@ -1064,6 +1067,47 @@ void JsonAPI::handleVideoModeCommand(const QJsonObject &message, const QString &
 {
 	API::setVideoMode(parse3DMode(message["videoMode"].toString("2D")));
 	sendSuccessReply(command, tan);
+}
+
+void JsonAPI::handleSsdpCommand(const QJsonObject &message, const QString &command, const int tan)
+{
+	//Debug(_log, "message: [%s]", QString(QJsonDocument(message).toJson(QJsonDocument::Compact)).toUtf8().constData() );
+
+	int searchPort = message["searchPort"].toInt(-1);
+	QString searchTarget = message["searchTarget"].toString("");
+	bool skipDups = message["skipDups"].toBool(true);
+	QString filterHeader = message["filter"]["filterHeader"].toString("");
+	QString filterRegEx = message["filter"]["filterRegEx"].toString("");
+
+	//	Debug(_log, "searchPort    : %d", searchPort );
+	//	Debug(_log, "searchTarget  : %s", QSTRING_CSTR( searchTarget ));
+	//	Debug(_log, "skipDups      : %d", skipDups);
+	//	Debug(_log, "filterHeader  : %s", QSTRING_CSTR( filterHeader ));
+	//	Debug(_log, "filterRegEx   : %s", QSTRING_CSTR( filterRegEx ));
+
+	// Discover Devices
+	SSDPDiscover discover;
+
+	if ( searchPort != -1)
+	{
+		discover.setPort(searchPort);
+	}
+	discover.skipDuplicateKeys(skipDups);
+
+	if ( discover.setSearchFilter(filterRegEx, filterHeader) )
+	{
+		if ( discover.discoverServices(searchTarget) > 0 )
+		{
+			QJsonArray response = discover.getServicesDiscoveredJson();
+
+			//Debug(_log, "response: [%s]", QString(QJsonDocument(response).toJson(QJsonDocument::Compact)).toUtf8().constData() );
+			sendSuccessDataReply(QJsonDocument(response), command, tan);
+		}
+		else
+		{
+			sendErrorReply("No device discovered", command, tan);
+		}
+	}
 }
 
 void JsonAPI::handleAuthorizeCommand(const QJsonObject &message, const QString &command, const int tan)

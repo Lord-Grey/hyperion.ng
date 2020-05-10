@@ -1,0 +1,45 @@
+{
+	"type":"object",
+	"required":true,
+	"properties":{
+		"command": {
+			"type" : "string",
+			"required" : true,
+			"enum" : ["ssdp"]
+		},
+		"tan" : {
+			"type" : "integer"
+		},
+		"searchPort": {
+			"type": "integer",
+			"minimum" : 0,
+			"maximum" : 65535,
+			"required": false
+		},
+		"searchTarget" : {
+			"type" : "string",
+			"required" : true
+		},
+		"skipDups" : {
+			"type" : "boolean"
+		},
+		"filter": {
+			"type": "object",
+			"required": false,
+			"properties": {
+				"filterRegEx" : {
+					"type" : "string",
+					"required" : false
+				},
+				"filterHeader" : {
+					"type" : "string",
+					"minLength" : 2,
+					"required" : false
+				},
+				"additionalProperties": false
+			}
+		}
+	},
+	"additionalProperties": false
+}
+

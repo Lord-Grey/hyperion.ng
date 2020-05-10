@@ -396,3 +396,31 @@ function requestAdjustment(type, value, complete)
 	else
 		sendToHyperion("adjustment", "", '"adjustment": {"'+type+'": '+value+'}');
 }
+
+function requestSsdp(searchTarget, searchPort, skipDups, filterRegEx, filterHeader)
+{
+	var msg = "";
+
+	if (typeof searchTarget != 'undefined' && searchTarget.length > 0)
+		msg += '"searchTarget":"'+searchTarget+'"';
+	else
+		msg += '"searchTarget":"ssdp:all"';
+
+	if (typeof searchPort != 'undefined' && searchPort.length > 0)
+		msg += ',"searchPort":'+searchPort+'';
+
+	if (typeof skipDups != 'undefined')
+		msg += ',"skipDups":'+skipDups+'';
+
+	msg += ',"filter":{'
+
+	if (typeof filterRegEx != 'undefined' && filterRegEx.length > 0)
+		msg += '"filterRegEx":"'+filterRegEx+'",';
+
+	if (typeof filterHeader != 'undefined' && filterHeader.length > 0)
+		msg += '"filterHeader":"'+filterHeader+'"';
+
+	msg += '}'
+
+	sendToHyperion("ssdp", "", msg);
+}

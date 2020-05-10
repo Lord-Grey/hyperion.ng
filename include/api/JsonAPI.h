@@ -259,6 +259,12 @@ private:
 	///
 	void handleVideoModeCommand(const QJsonObject &message, const QString &command, const int tan);
 
+	/// Handle an incoming JSON ssdp message
+	///
+	/// @param message the incoming message
+	///
+	void handleSsdpCommand(const QJsonObject &message, const QString &command, const int tan);
+
 	/// Handle an incoming JSON plugin message
 	///
 	/// @param message the incoming message
