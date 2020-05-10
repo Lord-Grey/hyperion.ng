@@ -6,9 +6,9 @@
 			"type": "integer",
 			"title":"Output Type",
 			"enum" : [0, 1],
-			"default" : 0,
+			"default" : 1,
 			"options" : {
-				"enum_titles" : ["HSV", "edt_conf_enum_rgb"]
+				"enum_titles" : ["edt_conf_enum_hsv", "edt_conf_enum_rgb"]
 			},
 			"minimum" : 0,
 			"maximum" : 1,
@@ -31,7 +31,6 @@
 		"transTime": {
 			"type": "integer",
 			"title":"edt_dev_spec_transistionTime_title",
-			"desc" : "Transtime description",
 			"default": 40,
 			"append" : "ms",
 			"minimum": 30,
@@ -46,7 +45,7 @@
 		},
 		"extraTimeDarkness": {
 			"type": "integer",
-			"title":"ExtraTime Darkness",
+			"title":"edt_dev_spec_transistionTimeExtra_title",
 			"default" : 0,
 			"step": 10,
 			"minimum" : 0,
@@ -68,7 +67,7 @@
 		},
 		"brigthnessSwitchOffOnMinimum": {
 			"type": "boolean",
-			"title":"edt_dev_spec_switchOffOnbelowMinBrightness",
+			"title":"edt_dev_spec_switchOffOnbelowMinBrightness_title",
 			"default" : false,
 			"access" : "advanced",
 			"propertyOrder" : 6
@@ -106,11 +105,11 @@
 				"required" : true,
 				"properties" :
 				{
-					"ip" :
+					"host" :
 					{
 						"type" : "string",
 						"minimum" : 7,
-						"title" : "edt_dev_spec_targetIpHost_title",
+						"title" : "edt_dev_spec_targetHost_title",
 						"required" : true,
 						"propertyOrder" : 1
 					},

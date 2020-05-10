@@ -1138,38 +1138,38 @@ function abortConnection(UserInterval){
 var lights = null;
 function startWizardYeelight(e)
 {
-  //create html
+	//create html
 
-  var yeelight_title = 'wiz_yeelight_title';
-  var yeelight_intro1 = 'wiz_yeelight_intro1';
+	var yeelight_title = 'wiz_yeelight_title';
+	var yeelight_intro1 = 'wiz_yeelight_intro1';
 
-  $('#wiz_header').html('<i class="fa fa-magic fa-fw"></i>'+$.i18n(yeelight_title));
-  $('#wizp1_body').html('<h4 style="font-weight:bold;text-transform:uppercase;">'+$.i18n(yeelight_title)+'</h4><p>'+$.i18n(yeelight_intro1)+'</p>');
-  $('#wizp1_footer').html('<button type="button" class="btn btn-primary" id="btn_wiz_cont"><i class="fa fa-fw fa-check"></i>'+$.i18n('general_btn_continue')+'</button><button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>'+$.i18n('general_btn_cancel')+'</button>');
+	$('#wiz_header').html('<i class="fa fa-magic fa-fw"></i>'+$.i18n(yeelight_title));
+	$('#wizp1_body').html('<h4 style="font-weight:bold;text-transform:uppercase;">'+$.i18n(yeelight_title)+'</h4><p>'+$.i18n(yeelight_intro1)+'</p>');
+	$('#wizp1_footer').html('<button type="button" class="btn btn-primary" id="btn_wiz_cont"><i class="fa fa-fw fa-check"></i>'+$.i18n('general_btn_continue')+'</button><button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>'+$.i18n('general_btn_cancel')+'</button>');
 
-  $('#wizp2_body').html('<div id="wh_topcontainer"></div>');
+	$('#wizp2_body').html('<div id="wh_topcontainer"></div>');
 
-  $('#wh_topcontainer').append('<div class="form-group" id="usrcont" style="display:none"></div>');
+	$('#wh_topcontainer').append('<div class="form-group" id="usrcont" style="display:none"></div>');
 
-  $('#wizp2_body').append('<div id="hue_ids_t" style="display:none"><p style="font-weight:bold" id="hue_id_headline">'+$.i18n('wiz_yeelight_desc2')+'</p></div>');
+	$('#wizp2_body').append('<div id="hue_ids_t" style="display:none"><p style="font-weight:bold" id="hue_id_headline">'+$.i18n('wiz_yeelight_desc2')+'</p></div>');
 
-  createTable("lidsh", "lidsb", "hue_ids_t");
-  $('.lidsh').append(createTableRow([$.i18n('edt_dev_spec_lights_title'),$.i18n('wiz_hue_pos'),$.i18n('wiz_hue_ident')], true));
-  $('#wizp2_footer').html('<button type="button" class="btn btn-primary" id="btn_wiz_save" style="display:none"><i class="fa fa-fw fa-save"></i>'+$.i18n('general_btn_save')+'</button><button type="button" class="btn btn-danger" id="btn_wiz_abort"><i class="fa fa-fw fa-close"></i>'+$.i18n('general_btn_cancel')+'</button>');
+	createTable("lidsh", "lidsb", "hue_ids_t");
+	$('.lidsh').append(createTableRow([$.i18n('edt_dev_spec_lights_title'),$.i18n('wiz_hue_pos'),$.i18n('wiz_hue_ident')], true));
+	$('#wizp2_footer').html('<button type="button" class="btn btn-primary" id="btn_wiz_save" style="display:none"><i class="fa fa-fw fa-save"></i>'+$.i18n('general_btn_save')+'</button><button type="button" class="btn btn-danger" id="btn_wiz_abort"><i class="fa fa-fw fa-close"></i>'+$.i18n('general_btn_cancel')+'</button>');
 
-  //open modal
-  $("#wizard_modal").modal({
-    backdrop : "static",
-    keyboard: false,
-    show: true
-  });
+	//open modal
+	$("#wizard_modal").modal({
+								 backdrop : "static",
+								 keyboard: false,
+								 show: true
+							 });
 
-  //listen for continue
-  $('#btn_wiz_cont').off().on('click',function() {
-    beginWizardYeelight();
-    $('#wizp1').toggle(false);
-    $('#wizp2').toggle(true);
-  });
+	//listen for continue
+	$('#btn_wiz_cont').off().on('click',function() {
+		beginWizardYeelight();
+		$('#wizp1').toggle(false);
+		$('#wizp2').toggle(true);
+	});
 }
 
 function beginWizardYeelight()
@@ -1177,7 +1177,7 @@ function beginWizardYeelight()
 	lights = [];
 	configuredLights = conf_editor.getEditor("root.specificOptions.lights").getValue();
 
-	get_yeelight_lights();
+	discover_yeelight_lights();
 
 	$('#btn_wiz_save').off().on("click", function(){
 		var yeelightLedConfig = [];
@@ -1188,9 +1188,17 @@ function beginWizardYeelight()
 		{
 			if($('#hue_'+key).val() !== "disabled")
 			{
+				//delete lights[key].model;
+
+				// Set Name to layout-position, if empty
+				if ( lights[key].name === "" )
+				{
+					lights[key].name = $.i18n( 'conf_leds_layout_cl_'+$('#hue_'+key).val() );
+				}
+
 				finalLights.push( lights[key]);
 
-				var name = lights[key].ip;
+				var name = lights[key].host;
 				if ( lights[key].name !== "")
 					name += '_'+lights[key].name;
 
@@ -1205,9 +1213,9 @@ function beginWizardYeelight()
 		//LED device config
 		var d = window.serverConfig.device;
 		d.type = 'yeelight';
-		d.hardwareLedCount = lights.length;
-		d.colorOrder = parseInt(conf_editor.getEditor("root.generalOptions.colorOrder").getValue());;;
-		d.colorModel = parseInt(conf_editor.getEditor("root.specificOptions.colorModel").getValue());;
+		d.hardwareLedCount = finalLights.length;
+		d.colorOrder = conf_editor.getEditor("root.generalOptions.colorOrder").getValue();
+		d.colorModel = parseInt(conf_editor.getEditor("root.specificOptions.colorModel").getValue());
 
 		d.transEffect = parseInt(conf_editor.getEditor("root.specificOptions.transEffect").getValue());
 		d.transTime = parseInt(conf_editor.getEditor("root.specificOptions.transTime").getValue());
@@ -1234,26 +1242,64 @@ function beginWizardYeelight()
 	$('#btn_wiz_abort').off().on('click', resetWizard);
 }
 
-function get_yeelight_lights(){
+function getHostInLights(hostname) {
+	return lights.filter(
+				function(lights) {
+					return lights.host === hostname
+				}
+				);
+}
 
+function discover_yeelight_lights(){
+
+	lights = [];
 	// Get discovered lights
-	// TODO:
+	requestSsdp ('wifi_bulb', '1982', true, 'yeelight(.*)', 'Location');
+}
+
+// Handle ssdp-response
+$(window.hyperion).on("cmd-ssdp", function(event){
+
 	var r = [];
+	var light = {};
 
-	// If no lights discovered, use configured lights
-	if( Object.keys(r).length == 0)
-	{
-		r = configuredLights;
-	}
-
-	// Remove empty items
+	// Process devices returned by ssdp-discovery
+	r = event.response.info;
 	for(var key in r)
 	{
-		if( r[key].ip !== "" )
+		if( r[key].hostname !== "")
 		{
-			lights.push(configuredLights[key]);
+			if ( getHostInLights ( r[key].hostname ).length === 0 )
+			{
+				light = {};
+				light.host = r[key].hostname;
+				light.name = r[key].other.name;
+				light.model = r[key].other.model;
+				lights.push(light);
+			}
 		}
 	}
+
+	// Add additional items from configuration
+	for(var keyConfig in configuredLights)
+	{
+		if ( getHostInLights ( configuredLights[keyConfig].host ).length === 0 )
+		{
+			light = {};
+			light.host = configuredLights[keyConfig].host;
+			light.name = configuredLights[keyConfig].name;
+			light.model = "color4";
+			lights.push(light);
+		}
+	}
+
+	assign_yeelight_lights();
+
+});
+
+function assign_yeelight_lights(){
+
+	var models =  ['color', 'color1', 'color2', 'color4', 'stripe', 'strip1'];
 
 	// If records are left for configuration
 	if(Object.keys(lights).length > 0)
@@ -1273,9 +1319,10 @@ function get_yeelight_lights(){
 
 		$('.lidsb').html("");
 		var pos = "";
+
 		for(var lightid in lights)
 		{
-			var lightIP = lights[lightid].ip;
+			var lightIP = lights[lightid].host;
 			var lightName = lights[lightid].name;
 
 			if ( lightName === "" )
@@ -1290,7 +1337,14 @@ function get_yeelight_lights(){
 				if(pos === val) options+=' selected="selected"';
 				options+= '>'+$.i18n(txt+val)+'</option>';
 			}
-			$('.lidsb').append(createTableRow([(parseInt(lightid, 10) + 1)+'. '+lightName+' ('+lightIP+')', '<select id="hue_'+lightid+'" class="hue_sel_watch form-control">'
+
+			if (! models.includes (lights[lightid].model) )
+			{
+				var enabled = 'disabled'
+				options = '<option value=disabled>'+$.i18n('wiz_yeelight_unsupported')+'</option>';
+			}
+
+			$('.lidsb').append(createTableRow([(parseInt(lightid, 10) + 1)+'. '+lightName+' ('+lightIP+')', '<select id="hue_'+lightid+'" '+enabled+' class="hue_sel_watch form-control">'
 											   + options
 											   + '</select>','<button class="btn btn-sm btn-primary" onClick=get_light_state('+lightid+')>'+$.i18n('wiz_yeelight_blinkblue',lightName)+'</button>']));
 		}
@@ -1305,7 +1359,7 @@ function get_yeelight_lights(){
 				}
 			}
 			if ( cC === 0)
-					$('#btn_wiz_save').attr("disabled",true);
+				$('#btn_wiz_save').attr("disabled",true);
 			else
 				$('#btn_wiz_save').attr("disabled",false);
 		});

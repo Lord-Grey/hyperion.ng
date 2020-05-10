@@ -236,13 +236,6 @@ private:
 		}
 	};
 
-	///
-	/// Discover device via SSDP identifiers
-	///
-	/// @return True, if device was found
-	///
-	bool discoverDevice();
-
 	bool openMusicModeServer();
 	bool closeMusicModeServer();
 
