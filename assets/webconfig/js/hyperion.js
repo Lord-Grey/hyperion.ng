@@ -117,16 +117,20 @@ function initWebSocket()
 				{
 					var response = JSON.parse(event.data);
 					var success = response.success;
-					var cmd = response.command;
+          var cmd = response.command;
+          var tan = response.tan
 					if (success || typeof(success) == "undefined")
 					{
 						$(window.hyperion).trigger({type:"cmd-"+cmd, response:response});
 					}
 					else
 					{
-						var error = response.hasOwnProperty("error")? response.error : "unknown";
-						$(window.hyperion).trigger({type:"error",reason:error});
-						console.log("[window.websocket::onmessage] ",error)
+            // skip tan -1 error handling
+            if(tan != -1){
+              var error = response.hasOwnProperty("error")? response.error : "unknown";
+              $(window.hyperion).trigger({type:"error",reason:error});
+              console.log("[window.websocket::onmessage] ",error)
+            }
 					}
 				}
 				catch(exception_error)
@@ -163,6 +167,53 @@ function sendToHyperion(command, subcommand, msg)
 		msg = "";
 
 	window.websocket.send('{"command":"'+command+'", "tan":'+window.wsTan+subcommand+msg+'}');
+}
+
+// Send a json message to Hyperion and wait for a matching response
+// A response matches, when command(+subcommand) of request and response is the same
+// command:    The string command
+// subcommand: The optional string subcommand
+// data:       The json data as Object
+// tan:        The optional tan, default 1. If the tan is -1, we skip global response error handling
+// Returns data of response or false if timeout
+async function sendAsyncToHyperion (command, subcommand, data, tan = 1) {
+  let obj = { command, tan }
+  if (subcommand) {Object.assign(obj, {subcommand})}
+  if (data) { Object.assign(obj, data) }
+
+  //if (process.env.DEV || sstore.getters['common/getDebugState']) console.log('SENDAS', obj)
+  return __sendAsync(obj)
+}
+
+// Send a json message to Hyperion and wait for a matching response
+// A response matches, when command(+subcommand) of request and response is the same
+// Returns data of response or false if timeout
+async function __sendAsync (data) {
+  return new Promise((resolve, reject) => {
+    let cmd = data.command
+    let subc = data.subcommand
+    if (subc)
+      cmd = `${cmd}-${subc}`
+
+    let func = (e) => {
+      let rdata;
+      try {
+        rdata = JSON.parse(e.data)
+      } catch (error) {
+        console.error("[window.websocket::onmessage] ",error)
+        resolve(false)
+      }
+
+      if (rdata.command == cmd) {
+        window.websocket.removeEventListener('message', func)
+        resolve(rdata)
+      }
+    }
+    // after 7 sec we resolve false
+    setTimeout(() => { window.websocket.removeEventListener('message', func); resolve(false) }, 7000)
+    window.websocket.addEventListener('message', func)
+    window.websocket.send(JSON.stringify(data) + '\n')
+  })
 }
 
 // -----------------------------------------------------------
@@ -397,30 +448,17 @@ function requestAdjustment(type, value, complete)
 		sendToHyperion("adjustment", "", '"adjustment": {"'+type+'": '+value+'}');
 }
 
-function requestSsdp(searchTarget, searchPort, skipDups, filterRegEx, filterHeader)
+async function requestSsdp(searchTarget, searchPort, skipDups, filterRegEx, filterHeader)
 {
-	var msg = "";
+	let data = {
+    searchTarget: (searchTarget ? searchTarget : 'ssdp:all'),
+    searchPort: (searchPort ? searchPort : undefined),
+    skipDups: (skipDups ? skipDups : undefined),
+  }
 
-	if (typeof searchTarget != 'undefined' && searchTarget.length > 0)
-		msg += '"searchTarget":"'+searchTarget+'"';
-	else
-		msg += '"searchTarget":"ssdp:all"';
-
-	if (typeof searchPort != 'undefined' && searchPort.length > 0)
-		msg += ',"searchPort":'+searchPort+'';
-
-	if (typeof skipDups != 'undefined')
-		msg += ',"skipDups":'+skipDups+'';
-
-	msg += ',"filter":{'
-
-	if (typeof filterRegEx != 'undefined' && filterRegEx.length > 0)
-		msg += '"filterRegEx":"'+filterRegEx+'",';
-
-	if (typeof filterHeader != 'undefined' && filterHeader.length > 0)
-		msg += '"filterHeader":"'+filterHeader+'"';
-
-	msg += '}'
-
-	sendToHyperion("ssdp", "", msg);
+  if(filterRegEx || filterHeader){
+    Object.assign(data, {filter:{filterRegEx, filterHeader}})
+  }
+  // tan -1 skip global error handling
+	return sendAsyncToHyperion("ssdp", "", data, -1);
 }

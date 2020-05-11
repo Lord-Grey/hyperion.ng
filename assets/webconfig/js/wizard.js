@@ -1250,52 +1250,47 @@ function getHostInLights(hostname) {
 				);
 }
 
-function discover_yeelight_lights(){
+async function discover_yeelight_lights(){
 
-	lights = [];
-	// Get discovered lights
-	requestSsdp ('wifi_bulb', '1982', true, 'yeelight(.*)', 'Location');
-}
-
-// Handle ssdp-response
-$(window.hyperion).on("cmd-ssdp", function(event){
-
-	var r = [];
 	var light = {};
+	// Get discovered lights
+  const res = await requestSsdp ('wifi_bulb', 1982, true, 'yeelight(.*)', 'Location');
+  // TODO: error case unhandled
+  // res can be: false (timeout) or res.error (not found)
+  if(res && !res.error){
+    const r = res.info
+    // Process devices returned by ssdp-discovery
+    for(var key in r)
+    {
+      if( r[key].hostname !== "")
+      {
+        if ( getHostInLights ( r[key].hostname ).length === 0 )
+        {
+          light = {};
+          light.host = r[key].hostname;
+          light.name = r[key].other.name;
+          light.model = r[key].other.model;
+          lights.push(light);
+        }
+      }
+    }
 
-	// Process devices returned by ssdp-discovery
-	r = event.response.info;
-	for(var key in r)
-	{
-		if( r[key].hostname !== "")
-		{
-			if ( getHostInLights ( r[key].hostname ).length === 0 )
-			{
-				light = {};
-				light.host = r[key].hostname;
-				light.name = r[key].other.name;
-				light.model = r[key].other.model;
-				lights.push(light);
-			}
-		}
-	}
+    // Add additional items from configuration
+    for(var keyConfig in configuredLights)
+    {
+      if ( getHostInLights ( configuredLights[keyConfig].host ).length === 0 )
+      {
+        light = {};
+        light.host = configuredLights[keyConfig].host;
+        light.name = configuredLights[keyConfig].name;
+        light.model = "color4";
+        lights.push(light);
+      }
+    }
 
-	// Add additional items from configuration
-	for(var keyConfig in configuredLights)
-	{
-		if ( getHostInLights ( configuredLights[keyConfig].host ).length === 0 )
-		{
-			light = {};
-			light.host = configuredLights[keyConfig].host;
-			light.name = configuredLights[keyConfig].name;
-			light.model = "color4";
-			lights.push(light);
-		}
-	}
-
-	assign_yeelight_lights();
-
-});
+    assign_yeelight_lights();
+  }
+}
 
 function assign_yeelight_lights(){
 
