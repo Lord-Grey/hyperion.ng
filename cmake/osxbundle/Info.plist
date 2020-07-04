@@ -15,7 +15,7 @@
     <key>CFBundleExecutable</key>
     <string>ambilightwifid</string>
     <key>CFBundleIconFile</key>
-    <string>Hyperion.icns</string>
+    <string>ambilightwifi.icns</string>
 
     <key>CFBundleIdentifier</key>
     <string>com.hyperion-project.Hyperion</string>
