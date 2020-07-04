@@ -121,7 +121,7 @@ $(document).ready( function() {
 	}
 
 	//interval update
-	$(window.ambilightwifi).on("cmd-effects-update", function(event){
+	$(window.hyperion).on("cmd-effects-update", function(event){
 		window.serverInfo.effects = event.response.data.effects
 		updateEffectlist();
 	});

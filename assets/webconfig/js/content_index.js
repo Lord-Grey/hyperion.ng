@@ -24,12 +24,12 @@ $(document).ready(function () {
 	loadContentTo("#container_restart", "restart");
 	initWebSocket();
 
-	$(window.ambilightwifi).on("cmd-serverinfo", function (event) {
+	$(window.hyperion).on("cmd-serverinfo", function (event) {
 		window.serverInfo = event.response.info;
 		// comps
 		window.comps = event.response.info.components
 
-		$(window.ambilightwifi).trigger("ready");
+		$(window.hyperion).trigger("ready");
 
 		window.comps.forEach(function (obj) {
 			if (obj.name == "ALL") {
@@ -47,9 +47,9 @@ $(document).ready(function () {
 		else
 			$('#btn_hypinstanceswitch').toggle(false)
 		// update listing at button
-		updateAmbilightwifiInstanceListing()
+		updateHyperionInstanceListing()
 		if (!instNameInit) {
-			window.currentAmbilightwifiInstanceName = getInstanceNameByIndex(0);
+			window.currentHyperionInstanceName = getInstanceNameByIndex(0);
 			instNameInit = true;
 		}
 
@@ -85,12 +85,12 @@ $(document).ready(function () {
 
 	//End language selection
 
-	$(window.ambilightwifi).on("cmd-sessions-update", function (event) {
+	$(window.hyperion).on("cmd-sessions-update", function (event) {
 		window.serverInfo.sessions = event.response.data;
 		updateSessions();
 	});
 
-	$(window.ambilightwifi).on("cmd-authorize-tokenRequest cmd-authorize-getPendingTokenRequests", function (event) {
+	$(window.hyperion).on("cmd-authorize-tokenRequest cmd-authorize-getPendingTokenRequests", function (event) {
 		var val = event.response.info;
 		if (Array.isArray(event.response.info)) {
 			if (event.response.info.length == 0) {
@@ -105,7 +105,7 @@ $(document).ready(function () {
 		$("#tok_grant_acc").off().on('click', function () {
 			tokenList.push(val)
 			// forward event, in case we need to rebuild the list now
-			$(window.ambilightwifi).trigger({ type: "build-token-list" });
+			$(window.hyperion).trigger({ type: "build-token-list" });
 			requestHandleTokenRequest(val.id, true)
 		});
 		$("#tok_deny_acc").off().on('click', function () {
@@ -113,20 +113,20 @@ $(document).ready(function () {
 		});
 	});
 
-	$(window.ambilightwifi).one("cmd-authorize-getTokenList", function (event) {
+	$(window.hyperion).one("cmd-authorize-getTokenList", function (event) {
 		tokenList = event.response.info;
 		requestServerInfo();
 	});
 
-	$(window.ambilightwifi).on("cmd-sysinfo", function (event) {
+	$(window.hyperion).on("cmd-sysinfo", function (event) {
 		requestServerInfo();
 		window.sysInfo = event.response.info;
 
-		window.currentVersion = window.sysInfo.ambilightwifi.version;
-		window.currentChannel = window.sysInfo.ambilightwifi.channel;
+		window.currentVersion = window.sysInfo.hyperion.version;
+		window.currentChannel = window.sysInfo.hyperion.channel;
 	});
 
-	$(window.ambilightwifi).one("cmd-config-getschema", function (event) {
+	$(window.hyperion).one("cmd-config-getschema", function (event) {
 		window.serverSchema = event.response.info;
 		requestServerConfig();
     requestTokenInfo();
@@ -135,20 +135,20 @@ $(document).ready(function () {
 		window.schema = window.serverSchema.properties;
 	});
 
-	$(window.ambilightwifi).on("cmd-config-getconfig", function (event) {
+	$(window.hyperion).on("cmd-config-getconfig", function (event) {
 		window.serverConfig = event.response.info;
 		requestSysInfo();
 
 		window.showOptHelp = window.serverConfig.general.showOptHelp;
 	});
 
-	$(window.ambilightwifi).on("cmd-config-setconfig", function (event) {
+	$(window.hyperion).on("cmd-config-setconfig", function (event) {
 		if (event.response.success === true) {
 			showNotification('success', $.i18n('dashboard_alert_message_confsave_success'), $.i18n('dashboard_alert_message_confsave_success_t'))
 		}
 	});
 
-	$(window.ambilightwifi).on("cmd-authorize-login", function (event) {
+	$(window.hyperion).on("cmd-authorize-login", function (event) {
 		$("#main-nav").removeAttr('style')
 		$("#top-navbar").removeAttr('style')
 
@@ -170,7 +170,7 @@ $(document).ready(function () {
 		requestServerConfigSchema();
 	});
 
-	$(window.ambilightwifi).on("cmd-authorize-newPassword", function (event) {
+	$(window.hyperion).on("cmd-authorize-newPassword", function (event) {
 		if (event.response.success === true) {
 			showInfoDialog("success", $.i18n('InfoDialog_changePassword_success'));
 			// not necessarily true, but better than nothing
@@ -178,7 +178,7 @@ $(document).ready(function () {
 		}
 	});
 
-	$(window.ambilightwifi).on("cmd-authorize-newPasswordRequired", function (event) {
+	$(window.hyperion).on("cmd-authorize-newPasswordRequired", function (event) {
 		var loginToken = getStorage("loginToken", true)
 
 		if (event.response.info.newPasswordRequired == true) {
@@ -200,7 +200,7 @@ $(document).ready(function () {
 		}
 	});
 
-	$(window.ambilightwifi).on("cmd-authorize-adminRequired", function (event) {
+	$(window.hyperion).on("cmd-authorize-adminRequired", function (event) {
 		//Check if a admin login is required.
 		//If yes: check if default pw is set. If no: go ahead to get server config and render page
 		if (event.response.info.adminRequired === true)
@@ -209,7 +209,7 @@ $(document).ready(function () {
 			requestServerConfigSchema();
 	});
 
-	$(window.ambilightwifi).on("error", function (event) {
+	$(window.hyperion).on("error", function (event) {
 		//If we are getting an error "No Authorization" back with a set loginToken we will forward to new Login (Token is expired.
 		//e.g.: ambilightwifid was started new in the meantime)
 		if (event.reason == "No Authorization" && getStorage("loginToken", true)) {
@@ -221,23 +221,23 @@ $(document).ready(function () {
 		}
 	});
 
-	$(window.ambilightwifi).on("open", function (event) {
+	$(window.hyperion).on("open", function (event) {
 		requestRequiresAdminAuth();
 	});
 
-	$(window.ambilightwifi).one("ready", function (event) {
+	$(window.hyperion).one("ready", function (event) {
 		loadContent();
 	});
 
-	$(window.ambilightwifi).on("cmd-adjustment-update", function (event) {
+	$(window.hyperion).on("cmd-adjustment-update", function (event) {
 		window.serverInfo.adjustment = event.response.data
 	});
 
-	$(window.ambilightwifi).on("cmd-videomode-update", function (event) {
+	$(window.hyperion).on("cmd-videomode-update", function (event) {
 		window.serverInfo.videomode = event.response.data.videomode
 	});
 
-	$(window.ambilightwifi).on("cmd-components-update", function (event) {
+	$(window.hyperion).on("cmd-components-update", function (event) {
 		let obj = event.response.data
 
 		// notfication in index
@@ -254,19 +254,19 @@ $(document).ready(function () {
 			}
 		});
 		// notify the update
-		$(window.ambilightwifi).trigger("components-updated", event.response.data);
+		$(window.hyperion).trigger("components-updated", event.response.data);
 	});
 
-	$(window.ambilightwifi).on("cmd-instance-update", function (event) {
+	$(window.hyperion).on("cmd-instance-update", function (event) {
 		window.serverInfo.instance = event.response.data
 		var avail = event.response.data;
 		// notify the update
-		$(window.ambilightwifi).trigger("instance-updated");
+		$(window.hyperion).trigger("instance-updated");
 
 		// if our current instance is no longer available we are at instance 0 again.
 		var isInData = false;
 		for (var key in avail) {
-			if (avail[key].instance == currentAmbilightwifiInstance && avail[key].running) {
+			if (avail[key].instance == currentHyperionInstance && avail[key].running) {
 				isInData = true;
 			}
 		}
@@ -276,8 +276,8 @@ $(document).ready(function () {
 			if (getStorage('lastSelectedInstance', false))
 				removeStorage('lastSelectedInstance', false)
 
-			currentAmbilightwifiInstance = 0;
-			currentAmbilightwifiInstanceName = getInstanceNameByIndex(0);
+			currentHyperionInstance = 0;
+			currentHyperionInstanceName = getInstanceNameByIndex(0);
 			requestServerConfig();
 			setTimeout(requestServerInfo, 100)
 			setTimeout(requestTokenInfo, 200)
@@ -292,17 +292,17 @@ $(document).ready(function () {
 			$('#btn_hypinstanceswitch').toggle(false)
 
 		// update listing for button
-		updateAmbilightwifiInstanceListing()
+		updateHyperionInstanceListing()
 	});
 
-	$(window.ambilightwifi).on("cmd-instance-switchTo", function (event) {
+	$(window.hyperion).on("cmd-instance-switchTo", function (event) {
 		requestServerConfig();
 		setTimeout(requestServerInfo, 200)
 		setTimeout(requestTokenInfo, 400)
 		setTimeout(loadContent, 400, undefined, true)
 	});
 
-	$(window.ambilightwifi).on("cmd-effects-update", function (event) {
+	$(window.hyperion).on("cmd-effects-update", function (event) {
 		window.serverInfo.effects = event.response.data.effects
 	});
 

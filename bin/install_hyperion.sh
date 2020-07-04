@@ -163,8 +163,8 @@ fi
 
 # Select the appropriate download path
 if [ $BETA -eq 1 ]; then
-	HYPERION_ADDRESS=https://www.facebook.com/Smart.led.strip.light/
-else HYPERION_ADDRESS=https://www.facebook.com/Smart.led.strip.light/
+	HYPERION_ADDRESS=https://sourceforge.net/projects/hyperion-project/files/beta
+else HYPERION_ADDRESS=https://sourceforge.net/projects/hyperion-project/files/release
 fi
 # Select the appropriate release
 if [ $CPU_RPI -eq 1 ] && [ $OS_RASPLEX -eq 1 ]; then

@@ -107,7 +107,7 @@ $(document).ready( function() {
 	// Save Effect
 	$('#btn_write').off().on('click',function() {
 		requestWriteEffect(effectName,effectPy,JSON.stringify(effects_editor.getValue()),imageData);
-		$(window.ambilightwifi).one("cmd-create-effect", function(event) {
+		$(window.hyperion).one("cmd-create-effect", function(event) {
 			if (event.response.success)
 				showInfoDialog('success', "", $.i18n('infoDialog_effconf_created_text', effectName));
 		});
@@ -137,7 +137,7 @@ $(document).ready( function() {
 	$('#btn_delete').off().on('click',function() {
 		var name = $("#effectsdellist").val().split("_")[1];
 		requestDeleteEffect(name);
-		$(window.ambilightwifi).one("cmd-delete-effect", function(event) {
+		$(window.hyperion).one("cmd-delete-effect", function(event) {
 			if (event.response.success)
 				showInfoDialog('success', "", $.i18n('infoDialog_effconf_deleted_text', name));
 		});
@@ -193,7 +193,7 @@ $(document).ready( function() {
 	updateDelEffectlist();
 
 	//interval update
-	$(window.ambilightwifi).on("cmd-effects-update", function(event){
+	$(window.hyperion).on("cmd-effects-update", function(event){
 		window.serverInfo.effects = event.response.data.effects
 		updateDelEffectlist();
 	});

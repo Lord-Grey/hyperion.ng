@@ -67,7 +67,7 @@ $(document).ready(function() {
 	  return path;
 	}
 
-	$(window.ambilightwifi).one("ready",function(){
+	$(window.hyperion).one("ready",function(){
 		leds = window.serverConfig.leds;
 
 		if(window.showOptHelp)
@@ -118,7 +118,7 @@ $(document).ready(function() {
 			}
 		});
 		// apply new serverinfos
-		$(window.ambilightwifi).on("cmd-config-getconfig",function(event){
+		$(window.hyperion).on("cmd-config-getconfig",function(event){
 			leds = event.response.info.leds;
 			updateLedLayout();
 		});
@@ -214,7 +214,7 @@ $(document).ready(function() {
 	});
 
 	// ------------------------------------------------------------------
-	$(window.ambilightwifi).on("cmd-ledcolors-ledstream-update",function(event){
+	$(window.hyperion).on("cmd-ledcolors-ledstream-update",function(event){
 		if (!modalOpened)
 		{
 			requestLedColorsStop();
@@ -226,7 +226,7 @@ $(document).ready(function() {
 	});
 
 	// ------------------------------------------------------------------
-	$(window.ambilightwifi).on("cmd-ledcolors-imagestream-update",function(event){
+	$(window.hyperion).on("cmd-ledcolors-imagestream-update",function(event){
 		if (!modalOpened)
 		{
 			requestLedImageStop();
@@ -248,7 +248,7 @@ $(document).ready(function() {
 	});
 
 	// ------------------------------------------------------------------
-	$(window.ambilightwifi).on("cmd-settings-update",function(event){
+	$(window.hyperion).on("cmd-settings-update",function(event){
 		var obj = event.response.data
 		Object.getOwnPropertyNames(obj).forEach(function(val, idx, array) {
 			window.serverInfo[val] = obj[val];

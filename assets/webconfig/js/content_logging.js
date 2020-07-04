@@ -143,7 +143,7 @@ $(document).ready(function() {
 	if (!window.loggingHandlerInstalled)
 	{
 		window.loggingHandlerInstalled = true;
-		$(window.ambilightwifi).on("cmd-logging-update",function(event){
+		$(window.hyperion).on("cmd-logging-update",function(event){
 
 			if ($("#logmessages").length == 0 && window.loggingStreamActive)
 			{
