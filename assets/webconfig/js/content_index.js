@@ -122,8 +122,8 @@ $(document).ready(function () {
 		requestServerInfo();
 		window.sysInfo = event.response.info;
 
-		window.currentVersion = window.sysInfo.hyperion.version;
-		window.currentChannel = window.sysInfo.hyperion.channel;
+		window.currentVersion = window.sysInfo.ambilightwifi.version;
+		window.currentChannel = window.sysInfo.ambilightwifi.channel;
 	});
 
 	$(window.ambilightwifi).one("cmd-config-getschema", function (event) {
