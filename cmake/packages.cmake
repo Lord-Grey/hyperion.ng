@@ -72,7 +72,7 @@ SET ( CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/rpm
 # OSX "Bundle" generator TODO Add more osx generators
 # https://cmake.org/cmake/help/v3.10/module/CPackBundle.html
 SET ( CPACK_BUNDLE_NAME "Ambilight WiFi" )
-SET ( CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/cmake/osxbundle/Hyperion.icns )
+SET ( CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/cmake/osxbundle/ambilightwifi.icns )
 SET ( CPACK_BUNDLE_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/cmake/osxbundle/Info.plist )
 SET ( CPACK_BUNDLE_STARTUP_COMMAND "${CMAKE_SOURCE_DIR}/cmake/osxbundle/launch.sh" )
 
@@ -105,9 +105,9 @@ SET ( CPACK_NSIS_URL_INFO_ABOUT "https://www.facebook.com/Smart.led.strip.light/
 SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi (Console).lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' '-d -c'")
 SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi (Console).lnk'")
 
+SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe'")
+SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Ambilight WiFi.lnk'")
 
-#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe'")
-#SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Ambilight WiFi.lnk'")
 # ambilightwifid desktop link
 #SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$DESKTOP\\\\Ambilight WiFi.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' ")
 #SET ( CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "Delete '$DESKTOP\\\\Ambilight WiFi.lnk' ")
