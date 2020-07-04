@@ -308,19 +308,19 @@ function showInfoDialog(type,header,message)
 	}
 	else if (type == "select")
 	{
-		$('#id_body').html('<img style="margin-bottom:20px" src="img/hyperion/ambilightwifilogo.png" alt="Redefine ambient light!">');
+		$('#id_body').html('<img style="margin-bottom:20px" src="img/ambilightwifi/ambilightwifilogo.png" alt="Redefine ambient light!">');
 		$('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-dismiss="modal"><i class="fa fa-fw fa-save"></i>'+$.i18n('general_btn_saveandreload')+'</button>');
 		$('#id_footer').append('<button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>'+$.i18n('general_btn_cancel')+'</button>');
 	}
 	else if (type == "iswitch")
 	{
-		$('#id_body').html('<img style="margin-bottom:20px" src="img/hyperion/ambilightwifilogo.png" alt="Redefine ambient light!">');
+		$('#id_body').html('<img style="margin-bottom:20px" src="img/ambilightwifi/ambilightwifilogo.png" alt="Redefine ambient light!">');
 		$('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-dismiss="modal"><i class="fa fa-fw fa-exchange"></i>'+$.i18n('general_btn_iswitch')+'</button>');
 		$('#id_footer').append('<button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>'+$.i18n('general_btn_cancel')+'</button>');
 	}
 	else if (type == "uilock")
 	{
-		$('#id_body').html('<img src="img/hyperion/ambilightwifilogo.png" alt="Redefine ambient light!">');
+		$('#id_body').html('<img src="img/ambilightwifi/ambilightwifilogo.png" alt="Redefine ambient light!">');
 		$('#id_footer').html('<b>'+$.i18n('InfoDialog_nowrite_foottext')+'</b>');
 	}
 	else if (type == "import")
@@ -354,19 +354,19 @@ function showInfoDialog(type,header,message)
 	}
 	else if (type == "checklist")
 	{
-		$('#id_body').html('<img style="margin-bottom:20px" src="img/hyperion/ambilightwifilogo.png" alt="Redefine ambient light!">');
+		$('#id_body').html('<img style="margin-bottom:20px" src="img/ambilightwifi/ambilightwifilogo.png" alt="Redefine ambient light!">');
 		$('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">'+$.i18n('infoDialog_checklist_title')+'</h4>');
 		$('#id_body').append(header);
 		$('#id_footer').html('<button type="button" class="btn btn-primary" data-dismiss="modal">'+$.i18n('general_btn_ok')+'</button>');
 	}
 	else if (type == "newToken")
 	{
-		$('#id_body').html('<img style="margin-bottom:20px" src="img/hyperion/ambilightwifilogo.png" alt="Redefine ambient light!">');
+		$('#id_body').html('<img style="margin-bottom:20px" src="img/ambilightwifi/ambilightwifilogo.png" alt="Redefine ambient light!">');
 		$('#id_footer').html('<button type="button" class="btn btn-primary" data-dismiss="modal">'+$.i18n('general_btn_ok')+'</button>');
 	}
 	else if (type == "grantToken")
 	{
-		$('#id_body').html('<img style="margin-bottom:20px" src="img/hyperion/ambilightwifilogo.png" alt="Redefine ambient light!">');
+		$('#id_body').html('<img style="margin-bottom:20px" src="img/ambilightwifi/ambilightwifilogo.png" alt="Redefine ambient light!">');
 		$('#id_footer').html('<button type="button" class="btn btn-primary" data-dismiss="modal" id="tok_grant_acc">'+$.i18n('general_btn_grantAccess')+'</button>');
 		$('#id_footer').append('<button type="button" class="btn btn-danger" data-dismiss="modal" id="tok_deny_acc">'+$.i18n('general_btn_denyAccess')+'</button>');
 	}
