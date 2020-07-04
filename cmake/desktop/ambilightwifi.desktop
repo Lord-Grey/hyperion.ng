@@ -2,10 +2,10 @@
 Name=Ambilight WiFi
 GenericName=Ambilight WiFi
 Comment=Ambilight WiFi mimics the well known Ambilight from Philips
-Icon=/usr/share/pixmaps/ambilightwifi/ambilightwifid_128.png
+Icon=/usr/share/pixmaps/ambilight-wifi/ambilightwifi_128.png
 Terminal=false
-TryExec=ambilightwifid
-Exec=ambilightwifid
+TryExec=ambilightwifi
+Exec=ambilightwifi
 Type=Application
 StartupNotify=true
 Categories=Application;
