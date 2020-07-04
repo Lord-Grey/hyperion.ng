@@ -109,7 +109,7 @@ The heart of Hyperion
 # Show the version/build date/commit of Hyperion
 ambilightwifid --version
 
-# Reset current adminstration password back to 'hyperion'
+# Reset current adminstration password back to 'ambilightwifi'
 ambilightwifid --resetPassword
 
 # Overwrite the path for user data (which defaults to your home directory)

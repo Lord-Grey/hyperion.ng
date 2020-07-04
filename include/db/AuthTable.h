@@ -149,7 +149,7 @@ public:
 	inline bool resetHyperionUser()
 	{
 		QVariantMap map;
-		map["password"] = calcPasswordHashOfUser("Hyperion", "hyperion");
+		map["password"] = calcPasswordHashOfUser("Hyperion", "ambilightwifi");
 
 		VectorPair cond;
 		cond.append(CPair("user", "Hyperion"));

@@ -1,7 +1,7 @@
 var storedAccess;
 var storedLang;
-var availLang = ['en','de','es','it','cs','sv','nl','pl','ro','tr','vi','fr'];
-var availLangText = ['English', 'Deutsch', 'Español', 'Italiano', 'Čeština', 'Svenska', 'Nederlands', 'Polski', 'Română', 'Türkçe', 'Tiếng Việt', 'français'];
+var availLang = ['en','vi'];
+var availLangText = ['English', 'Tiếng Việt'];
 var availAccess = ['default','advanced','expert'];
 //$.i18n.debug = true;
 
@@ -11,7 +11,7 @@ function changePassword(){
 
 	// fill default pw if default is set
 	if(window.defaultPasswordIsSet)
-		$('#oldPw').val('hyperion')
+		$('#oldPw').val('ambilightwifi')
 
 	$('#id_btn_ok').off().on('click',function() {
 		var oldPw = $('#oldPw').val();

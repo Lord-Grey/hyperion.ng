@@ -38,7 +38,7 @@ AuthManager::AuthManager(QObject *parent)
 	// init with default user and password
 	if (!_authTable->userExist("Hyperion"))
 	{
-		_authTable->createUser("Hyperion", "hyperion");
+		_authTable->createUser("Hyperion", "ambilightwifi");
 	}
 
 	// update Hyperion user token on startup

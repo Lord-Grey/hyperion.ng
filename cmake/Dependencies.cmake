@@ -203,7 +203,7 @@ macro(DeployWindows TARGET)
 		separate_arguments(DEPENDENCIES WINDOWS_COMMAND ${DEPS})
 		string(REPLACE "\\" "/" DEPENDENCIES "${DEPENDENCIES}")
 
-		# Copy dependencies to 'hyperion/lib' or 'hyperion'
+		# Copy dependencies to 'hyperion/lib' or 'ambilightwifi'
 		while (DEPENDENCIES)
 			list(GET DEPENDENCIES 0 src)
 			list(GET DEPENDENCIES 1 dst)
@@ -261,7 +261,7 @@ macro(DeployWindows TARGET)
 			)
 		endif()
 
-		# Copy pythonXX.dll and pythonXX.zip to 'hyperion'
+		# Copy pythonXX.dll and pythonXX.zip to 'ambilightwifi'
 		foreach(PYTHON_FILE
 			"python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.dll"
 			"python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.zip"
