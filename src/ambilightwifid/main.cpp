@@ -309,7 +309,7 @@ int main(int argc, char** argv)
 		// delete database before start
 		if(parser.isSet(deleteDB))
 		{
-			QString dbFile = mDir.absolutePath() + "/db/hyperion.db";
+			QString dbFile = mDir.absolutePath() + "/db/ambilightwifi.db";
 			if (QFile::exists(dbFile))
 			{
 				if (!QFile::remove(dbFile))

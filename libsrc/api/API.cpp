@@ -505,7 +505,7 @@ bool API::isUserAuthorized(const QString &password)
 bool API::hasHyperionDefaultPw()
 {
     bool res;
-    QMetaObject::invokeMethod(_authManager, "isUserAuthorized", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, res), Q_ARG(QString, "Hyperion"), Q_ARG(QString, "hyperion"));
+    QMetaObject::invokeMethod(_authManager, "isUserAuthorized", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, res), Q_ARG(QString, "Hyperion"), Q_ARG(QString, "ambilightwifi"));
     return res;
 }
 
