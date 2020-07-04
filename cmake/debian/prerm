@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "---Hyperion ambient light prerm ---"
+echo "---Ambilight WiFi prerm ---"
 
 # search for users in system, returns first entry
 FOUND_USR=`who | grep -o -m1 '^\w*\b'` || "root"
@@ -25,7 +25,7 @@ then
 	# upstart
 	$HYPERION_RUNNING && initctl stop ambilightwifid
 	echo "---> Remove upstart service"
-	rm -v /etc/init/hyperion* 2>/dev/null
+	rm -v /etc/init/ambilightwifi* 2>/dev/null
 	initctl reload-configuration
 
 else
@@ -33,8 +33,8 @@ else
 	# sysV
 	$HYPERION_RUNNING && service ambilightwifid stop 2>/dev/null
 	echo "---> Remove sysV service"
-	update-rc.d -f hyperion remove
-	rm /etc/init.d/hyperion* 2>/dev/null
+	update-rc.d -f ambilightwifi remove
+	rm /etc/init.d/ambilightwifi* 2>/dev/null
 fi
 
 # In case we don't use a service kill all instances
@@ -42,9 +42,9 @@ killall ambilightwifid 2> /dev/null
 
 # delete desktop icons; desktop-file-edit is a workaround to hide the entry and delete it afterwards manual.
 # TODO Better way for deletion and keep the desktop in sync without logout/login or desktop dependend cmds?
-echo "---> Delete Hyperion desktop icons"
+echo "---> Delete Ambilight WiFi desktop icons"
 desktop-file-edit --set-key=NoDisplay --set-value=true /usr/share/applications/ambilightwifid.desktop 2>/dev/null
-rm -v /usr/share/applications/hyperion* 2>/dev/null
-rm -rv /usr/share/pixmaps/hyperion 2>/dev/null
+rm -v /usr/share/applications/ambilightwifi* 2>/dev/null
+rm -rv /usr/share/pixmaps/ambilightwifi 2>/dev/null
 
 exit 0

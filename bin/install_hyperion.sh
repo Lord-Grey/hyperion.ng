@@ -263,7 +263,7 @@ elif [ $OS_OPENELEC -eq 1 ]; then
 elif [ $USE_SYSTEMD -eq 1 ]; then
 	echo '---> Installing systemd script'
 	#place startup script for systemd and activate
-	cp -n $SERVICEL/hyperion.systemd.sh $SERVICEP/hyperion.service
+	cp -n $SERVICEL/ambilightwifi.systemd.sh $SERVICEP/hyperion.service
 	systemctl -q enable hyperion.service
 		if [ $OS_OSMC -eq 1 ]; then
 			echo '---> Modify systemd script for OSMC usage'

@@ -14,7 +14,7 @@ if ! [ -d "$builddir" ]; then
 	echo "Could not find build director"
 	exit 1
 fi
-	
+
 outfile="$repodir/deploy/hyperion_$buildid.tar.gz"
 echo create $outfile
 
@@ -23,12 +23,12 @@ tar --create --gzip --absolute-names --show-transformed-names --ignore-failed-re
 	--transform "s:$builddir/bin/:hyperion/bin/:" \
 	--transform "s:$repodir/config/:hyperion/config/:" \
 	--transform "s:$repodir/bin/service/hyperion.init:hyperion/services/hyperion.init:" \
-	--transform "s:$repodir/bin/service/hyperion.systemd:hyperion/services/hyperion.systemd:" \
+	--transform "s:$repodir/bin/service/ambilightwifi.systemd:hyperion/services/ambilightwifi.systemd:" \
 	--transform "s:$repodir/bin/service/hyperion.initctl:hyperion/services/hyperion.initctl:" \
 	--transform "s://:/:g" \
 	"$builddir/bin/hyperion"* \
 	"$repodir/bin/service/hyperion.init" \
-	"$repodir/bin/service/hyperion.systemd" \
+	"$repodir/bin/service/ambilightwifi.systemd" \
 	"$repodir/bin/service/hyperion.initctl" \
 	"$repodir/config/hyperion.config.json.default"
 

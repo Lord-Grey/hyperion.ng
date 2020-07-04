@@ -84,7 +84,7 @@ macro(DeployUnix TARGET)
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 
-		# Copy Qt plugins to 'share/hyperion/lib'
+		# Copy Qt plugins to 'share/ambilightwifi/lib'
 		if(QT_PLUGINS_DIR)
 			foreach(PLUGIN "platforms" "sqldrivers" "imageformats")
 				if(EXISTS ${QT_PLUGINS_DIR}/${PLUGIN})
@@ -108,7 +108,7 @@ macro(DeployUnix TARGET)
 
 						install(
 							FILES ${file}
-							DESTINATION "share/hyperion/lib/${PLUGIN}"
+							DESTINATION "share/ambilightwifi/lib/${PLUGIN}"
 							COMPONENT "Hyperion"
 						)
 					endforeach()
@@ -116,19 +116,19 @@ macro(DeployUnix TARGET)
 			endforeach()
 		endif(QT_PLUGINS_DIR)
 
-		# Create a qt.conf file in 'share/hyperion/bin' to override hard-coded search paths in Qt plugins
+		# Create a qt.conf file in 'share/ambilightwifi/bin' to override hard-coded search paths in Qt plugins
 		file(WRITE "${CMAKE_BINARY_DIR}/qt.conf" "[Paths]\nPlugins=../lib/\n")
 		install(
 			FILES "${CMAKE_BINARY_DIR}/qt.conf"
-			DESTINATION "share/hyperion/bin"
+			DESTINATION "share/ambilightwifi/bin"
 			COMPONENT "Hyperion"
 		)
 
-		# Copy dependencies to 'share/hyperion/lib'
+		# Copy dependencies to 'share/ambilightwifi/lib'
 		foreach(PREREQUISITE_LIB ${PREREQUISITE_LIBS})
 			install(
 				FILES ${PREREQUISITE_LIB}
-				DESTINATION "share/hyperion/lib"
+				DESTINATION "share/ambilightwifi/lib"
 				COMPONENT "Hyperion"
 			)
 		endforeach()
@@ -152,11 +152,11 @@ macro(DeployUnix TARGET)
 
 		endif()
 
-		# Copy Python modules to 'share/hyperion/lib/python'
+		# Copy Python modules to 'share/ambilightwifi/lib/python'
 		if (PYTHON_MODULES_DIR)
 			install(
 				DIRECTORY ${PYTHON_MODULES_DIR}/
-				DESTINATION "share/hyperion/lib/python"
+				DESTINATION "share/ambilightwifi/lib/python"
 				COMPONENT "Hyperion"
 			)
 		endif(PYTHON_MODULES_DIR)

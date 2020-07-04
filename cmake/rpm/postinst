@@ -16,7 +16,7 @@ install_file()
 }
 
 
-echo "---Hyperion ambient light postinstall ---"
+echo "---Ambilight WiFi postinstall ---"
 
 #check system
 CPU_RPI=`grep -m1 -c 'BCM2708\|BCM2709\|BCM2710\|BCM2835' /proc/cpuinfo`
@@ -33,11 +33,11 @@ FOUND_USR=`who | grep -o -m1 '^\w*\b'` || "root"
 
 # determine if we should use a service
 ENABLE_SERVICE=0
-STARTUP_MSG="echo ---> You can start Hyperion from your menu now"
+STARTUP_MSG="echo ---> You can start Ambilight WiFi from your menu now"
 
 if [ $CPU_RPI -eq 1 ]; then
 	ENABLE_SERVICE=1
-	STARTUP_MSG="echo ---> Hyperion has been installed as service, it will start on each system startup"
+	STARTUP_MSG="echo ---> Ambilight WiFi has been installed as service, it will start on each system startup"
 fi
 
 start_msg=""
@@ -47,7 +47,7 @@ if grep -m1 systemd /proc/1/comm > /dev/null
 then
 	echo "---> init deamon: systemd"
 	# systemd
-	install_file /usr/share/hyperion/service/hyperion.systemd /etc/systemd/system/ambilightwifid@.service
+	install_file /usr/share/ambilightwifi/service/ambilightwifi.systemd /etc/systemd/system/ambilightwifid@.service
 	# service registration just on Raspberry Pi, probably need to ask the user how we should use the service. TODO service start in user login scope eg for x11?!
 	if [ $ENABLE_SERVICE -eq 1 ]; then
 		systemctl enable ambilightwifid"@${FOUND_USR}".service
@@ -60,7 +60,7 @@ then
 	echo "---> init deamon: upstart"
 	# upstart
 	if [ $ENABLE_SERVICE -eq 1 ]; then
-		install_file /usr/share/hyperion/service/ambilightwifid.initctl /etc/init/hyperion.conf && initctl reload-configuration
+		install_file /usr/share/ambilightwifi/service/ambilightwifid.initctl /etc/init/ambilightwifi.conf && initctl reload-configuration
 		start_msg="--> initctl start ambilightwifid"
 		initctl start ambilightwifid
 	fi
@@ -69,17 +69,17 @@ else
 	echo "---> init deamon: sysV"
 	# sysV
 	if [ $ENABLE_SERVICE -eq 1 ]; then
-		install_file /usr/share/hyperion/service/hyperion.init /etc/init.d/ambilightwifid && chmod +x /etc/init.d/ambilightwifid && update-rc.d ambilightwifid defaults 98 02
+		install_file /usr/share/ambilightwifi/service/ambilightwifi.init /etc/init.d/ambilightwifid && chmod +x /etc/init.d/ambilightwifid && update-rc.d ambilightwifid defaults 98 02
 		start_msg="---> service ambilightwifid start"
 		service ambilightwifid start
 	fi
 fi
 
 #cleanup
-rm -r /usr/share/hyperion/service
+rm -r /usr/share/ambilightwifi/service
 
 #link binarys and set exec bit
-BINSP=/usr/share/hyperion/bin
+BINSP=/usr/share/ambilightwifi/bin
 BINTP=/usr/bin
 chmod +x -R $BINSP
 ln -fs $BINSP/ambilightwifid $BINTP/ambilightwifid
@@ -92,13 +92,13 @@ ln -fs $BINSP/ambilightwifi-aml $BINTP/ambilightwifi-aml 2>/dev/null
 ln -fs $BINSP/ambilightwifi-qt $BINTP/ambilightwifi-qt 2>/dev/null
 
 # install desktop icons
-echo "---> Install Hyperion desktop icons"
-mkdir /usr/share/pixmaps/hyperion 2>/dev/null
-cp /usr/share/hyperion/desktop/*.png /usr/share/pixmaps/hyperion 2>/dev/null
-desktop-file-install /usr/share/hyperion/desktop/ambilightwifid.desktop 2>/dev/null
+echo "---> Install Ambilight WiFi desktop icons"
+mkdir /usr/share/pixmaps/ambilightwifi 2>/dev/null
+cp /usr/share/ambilightwifi/desktop/*.png /usr/share/pixmaps/ambilightwifi 2>/dev/null
+desktop-file-install /usr/share/ambilightwifi/desktop/ambilightwifid.desktop 2>/dev/null
 
 # cleanup desktop icons
-rm -r /usr/share/hyperion/desktop 2>/dev/null
+rm -r /usr/share/ambilightwifi/desktop 2>/dev/null
 
 #Check, if dtparam=spi=on is in place
 if [ $CPU_RPI -eq 1 ]; then
@@ -122,24 +122,22 @@ fi
 echo ${start_msg}
 
 echo "-----------------------------------------------------------------------------"
-echo "---> Hyperion has been installed/updated!"
+echo "---> Ambilight WiFi has been installed/updated!"
 echo "---> "
 $STARTUP_MSG
 echo "---> For configuration, visit with your browser: ${NET_IP}:8090"
 echo "---> or if already used by another service try: ${NET_IP}:8091"
 $REBOOTMESSAGE
 echo "-----------------------------------------------------------------------------"
-echo "Webpage: www.hyperion-project.org"
-echo "Wiki: wiki.hyperion-project.org"
-echo "Forum: forum.hyperion-project.org"
+echo "Fanpage: https://www.facebook.com/Smart.led.strip.light"
 echo "-----------------------------------------------------------------------------"
 
 
-if [ -e /opt/hyperion/ ]
+if [ -e /opt/ambilightwifi/ ]
 then
 	echo
 	echo "---------------------------------------------------------------------------------"
-	echo "- It seemd that you have an older version of hyperion installed in /opt/hyperion -"
+	echo "- It seemd that you have an older version of Ambilight WiFi installed in /opt/ambilightwifi -"
 	echo "- please remove it to avoid problems                                            -"
 	echo "---------------------------------------------------------------------------------"
 fi
