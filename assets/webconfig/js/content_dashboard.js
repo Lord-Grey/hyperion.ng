@@ -30,7 +30,7 @@ $(document).ready( function() {
 // 	{
 // 		var h = '<span style="color:red;font-weight:bold">'+$.i18n('dashboard_newsbox_noconn')+'</span>';
 // 		$.ajax({
-// 			url: 'https://www.facebook.com/Smart.led.strip.light',
+// 			url: 'https://hyperion-project.org/wp-json/wp/v2/posts?_embed',
 // 			dataType: 'json',
 // 			type: 'GET',
 // 			timeout: 2000
