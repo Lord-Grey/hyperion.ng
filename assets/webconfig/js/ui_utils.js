@@ -540,28 +540,6 @@ function createJsonEditor(container,schema,setconfig,usePanel,arrayre)
 	return editor;
 }
 
-function buildWL(link,linkt,cl)
-{
-	var baseLink = "https://docs.hyperion-project.org/";
-	var lang;
-
-	if(typeof linkt == "undefined")
-		linkt = "Placeholder";
-
-	if(storedLang == "de" || navigator.locale == "de")
-		lang = "de";
-	else
-		lang = "en";
-
-	if(cl === true)
-	{
-		linkt = $.i18n(linkt);
-		return '<div class="bs-callout bs-callout-primary"><h4>'+linkt+'</h4>'+$.i18n('general_wiki_moreto',linkt)+': <a href="'+baseLink+lang+'/'+link+'" target="_blank">'+linkt+'<a></div>'
-	}
-	else
-		return ': <a href="'+baseLink+lang+'/'+link+'" target="_blank">'+linkt+'<a>';
-}
-
 function rgbToHex(rgb)
 {
 	if(rgb.length == 3)

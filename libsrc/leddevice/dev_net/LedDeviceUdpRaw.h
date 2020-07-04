@@ -3,7 +3,7 @@
 // hyperion includes
 #include "ProviderUdp.h"
 
-#define RAW_DEFAULT_PORT	5568
+#define RAW_DEFAULT_PORT	19446
 
 ///
 /// Implementation of the LedDevice interface for sending led colors via udp.
