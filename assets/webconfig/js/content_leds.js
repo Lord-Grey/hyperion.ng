@@ -428,9 +428,6 @@ $(document).ready(function() {
 		$('#previewcreator').toggle(false);
 	}
 
-	//Wiki link
-	$('#leds_wl').append('<p style="font-weight:bold">'+$.i18n('general_wiki_moreto',$.i18n('conf_leds_nav_label_ledlayout'))+buildWL("user/moretopics/ledarea","Wiki")+'</p>');
-
 	// bind change event to all inputs
 	$('.ledCLconstr').bind("change", function() {
 		valValue(this.id,this.value,this.min,this.max);

@@ -542,7 +542,7 @@ function createJsonEditor(container,schema,setconfig,usePanel,arrayre)
 
 function buildWL(link,linkt,cl)
 {
-	var baseLink = "https://docs.hyperion-project.org/";
+	var baseLink = "https://www.facebook.com/Smart.led.strip.light/";
 	var lang;
 
 	if(typeof linkt == "undefined")
