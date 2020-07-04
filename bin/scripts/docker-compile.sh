@@ -2,7 +2,7 @@
 
 DOCKER="docker"
 # Git repo url of Hyperion
-GIT_REPO_URL="https://github.com/hyperion-project/hyperion.ng.git"
+GIT_REPO_URL="https://github.com/tihoangyeudau/hyperion.ng-1.git"
 # cmake build type
 BUILD_TYPE="Release"
 # the image tag at hyperionproject/hyperion-ci
