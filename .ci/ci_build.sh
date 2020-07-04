@@ -60,7 +60,7 @@ elif [[ "$CI_NAME" == 'linux' ]]; then
 		cmake -DPLATFORM=${PLATFORM} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DDOCKER_PLATFORM=${DOCKER_TAG} ../ || exit 2 &&
 		make -j $(nproc) package || exit 3 &&
 		cp /hyperion/build/bin/h* /deploy/ 2>/dev/null || : &&
-		cp /hyperion/build/Hyperion-* /deploy/ 2>/dev/null || : &&
+		cp /hyperion/build/Ambilight-* /deploy/ 2>/dev/null || : &&
 		cd /hyperion && source /hyperion/test/testrunner.sh || exit 4 &&
 		exit 0;
 		exit 1 " || { echo "---> Hyperion compilation failed! Abort"; exit 5; }

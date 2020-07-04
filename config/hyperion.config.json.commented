@@ -293,7 +293,7 @@
 		"paths" :
 		[
 			"$ROOT/custom-effects",
-			"/usr/share/hyperion/effects"
+			"/usr/share/ambilightwifi/effects"
 		],
 		"disable" :
 		[
@@ -351,7 +351,7 @@
       "pblh"		: 0,
       "pblv"		: 100,
       "pbrh"		: 100,
-      "pbrv"		: 100		
+      "pbrv"		: 100
 
  		},
 		"matrix":
@@ -360,7 +360,7 @@
 			"ledsvert" : 10,
 			"cabling"  : "snake",
 			"start"    : "top-left"
-    		}	
+    		}
 	},
 
 	///  The configuration for each individual led. This contains the specification of the area

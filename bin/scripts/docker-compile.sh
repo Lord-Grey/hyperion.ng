@@ -101,7 +101,7 @@ $DOCKER run --rm \
 	make -j $(nproc) ${PACKAGES} || exit 3 &&
 	echo '---> Copy binaries and packages to host folder: ${SCRIPT_PATH}/deploy' &&
 	cp -v /hyperion/build/bin/h* /deploy/ 2>/dev/null || : &&
-	cp -v /hyperion/build/Hyperion-* /deploy/ 2>/dev/null || : &&
+	cp -v /hyperion/build/Ambilight-* /deploy/ 2>/dev/null || : &&
 	exit 0;
 	exit 1 " || { echo "---> Hyperion compilation failed! Abort"; exit 4; }
 

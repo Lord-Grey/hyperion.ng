@@ -40,10 +40,10 @@ if (ENABLE_AMLOGIC)
 	)
 endif()
 
-install ( TARGETS ${PROJECT_NAME} DESTINATION "share/hyperion/bin" COMPONENT "hyperion_framebuffer" )
+install ( TARGETS ${PROJECT_NAME} DESTINATION "share/ambilightwifi/bin" COMPONENT "hyperion_framebuffer" )
 
 if(CMAKE_HOST_UNIX)
-	install(CODE "EXECUTE_PROCESS(COMMAND ln -sf \"../share/hyperion/bin/${PROJECT_NAME}\" \"${CMAKE_BINARY_DIR}/symlink_${PROJECT_NAME}\" )" COMPONENT  "hyperion_framebuffer" )
+	install(CODE "EXECUTE_PROCESS(COMMAND ln -sf \"../share/ambilightwifi/bin/${PROJECT_NAME}\" \"${CMAKE_BINARY_DIR}/symlink_${PROJECT_NAME}\" )" COMPONENT  "hyperion_framebuffer" )
 	install(FILES "${CMAKE_BINARY_DIR}/symlink_${PROJECT_NAME}" DESTINATION "bin" RENAME "${PROJECT_NAME}" COMPONENT "hyperion_framebuffer" )
 	install(CODE "FILE (REMOVE ${CMAKE_BINARY_DIR}/symlink_${PROJECT_NAME} )" COMPONENT  "hyperion_framebuffer" )
 endif(CMAKE_HOST_UNIX)

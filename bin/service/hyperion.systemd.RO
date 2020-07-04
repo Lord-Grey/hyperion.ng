@@ -4,7 +4,7 @@ After=graphical.target
 After=network.target
 
 [Service]
-WorkingDirectory=/storage/hyperion/bin/
+WorkingDirectory=/storage/ambilightwifi/bin/
 Environment=LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
 ExecStart=./ambilightwifid /storage/.config/hyperion/hyperion.config.json
 TimeoutStopSec=5

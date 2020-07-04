@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/ambilightwifid
-WorkingDirectory=/usr/share/hyperion/bin
+WorkingDirectory=/usr/share/ambilightwifi/bin
 User=%i
 TimeoutStopSec=5
 KillMode=mixed

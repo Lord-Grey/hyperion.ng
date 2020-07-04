@@ -17,7 +17,7 @@ Debugging segmentation faults requires a bunch of work, if we don't own your har
   * Open a terminal
   * Make sure Hyperion is NOT running, this can be done by typing `sudo service ambilightwifid stop` into the terminal and press enter
   * Type in `gdb` and press enter. You will now see the gdb welcome information and a "(gdb)" in front of your cursor
-  * Tell gdb where "ambilightwifid" is located, usually at /usr/share/hyperion/bin/ambilightwifid. Prepend "file" to the path. So type into terminal something like that and press enter: `file /usr/share/hyperion/bin/ambilightwifid`
+  * Tell gdb where "ambilightwifid" is located, usually at /usr/share/ambilightwifi/bin/ambilightwifid. Prepend "file" to the path. So type into terminal something like that and press enter: `file /usr/share/ambilightwifi/bin/ambilightwifid`
   * gdb should tell you now that the binary has been loaded with it's symbols etc
   * Now type in `run` and press enter, this will start Hyperion. Now you can use Hyperion as usual, repeat the steps you did to create a segmentation fault.
   * A segmentation fault happend, when Hyperion stops responding and you see something like this as last message at the terminal: `Thread 1 "ambilightwifid" received signal SIGSEGV, Segmentation fault.`

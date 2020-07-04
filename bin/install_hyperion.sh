@@ -75,7 +75,7 @@ if [ $BOBLIGHT_PROCNR -eq 1 ]; then
 fi
 
 #set service script path
-SERVICEL="/usr/share/hyperion/services"
+SERVICEL="/usr/share/ambilightwifi/services"
 
 # Stop hyperion daemon if it is running and set service path
 echo '---> Stop Hyperion, if necessary'
@@ -131,15 +131,15 @@ if [ $CPU_RPI -eq 1 ] && [ $OS_OPENELEC -eq 1 ]; then
 fi
 
 # compatibility layer to move old configs to new config dir
-if [ -f "/opt/hyperion/bin/ambilightwifid" ]; then
-	echo '---> Old installation found, move configs to /etc/hyperion/ and move hyperion to /usr/share/hyperion/'
-	mv /opt/hyperion/config/*.json /etc/hyperion 2>/dev/null
+if [ -f "/opt/ambilightwifi/bin/ambilightwifid" ]; then
+	echo '---> Old installation found, move configs to /etc/ambilightwifi/ and move hyperion to /usr/share/ambilightwifi/'
+	mv /opt/ambilightwifi/config/*.json /etc/hyperion 2>/dev/null
 
-	sed -i "s|/opt/hyperion/effects||g; s|/usr/share/hyperion/effects||g" /etc/hyperion/*.json
+	sed -i "s|/opt/ambilightwifi/effects||g; s|/usr/share/ambilightwifi/effects||g" /etc/ambilightwifi/*.json
 		CPO1=/etc/hyperion.config.json
-		CPO2=/opt/hyperion/config/hyperion.config.json
-		CPN=/etc/hyperion/hyperion.config.json
-		BPO=/opt/hyperion/bin/ambilightwifid
+		CPO2=/opt/ambilightwifi/config/hyperion.config.json
+		CPN=/etc/ambilightwifi/hyperion.config.json
+		BPO=/opt/ambilightwifi/bin/ambilightwifid
 		BPN=/usr/bin/ambilightwifid
 		if [ $USE_INITCTL -eq 1 ]; then
 			sed -i "s|$BPO|$BPN|g" $SERVICEP/hyperion.conf
@@ -221,11 +221,11 @@ if [ $OS_OPENELEC -eq 1 ]; then
 	echo '---> Downloading Hyperion OpenELEC/LibreELEC release'
 	curl -# -L --get $HYPERION_RELEASE | tar -C /storage -xz
 	echo '---> Downloading Hyperion OpenELEC/LibreELEC dependencies'
-	curl -# -L --get $OE_DEPENDECIES | tar -C /storage/hyperion/bin -xz
+	curl -# -L --get $OE_DEPENDECIES | tar -C /storage/ambilightwifi/bin -xz
 	#set the executen bit (failsave)
-	chmod +x -R /storage/hyperion/bin
+	chmod +x -R /storage/ambilightwifi/bin
 else
-	BINSP=/usr/share/hyperion/bin
+	BINSP=/usr/share/ambilightwifi/bin
 	BINTP=/usr/bin
 	wget -nv $HYPERION_RELEASE -O - | tar -C /usr/share -xz
 	#set the executen bit (failsave) and move config to /etc/hyperion
@@ -252,13 +252,13 @@ elif [ $OS_OPENELEC -eq 1 ]; then
 	touch /storage/.config/autostart.sh 2>/dev/null
 	if [ `cat /storage/.config/autostart.sh 2>/dev/null | grep ambilightwifid | wc -l` -eq 0 ]; then
 		echo '---> Adding Hyperion to OpenELEC/LibreELEC autostart.sh'
-		echo "/storage/hyperion/bin/ambilightwifid.sh /storage/.config/hyperion.config.json > /storage/logfiles/hyperion.log 2>&1 &" >> /storage/.config/autostart.sh
+		echo "/storage/ambilightwifi/bin/ambilightwifid.sh /storage/.config/hyperion.config.json > /storage/logfiles/hyperion.log 2>&1 &" >> /storage/.config/autostart.sh
 		chmod +x /storage/.config/autostart.sh
 	fi
 	# only add ambilightwifi-x11 to startup, if not found and x32x64 detected
 	if [ $CPU_X32X64 -eq 1 ] && [ `cat /storage/.config/autostart.sh 2>/dev/null | grep ambilightwifi-x11 | wc -l` -eq 0 ]; then
 		echo '---> Adding ambilightwifi-x11 to OpenELEC/LibreELEC autostart.sh'
-		echo "DISPLAY=:0.0 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/storage/hyperion/bin /storage/hyperion/bin/ambilightwifi-x11 </dev/null >/storage/logfiles/hyperion.log 2>&1 &" >> /storage/.config/autostart.sh
+		echo "DISPLAY=:0.0 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/storage/ambilightwifi/bin /storage/ambilightwifi/bin/ambilightwifi-x11 </dev/null >/storage/logfiles/hyperion.log 2>&1 &" >> /storage/.config/autostart.sh
 	fi
 elif [ $USE_SYSTEMD -eq 1 ]; then
 	echo '---> Installing systemd script'
@@ -282,9 +282,9 @@ fi
 
 #remove unwanted files/dirs
 if [ $OS_OPENELEC -eq 1 ]; then
-	rm -r /storage/hyperion/services
+	rm -r /storage/ambilightwifi/services
 else
-	rm -r /usr/share/hyperion/services
+	rm -r /usr/share/ambilightwifi/services
 	rm -r /opt/hyperion 2>/dev/null
 fi
 

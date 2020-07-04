@@ -41,10 +41,10 @@ if (ENABLE_AMLOGIC)
 	)
 endif()
 
-install ( TARGETS ${PROJECT_NAME} DESTINATION "share/hyperion/bin" COMPONENT "hyperion_aml" )
+install ( TARGETS ${PROJECT_NAME} DESTINATION "share/ambilightwifi/bin" COMPONENT "hyperion_aml" )
 
 if(CMAKE_HOST_UNIX)
-	install(CODE "EXECUTE_PROCESS(COMMAND ln -sf \"../share/hyperion/bin/${PROJECT_NAME}\" \"${CMAKE_BINARY_DIR}/symlink_${PROJECT_NAME}\" )" COMPONENT "hyperion_aml" )
+	install(CODE "EXECUTE_PROCESS(COMMAND ln -sf \"../share/ambilightwifi/bin/${PROJECT_NAME}\" \"${CMAKE_BINARY_DIR}/symlink_${PROJECT_NAME}\" )" COMPONENT "hyperion_aml" )
 	install(FILES "${CMAKE_BINARY_DIR}/symlink_${PROJECT_NAME}" DESTINATION "bin" RENAME "${PROJECT_NAME}" COMPONENT "hyperion_aml" )
 	install(CODE "FILE (REMOVE ${CMAKE_BINARY_DIR}/symlink_${PROJECT_NAME} )" COMPONENT "hyperion_aml" )
 endif(CMAKE_HOST_UNIX)
