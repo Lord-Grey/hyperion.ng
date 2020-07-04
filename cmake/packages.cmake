@@ -105,8 +105,8 @@ SET ( CPACK_NSIS_URL_INFO_ABOUT "https://www.facebook.com/Smart.led.strip.light/
 SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi (Console).lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' '-d -c'")
 SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi (Console).lnk'")
 
-SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe'")
-SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Ambilight WiFi.lnk'")
+#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe'")
+#SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Ambilight WiFi.lnk'")
 
 # ambilightwifid desktop link
 #SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$DESKTOP\\\\Ambilight WiFi.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' ")
