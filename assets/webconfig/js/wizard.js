@@ -1,5 +1,5 @@
 //clear priority and other tasks if people reload the page or lost connection while a wizard was active
-$(window.hyperion).one("ready", function(event) {
+$(window.ambilightwifi).one("ready", function(event) {
   if(getStorage("wizardactive") === 'true')
   {
     requestPriorityClear();
@@ -170,7 +170,7 @@ var withKodi = false;
 var profile = 0;
 var websAddress;
 var imgAddress;
-var vidAddress = "https://sourceforge.net/projects/hyperion-project/files/resources/vid/";
+var vidAddress = "https://www.youtube.com/results?search_query=ambilight+test";
 var picnr = 0;
 var availVideos = ["Sweet_Cocoon","Caminandes_2_GranDillama","Caminandes_3_Llamigos"];
 
@@ -373,7 +373,7 @@ function performAction()
       h +='<div><button id="stop" class="btn btn-sm btn-danger videobtn" style="margin-bottom:15px"><i class="fa fa-fw fa-stop"></i> '+$.i18n('wiz_cc_btn_stop')+'</button></div>';
     }
     else
-      h += '<p>'+$.i18n('wiz_cc_testintrowok')+' <a href="https://sourceforge.net/projects/hyperion-project/files/resources/vid/" target="_blank">'+$.i18n('wiz_cc_link')+'</a></p>';
+      h += '<p>'+$.i18n('wiz_cc_testintrowok')+' <a href="https://www.youtube.com/results?search_query=ambilight+test" target="_blank">'+$.i18n('wiz_cc_link')+'</a></p>';
     h += '<p>'+$.i18n('wiz_cc_summary')+'</p>';
     $('#wiz_cc_desc').html(h);
 
@@ -430,7 +430,7 @@ function startWizardCC()
     sendToKodi("msg", $.i18n('wiz_cc_kodimsg_start'), function(cb){
       if(cb == "error")
       {
-        $('#kodi_status').html('<p style="color:red;font-weight:bold;margin-top:5px">'+$.i18n('wiz_cc_kodidiscon')+'</p><p>'+$.i18n('wiz_cc_kodidisconlink')+' <a href="https://sourceforge.net/projects/hyperion-project/files/resources/Hyperion_calibration_pictures.zip/download" target="_blank">'+$.i18n('wiz_cc_link')+'</p>');
+        $('#kodi_status').html('<p style="color:red;font-weight:bold;margin-top:5px">'+$.i18n('wiz_cc_kodidiscon')+'</p><p>'+$.i18n('wiz_cc_kodidisconlink')+' <a href="https://www.youtube.com/results?search_query=ambilight+test" target="_blank">'+$.i18n('wiz_cc_link')+'</p>');
         withKodi = false;
       }
       else
@@ -913,10 +913,10 @@ function beginWizardHue()
 function createHueUser()
 {
   var connectionRetries = 30;
-  var data = {"devicetype":"hyperion#"+Date.now()}
+  var data = {"devicetype":"ambilightwifi#"+Date.now()}
   if(hueType == 'philipshueentertainment')
   {
-    data = {"devicetype":"hyperion#"+Date.now(), "generateclientkey":true}
+    data = {"devicetype":"ambilightwifi#"+Date.now(), "generateclientkey":true}
   }
   var UserInterval = setInterval(function(){
   $.ajax({

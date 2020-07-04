@@ -77,7 +77,7 @@ $(document).ready(function() {
     if(efx != "__none__")
     {
       requestPriorityClear();
-      $(window.hyperion).one("cmd-clear", function(event) {
+      $(window.ambilightwifi).one("cmd-clear", function(event) {
         setTimeout(function() {requestPlayEffect(efx,duration)}, 100);
       });
     }
@@ -397,27 +397,27 @@ $(document).ready(function() {
 
   // interval updates
 
-    $(window.hyperion).on('components-updated', function(e, comp){
+    $(window.ambilightwifi).on('components-updated', function(e, comp){
     //console.log ("components-updated", e, comp);
     updateComponent (comp);
   });
 
-  $(window.hyperion).on("cmd-priorities-update", function(event){
+  $(window.ambilightwifi).on("cmd-priorities-update", function(event){
     window.serverInfo.priorities = event.response.data.priorities;
     window.serverInfo.priorities_autoselect = event.response.data.priorities_autoselect;
     updateInputSelect();
   });
-  $(window.hyperion).on("cmd-imageToLedMapping-update", function(event){
+  $(window.ambilightwifi).on("cmd-imageToLedMapping-update", function(event){
     window.serverInfo.imageToLedMappingType = event.response.data.imageToLedMappingType;
     updateLedMapping();
   });
 
-  $(window.hyperion).on("cmd-videomode-update", function(event){
+  $(window.ambilightwifi).on("cmd-videomode-update", function(event){
     window.serverInfo.videomode = event.response.data.videomode;
     updateVideoMode();
   });
 
-  $(window.hyperion).on("cmd-effects-update", function(event){
+  $(window.ambilightwifi).on("cmd-effects-update", function(event){
     window.serverInfo.effects = event.response.data.effects;
     updateEffectlist();
   });

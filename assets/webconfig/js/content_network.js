@@ -189,7 +189,7 @@ $(document).ready( function() {
 		else
 		$('#tok_chars_needed').html("<br />")
 	});
-	$(window.hyperion).off("cmd-authorize-createToken").on("cmd-authorize-createToken", function(event) {
+	$(window.ambilightwifi).off("cmd-authorize-createToken").on("cmd-authorize-createToken", function(event) {
 		var val = event.response.info;
 		showInfoDialog("newToken",$.i18n('conf_network_tok_diaTitle'),$.i18n('conf_network_tok_diaMsg')+'<br><div style="font-weight:bold">'+val.token+'</div>')
 		tokenList.push(val)
@@ -213,6 +213,6 @@ $(document).ready( function() {
 	})
 
 	checkApiTokenState(window.serverConfig.network.apiAuth);
-	
+
 	removeOverlay();
 });

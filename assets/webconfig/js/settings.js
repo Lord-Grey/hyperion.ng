@@ -132,10 +132,10 @@ $(document).ready( function() {
 		{
 			if(lsys != window.wSess[i].host+':'+window.wSess[i].port)
 			{
-				var hyperionAddress = window.wSess[i].address;
-				if(hyperionAddress.indexOf(':') > -1 && hyperionAddress.length == 36) hyperionAddress = '['+hyperionAddress+']';
-				hyperionAddress = 'http://'+hyperionAddress+':'+window.wSess[i].port;
-				$('#id_select').append(createSelOpt(hyperionAddress, window.wSess[i].name));
+				var ambilightwifiAddress = window.wSess[i].address;
+				if(ambilightwifiAddress.indexOf(':') > -1 && ambilightwifiAddress.length == 36) ambilightwifiAddress = '['+ambilightwifiAddress+']';
+				ambilightwifiAddress = 'http://'+ambilightwifiAddress+':'+window.wSess[i].port;
+				$('#id_select').append(createSelOpt(ambilightwifiAddress, window.wSess[i].name));
 			}
 		}
 

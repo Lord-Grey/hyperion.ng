@@ -18,7 +18,7 @@ window.schema = {};
 window.sysInfo = {};
 window.jsonPort = 8090;
 window.websocket = null;
-window.hyperion = {};
+window.ambilightwifi = {};
 window.wsTan = 1;
 window.ledStreamActive = false;
 window.imageStreamActive = false;
@@ -27,15 +27,15 @@ window.loggingHandlerInstalled = false;
 window.watchdog = 0;
 window.debugMessagesActive = true;
 window.wSess = [];
-window.currentHyperionInstance = 0;
-window.currentHyperionInstanceName = "?";
+window.currentAmbilightwifiInstance = 0;
+window.currentAmbilightwifiInstanceName = "?";
 window.comps = [];
 window.defaultPasswordIsSet = null;
 tokenList = {};
 
 function initRestart()
 {
-	$(window.hyperion).off();
+	$(window.ambilightwifi).off();
 	requestServerConfigReload();
 	window.watchdog = 10;
 	connectionLostDetection('restart');
@@ -68,7 +68,7 @@ function connectionLostDetection(type)
 
 setInterval(connectionLostDetection, 3000);
 
-// init websocket to hyperion and bind socket events to jquery events of $(hyperion) object
+// init websocket to Ambilight WiFi and bind socket events to jquery events of $(Ambilight WiFi) object
 
 function initWebSocket()
 {
@@ -80,9 +80,9 @@ function initWebSocket()
 			window.websocket = (document.location.protocol == "https:") ? new WebSocket('wss://'+document.location.hostname+":"+window.jsonPort) : new WebSocket('ws://'+document.location.hostname+":"+window.jsonPort);
 
 			window.websocket.onopen = function (event) {
-				$(window.hyperion).trigger({type:"open"});
+				$(window.ambilightwifi).trigger({type:"open"});
 
-				$(window.hyperion).on("cmd-serverinfo", function(event) {
+				$(window.ambilightwifi).on("cmd-serverinfo", function(event) {
 					window.watchdog = 0;
 				});
 			};
@@ -107,7 +107,7 @@ function initWebSocket()
 					case 1015: reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified)."; break;
 					default: reason = "Unknown reason";
 				}
-				$(window.hyperion).trigger({type:"close", reason:reason});
+				$(window.ambilightwifi).trigger({type:"close", reason:reason});
 				window.watchdog = 10;
 				connectionLostDetection();
 			};
@@ -120,31 +120,31 @@ function initWebSocket()
 					var cmd = response.command;
 					if (success || typeof(success) == "undefined")
 					{
-						$(window.hyperion).trigger({type:"cmd-"+cmd, response:response});
+						$(window.ambilightwifi).trigger({type:"cmd-"+cmd, response:response});
 					}
 					else
 					{
 						var error = response.hasOwnProperty("error")? response.error : "unknown";
-						$(window.hyperion).trigger({type:"error",reason:error});
+						$(window.ambilightwifi).trigger({type:"error",reason:error});
 						console.log("[window.websocket::onmessage] ",error)
 					}
 				}
 				catch(exception_error)
 				{
-					$(window.hyperion).trigger({type:"error",reason:exception_error});
+					$(window.ambilightwifi).trigger({type:"error",reason:exception_error});
 					console.log("[window.websocket::onmessage] ",exception_error)
 				}
 			};
 
 			window.websocket.onerror = function (error) {
-				$(window.hyperion).trigger({type:"error",reason:error});
+				$(window.ambilightwifi).trigger({type:"error",reason:error});
 				console.log("[window.websocket::onerror] ",error)
 			};
 		}
 	}
 	else
 	{
-		$(window.hyperion).trigger("error");
+		$(window.ambilightwifi).trigger("error");
 		alert("Websocket is not supported by your browser");
 		return;
 	}

@@ -69,7 +69,7 @@ $(document).ready( function() {
 			}
 		});
 
-		var instancename = window.currentHyperionInstanceName;
+		var instancename = window.currentAmbilightwifiInstanceName;
 		console.log ("instancename: ",instancename);
 
 		$('#dash_statush').html(hyperion_enabled ? '<span style="color:green">'+$.i18n('general_btn_on')+'</span>' : '<span style="color:red">'+$.i18n('general_btn_off')+'</span>');
@@ -79,7 +79,7 @@ $(document).ready( function() {
 	// add more info
 	$('#dash_leddevice').html(window.serverConfig.device.type);
 	$('#dash_currv').html(window.currentVersion);
-	$('#dash_instance').html(window.currentHyperionInstanceName);
+	$('#dash_instance').html(window.currentAmbilightwifiInstanceName);
 	$('#dash_ports').html(window.serverConfig.flatbufServer.port+' | '+window.serverConfig.protoServer.port);
 	$('#dash_watchedversionbranch').html(window.serverConfig.general.watchedVersionBranch);
 
@@ -118,7 +118,7 @@ $(document).ready( function() {
 
 	//interval update
 	updateComponents();
-	$(window.hyperion).on("components-updated",updateComponents);
+	$(window.ambilightwifi).on("components-updated",updateComponents);
 
 	if(window.showOptHelp)
 		createHintH("intro", $.i18n('dashboard_label_intro'), "dash_intro");

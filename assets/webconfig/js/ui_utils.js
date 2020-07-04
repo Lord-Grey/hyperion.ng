@@ -108,7 +108,7 @@ function loadContent(event, forceRefresh)
 
 	var lastSelectedInstance = getStorage('lastSelectedInstance', false);
 
-	if (lastSelectedInstance && (lastSelectedInstance != window.currentHyperionInstance))
+	if (lastSelectedInstance && (lastSelectedInstance != window.currentAmbilightwifiInstance))
 		if (typeof(window.serverInfo.instance[lastSelectedInstance].running) !== 'undefined' && window.serverInfo.instance[lastSelectedInstance].running)
 			instanceSwitch(lastSelectedInstance);
 		else
@@ -133,7 +133,7 @@ function loadContent(event, forceRefresh)
 				$("#page-content").html('<h3>'+$.i18n('info_404')+'</h3>');
 				removeOverlay();
 			}
-			updateUiOnInstance(window.currentHyperionInstance);
+			updateUiOnInstance(window.currentAmbilightwifiInstance);
 		});
 	}
 }
@@ -149,15 +149,15 @@ function getInstanceNameByIndex(index)
 	return "unknown"
 }
 
-function updateHyperionInstanceListing()
+function updateAmbilightwifiInstanceListing()
 {
 	var data = window.serverInfo.instance.filter(entry => entry.running);
 	$('#hyp_inst_listing').html("");
 	for(var key in data)
 	{
-		var currInstMarker = (data[key].instance == window.currentHyperionInstance) ? "component-on" : "";
+		var currInstMarker = (data[key].instance == window.currentAmbilightwifiInstance) ? "component-on" : "";
 
-		var html = '<li id="hyperioninstance_'+data[key].instance+'"> \
+		var html = '<li id="ambilightwifiinstance_'+data[key].instance+'"> \
 			<a>  \
 				<div>  \
 					<i class="fa fa-circle fa-fw '+currInstMarker+'"></i> \
@@ -171,7 +171,7 @@ function updateHyperionInstanceListing()
 
 		$('#hyp_inst_listing').append(html);
 
-		$('#hyperioninstance_'+data[key].instance).off().on("click",function(e){
+		$('#ambilightwifiinstance_'+data[key].instance).off().on("click",function(e){
 			var inst = e.currentTarget.id.split("_")[1]
 			instanceSwitch(inst)
 		});
@@ -197,7 +197,7 @@ function initLanguageSelection()
 	// Resolve text for language code
 	var langText = 'Please Select';
 
-	//Test, if language is supported by hyperion
+	//Test, if language is supported by Ambilight WiFi
 	langIdx = availLang.indexOf(langLocale)
 	if ( langIdx > -1 )
 	{
@@ -205,7 +205,7 @@ function initLanguageSelection()
 	}
 	else
 	{
-		// If language is not supported by hyperion, try fallback language
+		// If language is not supported by Ambilight WiFi, try fallback language
 		langLocale = $.i18n().options.fallbackLocale.substring(0,2);
 		langIdx = availLang.indexOf(langLocale)
 		if ( langIdx > -1 )
@@ -243,10 +243,10 @@ function updateUiOnInstance(inst)
 function instanceSwitch(inst)
 {
 	requestInstanceSwitch(inst)
-	window.currentHyperionInstance = inst;
-	window.currentHyperionInstanceName = getInstanceNameByIndex(inst);
+	window.currentAmbilightwifiInstance = inst;
+	window.currentAmbilightwifiInstanceName = getInstanceNameByIndex(inst);
 	setStorage('lastSelectedInstance', inst, false)
-	updateHyperionInstanceListing()
+	updateAmbilightwifiInstanceListing()
 }
 
 function loadContentTo(containerId, fileName)
