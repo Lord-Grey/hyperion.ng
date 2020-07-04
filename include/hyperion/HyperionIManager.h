@@ -164,7 +164,7 @@ private:
 	void startAll();
 
 	///
-	/// @brief Stop all instances, used from hyperiond
+	/// @brief Stop all instances, used from ambilightwifid
 	///
 	void stopAll();
 

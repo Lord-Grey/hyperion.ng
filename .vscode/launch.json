@@ -5,10 +5,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "(Linux) hyperiond",
+      "name": "(Linux) ambilightwifid",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/bin/hyperiond",
+      "program": "${workspaceFolder}/build/bin/ambilightwifid",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
@@ -24,10 +24,10 @@
       ]
     },
     {
-      "name": "(Windows) hyperiond",
+      "name": "(Windows) ambilightwifid",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/bin/Debug/hyperiond.exe",
+      "program": "${workspaceFolder}/build/bin/Debug/ambilightwifid.exe",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

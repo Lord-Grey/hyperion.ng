@@ -130,7 +130,7 @@ You can subscribe to future data updates. Read more about [Effect updates](/en/j
   ]
 }
 ```
-  
+
 ### LED mapping
 Active mode of led area mapping. [See control LED mapping](/en/json/control#led-mapping)
 ::: tip Subscribe
@@ -200,7 +200,7 @@ You can subscribe to future data updates. Read more about [Priority updates](/en
 If "priorities_autoselect" is "true" the visible source is determined by priority. The lowest number is selected. If someone request to set a source manual, the value switches to "false".
 In case the manual selected source is cleared/stops/duration runs out OR the user requests the auto selection, it switches back to "true". [See also source selection](/en/json/control#source-selection).
 This value will be updated together with the priority update.
-  
+
 ### Instance
 Information about available instances and their state. Each instance represents a LED device. How to control them: [Control Instance](/en/json/control#control-instances).
 ::: tip Subscribe
@@ -233,13 +233,13 @@ You can subscribe to future data updates. Read more about [LEDs Updates](/en/jso
       "hmin":0.0,
       "hmax":1.0,
       "vmin":0.0,
-      "vmax":1.0 
+      "vmax":1.0
     },
     {
       "hmin":0.0,
       "hmax":1.0,
       "vmin":0.0,
-      "vmax":1.0 
+      "vmax":1.0
     },
     ...
   ]
@@ -298,9 +298,9 @@ You can subscribe to future data updates. Read more about [Session updates](/en/
         "host":"raspberrypi",
         "name":"Awwh yeah!!@raspberrypi:8099",
         "port":8090,
-        "type":"_hyperiond-http._tcp."
+        "type":"_ambilightwifid-http._tcp."
     }
-  ] 
+  ]
 }
 ```
 

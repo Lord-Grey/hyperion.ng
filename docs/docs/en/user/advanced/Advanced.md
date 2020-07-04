@@ -96,70 +96,70 @@ Explain the differences between the available modes for blackbar detection.
 <ImageWrap src="/images/en/user_bbmodes.jpg" alt="Hyperion Blackbar detection modes" />
 
 ## Gamma Curve
- Gamma values in a graphic. AS you see 1.0 is neutral. Lower than 1.0 increase the color, higher reduce color. 
+ Gamma values in a graphic. AS you see 1.0 is neutral. Lower than 1.0 increase the color, higher reduce color.
  <ImageWrap src="/images/en/user_gammacurve.png" alt="Hyperion Gamma Curve" />
 
 
 ## CLI
 All executables shipped with Hyperion have some command line arguments/options
 
-### hyperiond
+### ambilightwifid
 The heart of Hyperion
 ``` sh
-# Show the version/build date/commit of Hyperion 
-hyperiond --version
+# Show the version/build date/commit of Hyperion
+ambilightwifid --version
 
 # Reset current adminstration password back to 'hyperion'
-hyperiond --resetPassword
+ambilightwifid --resetPassword
 
 # Overwrite the path for user data (which defaults to your home directory)
-hyperiond --userdata /temp/anotherDir
+ambilightwifid --userdata /temp/anotherDir
 
-# Overwrite log level temporarily: hyperiond -s for silent -v for verbose and -d for debug
-hyperiond -d
+# Overwrite log level temporarily: ambilightwifid -s for silent -v for verbose and -d for debug
+ambilightwifid -d
 
 # Export effects to directory
-hyperiond --export-effects /tmp
+ambilightwifid --export-effects /tmp
 
 # Run Hyperion in desktop mode
-hyperiond --desktop
+ambilightwifid --desktop
 ```
 
 ::: tip
 If a path name contains spaces, surround it with `“`.
-`hyperiond --userdata "/temp/another Dir"`
+`ambilightwifid --userdata "/temp/another Dir"`
 :::
 
-### hyperion-remote
-hyperion-remote is a command line tool which translates given arguments to json commands and sends them to the Hyperion JSON-RPC. Easy to use for scripts. It supports nearly all commands that Hyperion provides.
+### ambilightwifi-remote
+ambilightwifi-remote is a command line tool which translates given arguments to json commands and sends them to the Hyperion JSON-RPC. Easy to use for scripts. It supports nearly all commands that Hyperion provides.
 
 ``` sh
 # Get a list of all available commands
-hyperion-remote -h
+ambilightwifi-remote -h
 
 # Set a color by using HTML color names
-hyperion-remote -c aqua
+ambilightwifi-remote -c aqua
 
 # Set color with hex value
-hyperion-remote -c FF7F50
+ambilightwifi-remote -c FF7F50
 
-# Set color with a duration of 5 seconds instead endless 
-hyperion-remote -c FF7F50 -d 5000
+# Set color with a duration of 5 seconds instead endless
+ambilightwifi-remote -c FF7F50 -d 5000
 
 # Start an effect
-hyperion-remote -e "Rainbow swirl"
+ambilightwifi-remote -e "Rainbow swirl"
 
 # with a duration of 8 seconds instead endless
-hyperion-remote -e "Rainbow swirl" -d 8000
+ambilightwifi-remote -e "Rainbow swirl" -d 8000
 
 # Target a specific instance
 # ATTENTION: Hyperion instances will synchronize with the Instance Syncing feature by default
 # You can configure the behaviour for each instance
-hyperion-remote -I "My cool instance name"
+ambilightwifi-remote -I "My cool instance name"
 # Or
-hyperion-remote --instance "My cool instance name"
+ambilightwifi-remote --instance "My cool instance name"
 # Example set effect for instance
-hyperion-remote --instance "My cool instance name" -e "Rainbow swirl"
+ambilightwifi-remote --instance "My cool instance name" -e "Rainbow swirl"
 ```
 
 ::: tip
@@ -167,7 +167,7 @@ Hyperion remote will search for a Hyperion server automatically. So you can even
 :::
 
 ### hyperion-capture
- We deliver also stand alone capture apps right in your Hyperion directory. They are called hyperion-dispmanx, hyperion-osx, hyperion-x11, hyperion-amlogic, hyperion-framebuffer, hyperion-qt. Depending on your platform you have more or less.
+ We deliver also stand alone capture apps right in your Hyperion directory. They are called ambilightwifi-dispmanx, ambilightwifi-osx, ambilightwifi-x11, ambilightwifi-amlogic, ambilightwifi-framebuffer, ambilightwifi-qt. Depending on your platform you have more or less.
 
 All these application can be started independent from Hyperion and all of these have slightly different options. They communitcate with the flatbuffer interface of Hyperion. So let's start one of them! In this example i use dispmanx for Raspberry Pi, so let us check the available options.
 
@@ -189,5 +189,5 @@ hyprion-dispmanx -h
   --3DTAB                      Interpret the incoming video stream as 3D top-and-bottom
 
 # Let's start with capture interval of 15, width of 100 and a height of 100
-hyperion-dispmanx -a 192.168.0.20:19445 -f 15 --width 100 --height 100
+ambilightwifi-dispmanx -a 192.168.0.20:19445 -f 15 --width 100 --height 100
 ```

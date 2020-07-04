@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An option to reset (delete) the database for the commandline has been added (#820)
 - Improve language selection usability (#812)
 - readded V4L2 Input method from old Hyperion (#825)
-- Windows: Start Hyperion with a console window `hyperiond -c` (Or new start menu entry) (#860)
+- Windows: Start Hyperion with a console window `ambilightwifid -c` (Or new start menu entry) (#860)
 
 ### Changed
 - Updated dependency rpi_ws281x to latest upstream (#820)

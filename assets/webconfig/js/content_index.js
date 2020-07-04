@@ -9,12 +9,12 @@ $(document).ready(function () {
 		if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
 			handleDarkMode();
 		}
-	
+
 		if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
 			setStorage("darkMode", "off", false);
 		}
 	}
-	
+
 	if(getStorage("darkMode", false) == "on")
 	{
 		handleDarkMode();
@@ -82,9 +82,9 @@ $(document).ready(function () {
 	$(".bootstrap-select").click(function(e){
 		e.stopPropagation();
 	});
-	
+
 	//End language selection
-	
+
 	$(window.hyperion).on("cmd-sessions-update", function (event) {
 		window.serverInfo.sessions = event.response.data;
 		updateSessions();
@@ -211,7 +211,7 @@ $(document).ready(function () {
 
 	$(window.hyperion).on("error", function (event) {
 		//If we are getting an error "No Authorization" back with a set loginToken we will forward to new Login (Token is expired.
-		//e.g.: hyperiond was started new in the meantime)
+		//e.g.: ambilightwifid was started new in the meantime)
 		if (event.reason == "No Authorization" && getStorage("loginToken", true)) {
 			removeStorage("loginToken", true);
 			requestRequiresAdminAuth();
@@ -315,9 +315,9 @@ $(document).ready(function () {
 
 function suppressDefaultPwWarning(){
 
-  if (document.getElementById('chk_suppressDefaultPw').checked) 
+  if (document.getElementById('chk_suppressDefaultPw').checked)
 	setStorage("suppressDefaultPwWarning", "true");
-  else 
+  else
 	setStorage("suppressDefaultPwWarning", "false");
 }
 
@@ -347,5 +347,5 @@ $("#btn_darkmode").off().on("click",function(e){
 		setStorage("darkModeOverwrite", true, true);
 		location.reload();
 	}
-	
+
 });

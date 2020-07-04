@@ -8,30 +8,31 @@ Note: call the script with `./docker-compile.sh -h` for more options
 
 **Raspbian Stretch**
 ```
-wget -qN https://raw.github.com/hyperion-project/hyperion.ng/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t rpi-raspbian-stretch
+wget -qN https://raw.github.com/tihoangyeudau/hyperion.ng-1/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t rpi-raspbian-stretch
 ```
 **Raspbian Buster**
 ```
-wget -qN https://raw.github.com/hyperion-project/hyperion.ng/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t rpi-raspbian-buster
+wget -qN https://raw.github.com/tihoangyeudau/hyperion.ng-1/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t rpi-raspbian-buster
 ```
 
 ## Cross compiling on X64_86 for:
 
 **X64:**
 ```
-wget -qN https://raw.github.com/hyperion-project/hyperion.ng/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh
+=======
+wget -qN https://raw.github.com/tihoangyeudau/hyperion.ng-1/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh
 ```
 **i386:**
 ```
-wget -qN https://raw.github.com/hyperion-project/hyperion.ng/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t i386
+wget -qN https://raw.github.com/tihoangyeudau/hyperion.ng-1/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t i386
 ```
 **Raspberry Pi v1 & ZERO**
 ```
-wget -qN https://raw.github.com/hyperion-project/hyperion.ng/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t armv6hf
+wget -qN https://raw.github.com/tihoangyeudau/hyperion.ng-1/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t armv6hf
 ```
 **Raspberry Pi 2 & 3**
 ```
-wget -qN https://raw.github.com/hyperion-project/hyperion.ng/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t armv7hf
+wget -qN https://raw.github.com/tihoangyeudau/hyperion.ng-1/master/bin/scripts/docker-compile.sh && chmod +x *.sh && ./docker-compile.sh -t armv7hf
 ```
 
 # The usual way
@@ -92,14 +93,14 @@ We assume a 64bit Windows 7 or higher. Install the following
 
 complete automated process for Mac/Linux:
 ```bash
-wget -qO- https://raw.githubusercontent.com/hyperion-project/hyperion.ng/master/bin/compile.sh | sh
+wget -qO- https://raw.githubusercontent.com/tihoangyeudau/hyperion.ng-1/master/bin/compile.sh | sh
 ```
 
 some more detailed way: (or more or less the content of the script above)
 be sure you fulfill the prerequisites above.
 
 ```bash
-git clone --recursive https://github.com/hyperion-project/hyperion.ng.git hyperion
+git clone --recursive https://github.com/tihoangyeudau/hyperion.ng-1.git hyperion
 cd hyperion
 mkdir build
 cd build
@@ -112,7 +113,7 @@ sudo make install/strip
 # to uninstall (not very well tested, please keep that in mind)
 sudo make uninstall
 # ... or run it from compile directory
-bin/hyperiond
+bin/ambilightwifi
 # webui is located on localhost:8090 or 8091
 ```
 
@@ -122,7 +123,7 @@ bin/hyperiond
 
 ```
 export HYPERION_DIR="hyperion"
-git clone --recursive --depth 1 https://github.com/hyperion-project/hyperion.ng.git "$HYPERION_DIR"
+git clone --recursive --depth 1 https://github.com/tihoangyeudau/hyperion.ng-1.git "$HYPERION_DIR"
 ```
 
 ### Preparations
@@ -189,7 +190,7 @@ Maintainer: To build installer, install [NSIS](https://nsis.sourceforge.io/Main_
 
 ### Install hyperion into your system
 
-Copy all necessary files to ``/usr/local/share/hyperion``
+Copy all necessary files to ``/usr/local/share/ambilight-wifi``
 ```bash
 sudo make install/strip
 ```
@@ -199,7 +200,7 @@ If you want to install into another location call this before installing
 ```bash
 cmake -DCMAKE_INSTALL_PREFIX=/home/pi/apps ..
 ```
-This will install to ``/home/pi/apps/share/hyperion``
+This will install to ``/home/pi/apps/share/ambilight-wifi``
 
 
 ### Integrating hyperion into your system

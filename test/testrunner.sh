@@ -42,7 +42,7 @@ cd build || exit 1
 echo
 echo "Hyperion test execution"
 echo
-exec_test "hyperiond is executable and show version" bin/hyperiond --version
+exec_test "ambilightwifid is executable and show version" bin/ambilightwifid --version
 
 for cfg in ../config/*json.default
 do

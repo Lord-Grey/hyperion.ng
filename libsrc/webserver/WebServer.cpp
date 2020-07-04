@@ -61,13 +61,13 @@ void WebServer::onServerStarted (quint16 port)
 	if(_serviceRegister == nullptr)
 	{
 		_serviceRegister = new BonjourServiceRegister(this);
-		_serviceRegister->registerService("_hyperiond-http._tcp", port);
+		_serviceRegister->registerService("_ambilightwifid-http._tcp", port);
 	}
 	else if( _serviceRegister->getPort() != port)
 	{
 		delete _serviceRegister;
 		_serviceRegister = new BonjourServiceRegister(this);
-		_serviceRegister->registerService("_hyperiond-http._tcp", port);
+		_serviceRegister->registerService("_ambilightwifid-http._tcp", port);
 	}
 #endif
 	emit stateChange(true);

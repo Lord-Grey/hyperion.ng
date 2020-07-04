@@ -6,29 +6,29 @@ echo "---Hyperion ambient light preinst ---"
 FOUND_USR=`who | grep -o -m1 '^\w*\b'` || "root"
 
 # stop running daemon before we install
-if pgrep hyperiond > /dev/null 2>&1
+if pgrep ambilightwifid > /dev/null 2>&1
 then
 	if grep -m1 systemd /proc/1/comm > /dev/null
 	then
 		echo "--> stop init deamon: systemd"
 		# systemd
-		systemctl stop hyperiond"@${FOUND_USR}" 2> /dev/null
+		systemctl stop ambilightwifid"@${FOUND_USR}" 2> /dev/null
 
 	elif [ -e /sbin/initctl ]
 	then
 		echo "--> stop init deamon: upstart"
 		# upstart
-		initctl stop hyperiond
+		initctl stop ambilightwifid
 
 	else
 		echo "--> stop init deamon: sysV"
 		# sysV
-		service hyperiond stop 2>/dev/null
+		service ambilightwifid stop 2>/dev/null
 	fi
 fi
 
 # In case we don't use a service kill all instances
-killall hyperiond 2> /dev/null
+killall ambilightwifid 2> /dev/null
 
 exit 0
 

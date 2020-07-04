@@ -24,14 +24,14 @@
       "group": "build",
     },
     {
-      "label": "build:debug hyperiond",
+      "label": "build:debug ambilightwifid",
       "type": "shell",
-      "command": "cmake --build ${workspaceFolder}/build --target hyperiond -- -j $(nproc)",
+      "command": "cmake --build ${workspaceFolder}/build --target ambilightwifid -- -j $(nproc)",
       "windows": {
-        "command": "cmake --build ${workspaceFolder}/build --target hyperiond --config Debug -- -maxcpucount"
+        "command": "cmake --build ${workspaceFolder}/build --target ambilightwifid --config Debug -- -maxcpucount"
       },
       "osx": {
-        "command": "cmake --build ${workspaceFolder}/build --target hyperiond -- -j $(sysctl -n hw.ncpu)"
+        "command": "cmake --build ${workspaceFolder}/build --target ambilightwifid -- -j $(sysctl -n hw.ncpu)"
       },
       "group": {
         "kind": "build",
@@ -63,14 +63,14 @@
       "group": "build"
     },
     {
-      "label": "build:release hyperiond",
+      "label": "build:release ambilightwifid",
       "type": "shell",
-      "command": "cmake --build ${workspaceFolder}/build --target hyperiond -- -j $(nproc)",
+      "command": "cmake --build ${workspaceFolder}/build --target ambilightwifid -- -j $(nproc)",
       "windows": {
-        "command": "cmake --build ${workspaceFolder}/build --target hyperiond --config Release -- -maxcpucount"
+        "command": "cmake --build ${workspaceFolder}/build --target ambilightwifid --config Release -- -maxcpucount"
       },
       "osx": {
-        "command": "cmake --build ${workspaceFolder}/build --target hyperiond -- -j $(sysctl -n hw.ncpu)"
+        "command": "cmake --build ${workspaceFolder}/build --target ambilightwifid -- -j $(sysctl -n hw.ncpu)"
       },
       "group": {
         "kind": "build",
@@ -102,20 +102,20 @@
       "group": "build"
     },
     {
-      "label": "run:hyperiond (Debug)",
+      "label": "run:ambilightwifid (Debug)",
       "type": "shell",
-      "command": "${workspaceFolder}/build/bin/hyperiond -d",
+      "command": "${workspaceFolder}/build/bin/ambilightwifid -d",
       "windows": {
-        "command": "${workspaceFolder}/build/bin/Debug/hyperiond -d -c"
+        "command": "${workspaceFolder}/build/bin/Debug/ambilightwifid -d -c"
       },
       "group": "build"
     },
     {
-      "label": "run:hyperiond (Release)",
+      "label": "run:ambilightwifid (Release)",
       "type": "shell",
-      "command": "${workspaceFolder}/build/bin/hyperiond -d",
+      "command": "${workspaceFolder}/build/bin/ambilightwifid -d",
       "windows": {
-        "command": "${workspaceFolder}/build/bin/Release/hyperiond -d -c"
+        "command": "${workspaceFolder}/build/bin/Release/ambilightwifid -d -c"
       },
       "group": "build"
     }

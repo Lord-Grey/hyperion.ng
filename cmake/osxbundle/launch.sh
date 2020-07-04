@@ -1,5 +1,5 @@
 #!/bin/sh
 cd "$(dirname "$0")"
-# Path to hyperiond!?
+# Path to ambilightwifid!?
 cd ../Resources/bin
-exec ./hyperiond "$@"
+exec ./ambilightwifid "$@"

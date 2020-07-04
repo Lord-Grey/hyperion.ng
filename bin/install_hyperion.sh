@@ -16,7 +16,7 @@ fi
 
 #Check, if script is running as root
 if [ $(id -u) != 0 ]; then
-		echo '---> Critical Error: Please run the script as root (sudo sh ./install_hyperion.sh) -> abort' 
+		echo '---> Critical Error: Please run the script as root (sudo sh ./install_hyperion.sh) -> abort'
 		exit 1
 fi
 
@@ -27,9 +27,9 @@ else WMESSAGE="echo This script will install/update Hyperion Ambient Light"
 fi
 
 #Welcome message
-echo '*******************************************************************************' 
-$WMESSAGE 
-echo 'Created by brindosch - hyperion-project.org - the official Hyperion source.' 
+echo '*******************************************************************************'
+$WMESSAGE
+echo 'Created by brindosch - hyperion-project.org - the official Hyperion source.'
 echo '*******************************************************************************'
 
 # Find out if we are on OpenElec (Rasplex) / OSMC / Raspbian
@@ -80,7 +80,7 @@ SERVICEL="/usr/share/hyperion/services"
 # Stop hyperion daemon if it is running and set service path
 echo '---> Stop Hyperion, if necessary'
 if [ $OS_OPENELEC -eq 1 ]; then
-    killall hyperiond 2>/dev/null
+    killall ambilightwifid 2>/dev/null
 elif [ $USE_INITCTL -eq 1 ]; then
 	/sbin/initctl stop hyperion 2>/dev/null
 	SERVICEP="/etc/init"
@@ -129,18 +129,18 @@ if [ $CPU_RPI -eq 1 ] && [ $OS_OPENELEC -eq 1 ]; then
 				fi
 		fi
 fi
- 
+
 # compatibility layer to move old configs to new config dir
-if [ -f "/opt/hyperion/bin/hyperiond" ]; then
+if [ -f "/opt/hyperion/bin/ambilightwifid" ]; then
 	echo '---> Old installation found, move configs to /etc/hyperion/ and move hyperion to /usr/share/hyperion/'
-	mv /opt/hyperion/config/*.json /etc/hyperion 2>/dev/null 
-	
+	mv /opt/hyperion/config/*.json /etc/hyperion 2>/dev/null
+
 	sed -i "s|/opt/hyperion/effects||g; s|/usr/share/hyperion/effects||g" /etc/hyperion/*.json
 		CPO1=/etc/hyperion.config.json
 		CPO2=/opt/hyperion/config/hyperion.config.json
 		CPN=/etc/hyperion/hyperion.config.json
-		BPO=/opt/hyperion/bin/hyperiond
-		BPN=/usr/bin/hyperiond
+		BPO=/opt/hyperion/bin/ambilightwifid
+		BPN=/usr/bin/ambilightwifid
 		if [ $USE_INITCTL -eq 1 ]; then
 			sed -i "s|$BPO|$BPN|g" $SERVICEP/hyperion.conf
 			sed -i "s|$CPO1|$CPN|g" $SERVICEP/hyperion.conf
@@ -227,16 +227,16 @@ if [ $OS_OPENELEC -eq 1 ]; then
 else
 	BINSP=/usr/share/hyperion/bin
 	BINTP=/usr/bin
-	wget -nv $HYPERION_RELEASE -O - | tar -C /usr/share -xz	
+	wget -nv $HYPERION_RELEASE -O - | tar -C /usr/share -xz
 	#set the executen bit (failsave) and move config to /etc/hyperion
 	chmod +x -R $BINSP
 	# create links to the binaries
-	ln -fs $BINSP/hyperiond $BINTP/hyperiond
-	ln -fs $BINSP/hyperion-remote $BINTP/hyperion-remote
-	ln -fs $BINSP/hyperion-v4l2 $BINTP/hyperion-v4l2
-	ln -fs $BINSP/hyperion-dispmanx $BINTP/hyperion-dispmanx 2>/dev/null
-	ln -fs $BINSP/hyperion-x11 $BINTP/hyperion-x11 2>/dev/null
-	ln -fs $BINSP/hyperion-aml $BINTP/hyperion-aml 2>/dev/null
+	ln -fs $BINSP/ambilightwifid $BINTP/ambilightwifid
+	ln -fs $BINSP/ambilightwifi-remote $BINTP/ambilightwifi-remote
+	ln -fs $BINSP/ambilightwifi-v4l2 $BINTP/ambilightwifi-v4l2
+	ln -fs $BINSP/ambilightwifi-dispmanx $BINTP/ambilightwifi-dispmanx 2>/dev/null
+	ln -fs $BINSP/ambilightwifi-x11 $BINTP/ambilightwifi-x11 2>/dev/null
+	ln -fs $BINSP/ambilightwifi-aml $BINTP/ambilightwifi-aml 2>/dev/null
 fi
 
 # Copy the service control configuration to /etc/init (-n to respect user modified scripts)
@@ -250,15 +250,15 @@ elif [ $OS_OPENELEC -eq 1 ]; then
 	# only add to start script if hyperion is not present yet
 	mkdir /storage/logfiles 2>/dev/null
 	touch /storage/.config/autostart.sh 2>/dev/null
-	if [ `cat /storage/.config/autostart.sh 2>/dev/null | grep hyperiond | wc -l` -eq 0 ]; then
+	if [ `cat /storage/.config/autostart.sh 2>/dev/null | grep ambilightwifid | wc -l` -eq 0 ]; then
 		echo '---> Adding Hyperion to OpenELEC/LibreELEC autostart.sh'
-		echo "/storage/hyperion/bin/hyperiond.sh /storage/.config/hyperion.config.json > /storage/logfiles/hyperion.log 2>&1 &" >> /storage/.config/autostart.sh
+		echo "/storage/hyperion/bin/ambilightwifid.sh /storage/.config/hyperion.config.json > /storage/logfiles/hyperion.log 2>&1 &" >> /storage/.config/autostart.sh
 		chmod +x /storage/.config/autostart.sh
 	fi
-	# only add hyperion-x11 to startup, if not found and x32x64 detected
-	if [ $CPU_X32X64 -eq 1 ] && [ `cat /storage/.config/autostart.sh 2>/dev/null | grep hyperion-x11 | wc -l` -eq 0 ]; then
-		echo '---> Adding Hyperion-x11 to OpenELEC/LibreELEC autostart.sh'
-		echo "DISPLAY=:0.0 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/storage/hyperion/bin /storage/hyperion/bin/hyperion-x11 </dev/null >/storage/logfiles/hyperion.log 2>&1 &" >> /storage/.config/autostart.sh		
+	# only add ambilightwifi-x11 to startup, if not found and x32x64 detected
+	if [ $CPU_X32X64 -eq 1 ] && [ `cat /storage/.config/autostart.sh 2>/dev/null | grep ambilightwifi-x11 | wc -l` -eq 0 ]; then
+		echo '---> Adding ambilightwifi-x11 to OpenELEC/LibreELEC autostart.sh'
+		echo "DISPLAY=:0.0 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/storage/hyperion/bin /storage/hyperion/bin/ambilightwifi-x11 </dev/null >/storage/logfiles/hyperion.log 2>&1 &" >> /storage/.config/autostart.sh
 	fi
 elif [ $USE_SYSTEMD -eq 1 ]; then
 	echo '---> Installing systemd script'
@@ -307,13 +307,13 @@ elif [ $USE_SYSTEMD -eq 1 ]; then
 	service hyperion start
 fi
 
-echo '*******************************************************************************' 
-echo 'Hyperion Installation/Update finished!' 
-echo 'Please download the latest HyperCon version to benefit from new features!' 
-echo 'To create a config, follow the HyperCon Guide at our Wiki (EN/DE)!' 
-echo 'Wiki: wiki.hyperion-project.org Webpage: www.hyperion-project.org' 
+echo '*******************************************************************************'
+echo 'Hyperion Installation/Update finished!'
+echo 'Please download the latest HyperCon version to benefit from new features!'
+echo 'To create a config, follow the HyperCon Guide at our Wiki (EN/DE)!'
+echo 'Wiki: wiki.hyperion-project.org Webpage: www.hyperion-project.org'
 $REBOOTMESSAGE
-echo '*******************************************************************************' 
+echo '*******************************************************************************'
 ## Force reboot and prevent prompt if spi is added during a HyperCon Install
 if [ $HCInstall -eq 1 ] && [ $CPU_RPI -eq 1 ] && [ $SPIOK -ne 1 ]; then
 	echo "Rebooting now, we added dtparam=spi=on to config.txt"

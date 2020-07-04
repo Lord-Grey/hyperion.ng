@@ -16,7 +16,7 @@ class NetOrigin;
 
 ///
 /// This class creates a TCP server which accepts connections wich can then send
-/// in JSON encoded commands. This interface to Hyperion is used by hyperion-remote
+/// in JSON encoded commands. This interface to Hyperion is used by ambilightwifi-remote
 /// to control the leds
 ///
 class JsonServer : public QObject

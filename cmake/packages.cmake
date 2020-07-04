@@ -38,7 +38,7 @@ SET ( CPACK_PACKAGE_FILE_NAME "Hyperion-${HYPERION_VERSION}-${CMAKE_SYSTEM_NAME}
 
 SET ( CPACK_PACKAGE_CONTACT "packages@hyperion-project.org")
 SET ( CPACK_PACKAGE_VENDOR "hyperion-project")
-SET ( CPACK_PACKAGE_EXECUTABLES "hyperiond;Hyperion" )
+SET ( CPACK_PACKAGE_EXECUTABLES "ambilightwifid;Hyperion" )
 SET ( CPACK_PACKAGE_INSTALL_DIRECTORY "Hyperion" )
 SET ( CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources/icons/ambilightwifi-icon-32px.png")
 
@@ -46,8 +46,8 @@ SET ( CPACK_PACKAGE_VERSION_MAJOR "${HYPERION_VERSION_MAJOR}")
 SET ( CPACK_PACKAGE_VERSION_MINOR "${HYPERION_VERSION_MINOR}")
 SET ( CPACK_PACKAGE_VERSION_PATCH "${HYPERION_VERSION_PATCH}")
 SET ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" )
-SET ( CPACK_PACKAGE_EXECUTABLES "hyperiond;Hyperion" )
-SET ( CPACK_CREATE_DESKTOP_LINKS "hyperiond;Hyperion" )
+SET ( CPACK_PACKAGE_EXECUTABLES "ambilightwifid;Hyperion" )
+SET ( CPACK_CREATE_DESKTOP_LINKS "ambilightwifid;Hyperion" )
 
 # Define the install prefix path for cpack
 IF ( UNIX )
@@ -98,20 +98,20 @@ SET ( CPACK_NSIS_MUI_HEADERIMAGE ${NSIS_HYP_LOGO_HORI} )
 SET ( CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP ${NSIS_HYP_LOGO_VERT})
 SET ( CPACK_NSIS_DISPLAY_NAME "Hyperion Ambient Light")
 SET ( CPACK_NSIS_PACKAGE_NAME "Hyperion" )
-SET ( CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\hyperiond.exe")
+SET ( CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\ambilightwifid.exe")
 SET ( CPACK_NSIS_HELP_LINK "https://www.hyperion-project.org")
 SET ( CPACK_NSIS_URL_INFO_ABOUT "https://www.hyperion-project.org")
-# additional hyperiond startmenu link, won't be created if the user disables startmenu links
-SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Hyperion (Console).lnk' '$INSTDIR\\\\bin\\\\hyperiond.exe' '-d -c'")
+# additional ambilightwifid startmenu link, won't be created if the user disables startmenu links
+SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Hyperion (Console).lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' '-d -c'")
 SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Hyperion (Console).lnk'")
 
 
-#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Hyperion.lnk' '$INSTDIR\\\\bin\\\\hyperiond.exe'")
+#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Hyperion.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe'")
 #SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Hyperion.lnk'")
-# hyperiond desktop link
-#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$DESKTOP\\\\Hyperion.lnk' '$INSTDIR\\\\bin\\\\hyperiond.exe' ")
+# ambilightwifid desktop link
+#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$DESKTOP\\\\Hyperion.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' ")
 #SET ( CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "Delete '$DESKTOP\\\\Hyperion.lnk' ")
-#SET ( CPACK_NSIS_EXTRA_INSTALL_COMMANDS "CreateShortCut \\\"$DESKTOP\\\\Hyperion.lnk\\\" \\\"$INSTDIR\\\\bin\\\\hyperiond.exe\\\" ")
+#SET ( CPACK_NSIS_EXTRA_INSTALL_COMMANDS "CreateShortCut \\\"$DESKTOP\\\\Hyperion.lnk\\\" \\\"$INSTDIR\\\\bin\\\\ambilightwifid.exe\\\" ")
 #SET ( CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "Delete \\\"$DESKTOP\\\\Hyperion.lnk\\\" ")
 
 # define the install components
@@ -154,7 +154,7 @@ INCLUDE ( CPack )
 
 cpack_add_install_type(Full DISPLAY_NAME "Full")
 cpack_add_install_type(Min DISPLAY_NAME "Minimal")
-cpack_add_component_group(Runtime EXPANDED DESCRIPTION "Hyperion runtime and hyperion-remote commandline tool")
+cpack_add_component_group(Runtime EXPANDED DESCRIPTION "Hyperion runtime and ambilightwifi-remote commandline tool")
 cpack_add_component_group(Screencapture EXPANDED DESCRIPTION "Standalone Screencapture commandline programs")
 # Components base
 cpack_add_component(Hyperion

@@ -31,9 +31,9 @@ You will receive further notifications when the data changes (Network adapter ch
 Also known as [Apple Bonjour](https://en.wikipedia.org/wiki/Bonjour_(software)) or [Avahi](https://en.wikipedia.org/wiki/Avahi_(software)). Hyperion is detectable through zeroconf.
 
 **Hyperion publishes the following informations:**
-  * _hyperiond-http._tcp -> Hyperion Webserver (HTTP+Websocket)
-  * _hyperiond-json._tcp -> Hyperion JSON Server (TcpSocket)
-  * _hyperiond-flatbuf._tcp -> Hyperion Flatbuffers server (Google Flatbuffers)
+  * _ambilightwifid-http._tcp -> Hyperion Webserver (HTTP+Websocket)
+  * _ambilightwifid-json._tcp -> Hyperion JSON Server (TcpSocket)
+  * _ambilightwifid-flatbuf._tcp -> Hyperion Flatbuffers server (Google Flatbuffers)
 
 So you get the ip address, hostname and port of the system. Also the Hyperion instance name is part of it (before the @ for the full name). As this works realtime you have always an up2date list of available Hyperion servers right to your hand. So check your development environment if you have access to it.
 
@@ -44,9 +44,9 @@ Each published entry contains at least the following informations at the txt fie
 
 
 ### Test Clients
-There are several clients available for testing like the [avahi-browse](http://manpages.ubuntu.com/manpages/bionic/man1/avahi-browse.1.html) commandline tool for ubuntu/debian. Example command 
+There are several clients available for testing like the [avahi-browse](http://manpages.ubuntu.com/manpages/bionic/man1/avahi-browse.1.html) commandline tool for ubuntu/debian. Example command
 ``` bash
 sudo apt-get install avahi-browse &&
-avahi-browse -r _hyperiond-http._tcp
+avahi-browse -r _ambilightwifid-http._tcp
 ```
 <ImageWrap src="/images/en/avahi-browse.jpg" alt="Searching for Hyperion Server with Avahi cli" />

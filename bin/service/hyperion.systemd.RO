@@ -6,7 +6,7 @@ After=network.target
 [Service]
 WorkingDirectory=/storage/hyperion/bin/
 Environment=LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
-ExecStart=./hyperiond /storage/.config/hyperion/hyperion.config.json
+ExecStart=./ambilightwifid /storage/.config/hyperion/hyperion.config.json
 TimeoutStopSec=5
 KillMode=mixed
 Restart=on-failure

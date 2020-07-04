@@ -157,7 +157,7 @@ void LedDeviceWrapper::stopDeviceThread()
 {
 	// turns the leds off & stop refresh timers
 	emit closeLedDevice();
-	std::cout << "[hyperiond LedDeviceWrapper] <INFO> LedDevice \'" << QSTRING_CSTR(_ledDevice->getActiveDeviceType()) << "\' closed" << std::endl;
+	std::cout << "[ambilightwifid LedDeviceWrapper] <INFO> LedDevice \'" << QSTRING_CSTR(_ledDevice->getActiveDeviceType()) << "\' closed" << std::endl;
 
 	// get current thread
 	QThread* oldThread = _ledDevice->thread();

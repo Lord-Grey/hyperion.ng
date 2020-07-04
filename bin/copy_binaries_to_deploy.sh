@@ -18,9 +18,9 @@ tar --create --verbose --gzip --absolute-names --show-transformed-names \
 	--transform "s:$builddir/bin/:hyperion/bin/:" \
 	--transform "s:$repodir/bin/hyperion.init.sh:hyperion/init.d/hyperion.init.sh:" \
 	--transform "s://:/:g" \
-	"$builddir/bin/hyperiond" \
-	"$builddir/bin/hyperion-remote" \
-	"$builddir/bin/hyperion-v4l2" \
+	"$builddir/bin/ambilightwifid" \
+	"$builddir/bin/ambilightwifi-remote" \
+	"$builddir/bin/ambilightwifi-v4l2" \
 	"$builddir/bin/gpio2spi" \
 	"$builddir/bin/dispmanx2png" \
 	"$repodir/bin/hyperion.init.sh" \

@@ -67,7 +67,7 @@ function updateSessions()
 		window.wSess = [];
 		for(var i = 0; i<sess.length; i++)
 		{
-			if(sess[i].type == "_hyperiond-http._tcp.")
+			if(sess[i].type == "_ambilightwifid-http._tcp.")
 			{
 				window.wSess.push(sess[i]);
 			}

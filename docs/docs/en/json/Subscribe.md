@@ -67,7 +67,7 @@ You can subscribe to session updates (Found with Bonjour/Zeroconf/Ahavi). These 
 }
 ```
 These updates aren't incremental, so they contain always all found entries.
-Example response with 2 http server sessions (_hyperiond-http._tcp)
+Example response with 2 http server sessions (_ambilightwifid-http._tcp)
 ``` json
 {
     "command":"sessions-update",
@@ -78,7 +78,7 @@ Example response with 2 http server sessions (_hyperiond-http._tcp)
             "host":"ubuntu-2",
             "name":"My Hyperion Config@ubuntu:8090",
             "port":8090,
-            "type":"_hyperiond-http._tcp."
+            "type":"_ambilightwifid-http._tcp."
         },
         {
             "address":"192.168.58.169",
@@ -86,7 +86,7 @@ Example response with 2 http server sessions (_hyperiond-http._tcp)
             "host":"ubuntu-2",
             "name":"My Hyperion Config@ubuntu:8099",
             "port":8099,
-            "type":"_hyperiond-http._tcp."
+            "type":"_ambilightwifid-http._tcp."
         }
    ]
 }
@@ -119,7 +119,7 @@ You get the complete data, please note that if a color or effect is running with
         "componentId":"EFFECT",
         "origin":"System",
         "owner":"Warm mood blobs",
-        "priority":254,    
+        "priority":254,
         "visible":false
       },
       {

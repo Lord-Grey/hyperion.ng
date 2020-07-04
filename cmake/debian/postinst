@@ -47,12 +47,12 @@ if grep -m1 systemd /proc/1/comm > /dev/null
 then
 	echo "---> init deamon: systemd"
 	# systemd
-	install_file /usr/share/hyperion/service/hyperion.systemd /etc/systemd/system/hyperiond@.service
+	install_file /usr/share/hyperion/service/hyperion.systemd /etc/systemd/system/ambilightwifid@.service
 	# service registration just on Raspberry Pi, probably need to ask the user how we should use the service. TODO service start in user login scope eg for x11?!
 	if [ $ENABLE_SERVICE -eq 1 ]; then
-		systemctl enable hyperiond"@${FOUND_USR}".service
-		start_msg="--> systemctl start hyperiond for user ${FOUND_USR}"
-		systemctl start hyperiond"@${FOUND_USR}"
+		systemctl enable ambilightwifid"@${FOUND_USR}".service
+		start_msg="--> systemctl start ambilightwifid for user ${FOUND_USR}"
+		systemctl start ambilightwifid"@${FOUND_USR}"
 	fi
 
 elif [ -e /sbin/initctl ]
@@ -60,18 +60,18 @@ then
 	echo "---> init deamon: upstart"
 	# upstart
 	if [ $ENABLE_SERVICE -eq 1 ]; then
-		install_file /usr/share/hyperion/service/hyperiond.initctl /etc/init/hyperion.conf && initctl reload-configuration
-		start_msg="--> initctl start hyperiond"
-		initctl start hyperiond
+		install_file /usr/share/hyperion/service/ambilightwifid.initctl /etc/init/hyperion.conf && initctl reload-configuration
+		start_msg="--> initctl start ambilightwifid"
+		initctl start ambilightwifid
 	fi
 
 else
 	echo "---> init deamon: sysV"
 	# sysV
 	if [ $ENABLE_SERVICE -eq 1 ]; then
-		install_file /usr/share/hyperion/service/hyperion.init /etc/init.d/hyperiond && chmod +x /etc/init.d/hyperiond && update-rc.d hyperiond defaults 98 02
-		start_msg="---> service hyperiond start"
-		service hyperiond start
+		install_file /usr/share/hyperion/service/hyperion.init /etc/init.d/ambilightwifid && chmod +x /etc/init.d/ambilightwifid && update-rc.d ambilightwifid defaults 98 02
+		start_msg="---> service ambilightwifid start"
+		service ambilightwifid start
 	fi
 fi
 
@@ -82,20 +82,20 @@ rm -r /usr/share/hyperion/service
 BINSP=/usr/share/hyperion/bin
 BINTP=/usr/bin
 chmod +x -R $BINSP
-ln -fs $BINSP/hyperiond $BINTP/hyperiond
-ln -fs $BINSP/hyperion-remote $BINTP/hyperion-remote
-ln -fs $BINSP/hyperion-v4l2 $BINTP/hyperion-v4l2
-ln -fs $BINSP/hyperion-framebuffer $BINTP/hyperion-framebuffer 2>/dev/null
-ln -fs $BINSP/hyperion-dispmanx $BINTP/hyperion-dispmanx 2>/dev/null
-ln -fs $BINSP/hyperion-x11 $BINTP/hyperion-x11 2>/dev/null
-ln -fs $BINSP/hyperion-aml $BINTP/hyperion-aml 2>/dev/null
-ln -fs $BINSP/hyperion-qt $BINTP/hyperion-qt 2>/dev/null
+ln -fs $BINSP/ambilightwifid $BINTP/ambilightwifid
+ln -fs $BINSP/ambilightwifi-remote $BINTP/ambilightwifi-remote
+ln -fs $BINSP/ambilightwifi-v4l2 $BINTP/ambilightwifi-v4l2
+ln -fs $BINSP/ambilightwifi-framebuffer $BINTP/ambilightwifi-framebuffer 2>/dev/null
+ln -fs $BINSP/ambilightwifi-dispmanx $BINTP/ambilightwifi-dispmanx 2>/dev/null
+ln -fs $BINSP/ambilightwifi-x11 $BINTP/ambilightwifi-x11 2>/dev/null
+ln -fs $BINSP/ambilightwifi-aml $BINTP/ambilightwifi-aml 2>/dev/null
+ln -fs $BINSP/ambilightwifi-qt $BINTP/ambilightwifi-qt 2>/dev/null
 
 # install desktop icons
 echo "---> Install Hyperion desktop icons"
 mkdir /usr/share/pixmaps/hyperion 2>/dev/null
 cp /usr/share/hyperion/desktop/*.png /usr/share/pixmaps/hyperion 2>/dev/null
-desktop-file-install /usr/share/hyperion/desktop/hyperiond.desktop 2>/dev/null
+desktop-file-install /usr/share/hyperion/desktop/ambilightwifid.desktop 2>/dev/null
 
 # cleanup desktop icons
 rm -r /usr/share/hyperion/desktop 2>/dev/null
