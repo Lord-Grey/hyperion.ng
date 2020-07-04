@@ -32,7 +32,7 @@ void WebServer::initServer()
 {
 	Debug(_log, "Initialize Webserver");
 	_server = new QtHttpServer (this);
-	_server->setServerName (QStringLiteral ("Hyperion Webserver"));
+	_server->setServerName (QStringLiteral ("Ambilight WiFi Webserver"));
 
 	if(_useSsl)
 	{

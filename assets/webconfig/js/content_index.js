@@ -187,7 +187,7 @@ $(document).ready(function () {
 			if (loginToken)
 				requestTokenAuthorization(loginToken)
 			else
-				requestAuthorization('ambilightwifi');
+				requestAuthorization('hyperion');
 		}
 		else {
 			$("#main-nav").attr('style', 'display:none')

@@ -31,7 +31,7 @@ You will receive further notifications when the data changes (Network adapter ch
 Also known as [Apple Bonjour](https://en.wikipedia.org/wiki/Bonjour_(software)) or [Avahi](https://en.wikipedia.org/wiki/Avahi_(software)). Hyperion is detectable through zeroconf.
 
 **Hyperion publishes the following informations:**
-  * _ambilightwifid-http._tcp -> Hyperion Webserver (HTTP+Websocket)
+  * _ambilightwifid-http._tcp -> Ambilight WiFi Webserver (HTTP+Websocket)
   * _ambilightwifid-json._tcp -> Hyperion JSON Server (TcpSocket)
   * _ambilightwifid-flatbuf._tcp -> Hyperion Flatbuffers server (Google Flatbuffers)
 

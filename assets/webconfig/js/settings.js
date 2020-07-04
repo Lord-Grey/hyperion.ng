@@ -11,7 +11,7 @@ function changePassword(){
 
 	// fill default pw if default is set
 	if(window.defaultPasswordIsSet)
-		$('#oldPw').val('ambilightwifi')
+		$('#oldPw').val('hyperion')
 
 	$('#id_btn_ok').off().on('click',function() {
 		var oldPw = $('#oldPw').val();

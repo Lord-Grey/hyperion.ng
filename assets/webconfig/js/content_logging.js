@@ -109,7 +109,7 @@ $(document).ready(function() {
 		info = JSON.stringify(info);
 		log = JSON.stringify(log);
 		config = JSON.stringify(config);
-		var title = 'Hyperion '+window.currentVersion+' Report ('+window.serverConfig.general.name+' ('+window.serverInfo.ledDevices.active+'))';
+		var title = 'Ambilight WiFi '+window.currentVersion+' Report ('+window.serverConfig.general.name+' ('+window.serverInfo.ledDevices.active+'))';
 
 		$.ajax({
 			url: 'https://www.facebook.com/Smart.led.strip.light/',

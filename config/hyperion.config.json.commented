@@ -267,7 +267,7 @@
  		"priority" : 128
  	},
 
-	/// Configuration of the Hyperion webserver
+	/// Configuration of the Ambilight WiFi webserver
 	///  * document_root : path to hyperion webapp files (webconfig developer only)
 	///  * port          : the port where hyperion webapp is accasible
 	///  * sslPort       : the secure (HTTPS) port of the hyperion webapp
@@ -306,6 +306,7 @@
 	{
 		"systemEnable" : true,
 		"systemPriority" : 250,
+		"v4lEnable" : false,
 		"v4lEnable" : false,
 		"v4lPriority" : 240
 	},
