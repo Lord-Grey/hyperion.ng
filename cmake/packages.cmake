@@ -31,27 +31,27 @@ endif()
 # Apply to all packages, some of these can be overwritten with generator specific content
 # https://cmake.org/cmake/help/v3.5/module/CPack.html
 
-SET ( CPACK_PACKAGE_NAME "Hyperion" )
-SET ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Hyperion is an open source ambient light implementation" )
+SET ( CPACK_PACKAGE_NAME "Ambilight-WiFi" )
+SET ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Ambilight-WiFi is an open source ambient light implementation" )
 SET ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md" )
-SET ( CPACK_PACKAGE_FILE_NAME "Hyperion-${HYPERION_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+SET ( CPACK_PACKAGE_FILE_NAME "Ambilight-WiFi-${HYPERION_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 
-SET ( CPACK_PACKAGE_CONTACT "packages@hyperion-project.org")
-SET ( CPACK_PACKAGE_VENDOR "hyperion-project")
-SET ( CPACK_PACKAGE_EXECUTABLES "ambilightwifid;Hyperion" )
-SET ( CPACK_PACKAGE_INSTALL_DIRECTORY "Hyperion" )
+SET ( CPACK_PACKAGE_CONTACT "rainbowmusicled@gmail.com")
+SET ( CPACK_PACKAGE_VENDOR "rainbow-music-led")
+SET ( CPACK_PACKAGE_EXECUTABLES "ambilightwifid;Ambilight WiFi" )
+SET ( CPACK_PACKAGE_INSTALL_DIRECTORY "ambilight-wifi" )
 SET ( CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources/icons/ambilightwifi-icon-32px.png")
 
 SET ( CPACK_PACKAGE_VERSION_MAJOR "${HYPERION_VERSION_MAJOR}")
 SET ( CPACK_PACKAGE_VERSION_MINOR "${HYPERION_VERSION_MINOR}")
 SET ( CPACK_PACKAGE_VERSION_PATCH "${HYPERION_VERSION_PATCH}")
 SET ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" )
-SET ( CPACK_PACKAGE_EXECUTABLES "ambilightwifid;Hyperion" )
-SET ( CPACK_CREATE_DESKTOP_LINKS "ambilightwifid;Hyperion" )
+SET ( CPACK_PACKAGE_EXECUTABLES "ambilightwifid;Ambilight WiFi" )
+SET ( CPACK_CREATE_DESKTOP_LINKS "ambilightwifid;Ambilight WiFi" )
 
 # Define the install prefix path for cpack
 IF ( UNIX )
-	#SET ( CPACK_PACKAGING_INSTALL_PREFIX "share/hyperion")
+	#SET ( CPACK_PACKAGING_INSTALL_PREFIX "share/ambilight-wifi")
 ENDIF()
 
 # Specific CPack Package Generators
@@ -71,7 +71,7 @@ SET ( CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/rpm
 
 # OSX "Bundle" generator TODO Add more osx generators
 # https://cmake.org/cmake/help/v3.10/module/CPackBundle.html
-SET ( CPACK_BUNDLE_NAME "Hyperion" )
+SET ( CPACK_BUNDLE_NAME "Ambilight WiFi" )
 SET ( CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/cmake/osxbundle/Hyperion.icns )
 SET ( CPACK_BUNDLE_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/cmake/osxbundle/Info.plist )
 SET ( CPACK_BUNDLE_STARTUP_COMMAND "${CMAKE_SOURCE_DIR}/cmake/osxbundle/launch.sh" )
@@ -96,23 +96,23 @@ SET ( CPACK_NSIS_MUI_ICON ${NSIS_HYP_ICO})
 SET ( CPACK_NSIS_MUI_UNIICON ${NSIS_HYP_ICO})
 SET ( CPACK_NSIS_MUI_HEADERIMAGE ${NSIS_HYP_LOGO_HORI} )
 SET ( CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP ${NSIS_HYP_LOGO_VERT})
-SET ( CPACK_NSIS_DISPLAY_NAME "Hyperion Ambient Light")
-SET ( CPACK_NSIS_PACKAGE_NAME "Hyperion" )
+SET ( CPACK_NSIS_DISPLAY_NAME "Ambilight WiFi")
+SET ( CPACK_NSIS_PACKAGE_NAME "Ambilight WiFi" )
 SET ( CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\ambilightwifid.exe")
-SET ( CPACK_NSIS_HELP_LINK "https://www.hyperion-project.org")
-SET ( CPACK_NSIS_URL_INFO_ABOUT "https://www.hyperion-project.org")
+SET ( CPACK_NSIS_HELP_LINK "https://www.facebook.com/Smart.led.strip.light/")
+SET ( CPACK_NSIS_URL_INFO_ABOUT "https://www.facebook.com/Smart.led.strip.light/")
 # additional ambilightwifid startmenu link, won't be created if the user disables startmenu links
-SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Hyperion (Console).lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' '-d -c'")
-SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Hyperion (Console).lnk'")
+SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi (Console).lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' '-d -c'")
+SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi (Console).lnk'")
 
 
-#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Hyperion.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe'")
-#SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Hyperion.lnk'")
+#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Ambilight WiFi.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe'")
+#SET ( CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Ambilight WiFi.lnk'")
 # ambilightwifid desktop link
-#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$DESKTOP\\\\Hyperion.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' ")
-#SET ( CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "Delete '$DESKTOP\\\\Hyperion.lnk' ")
-#SET ( CPACK_NSIS_EXTRA_INSTALL_COMMANDS "CreateShortCut \\\"$DESKTOP\\\\Hyperion.lnk\\\" \\\"$INSTDIR\\\\bin\\\\ambilightwifid.exe\\\" ")
-#SET ( CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "Delete \\\"$DESKTOP\\\\Hyperion.lnk\\\" ")
+#SET ( CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$DESKTOP\\\\Ambilight WiFi.lnk' '$INSTDIR\\\\bin\\\\ambilightwifid.exe' ")
+#SET ( CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "Delete '$DESKTOP\\\\Ambilight WiFi.lnk' ")
+#SET ( CPACK_NSIS_EXTRA_INSTALL_COMMANDS "CreateShortCut \\\"$DESKTOP\\\\Ambilight WiFi.lnk\\\" \\\"$INSTDIR\\\\bin\\\\ambilightwifid.exe\\\" ")
+#SET ( CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "Delete \\\"$DESKTOP\\\\Ambilight WiFi.lnk\\\" ")
 
 # define the install components
 # See also https://gitlab.kitware.com/cmake/community/-/wikis/doc/cpack/Component-Install-With-CPack
@@ -154,19 +154,19 @@ INCLUDE ( CPack )
 
 cpack_add_install_type(Full DISPLAY_NAME "Full")
 cpack_add_install_type(Min DISPLAY_NAME "Minimal")
-cpack_add_component_group(Runtime EXPANDED DESCRIPTION "Hyperion runtime and ambilightwifi-remote commandline tool")
+cpack_add_component_group(Runtime EXPANDED DESCRIPTION "Ambilight WiFi runtime and Ambilight WiFi remote commandline tool")
 cpack_add_component_group(Screencapture EXPANDED DESCRIPTION "Standalone Screencapture commandline programs")
 # Components base
 cpack_add_component(Hyperion
-	DISPLAY_NAME "Hyperion"
-	DESCRIPTION "Hyperion runtime"
+	DISPLAY_NAME "Ambilight WiFi"
+	DESCRIPTION "Ambilight WiFi runtime"
 	INSTALL_TYPES Full Min
 	GROUP Runtime
 	REQUIRED
 )
 cpack_add_component(hyperion_remote
-	DISPLAY_NAME "Hyperion Remote"
-	DESCRIPTION "Hyperion remote cli tool"
+	DISPLAY_NAME "Ambilight WiFi Remote"
+	DESCRIPTION "Ambilight WiFi remote cli tool"
 	INSTALL_TYPES Full
 	GROUP Runtime
 	DEPENDS Hyperion
