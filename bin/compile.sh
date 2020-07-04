@@ -12,7 +12,7 @@ then
 	sudo apt-get install libraspberrypi-dev || exit 1
 fi
 
-git clone --recursive https://github.com/hyperion-project/hyperion.ng.git ${TARGET} || exit 1
+git clone --recursive https://github.com/tihoangyeudau/hyperion.ng-1.git ${TARGET} || exit 1
 
 rm -rf  $TARGET/build
 mkdir -p $TARGET/build           || exit 1

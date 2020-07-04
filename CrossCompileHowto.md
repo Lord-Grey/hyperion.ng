@@ -68,7 +68,7 @@ Follow the dialogs and install in absolute directory of ```$HOME/crosscompile/Qt
 ```
 ### Get the Hyperion-NG source files
 ```
-git clone --recursive https://github.com/hyperion-project/hyperion.ng.git "$HYPERION_DIR"
+git clone --recursive https://github.com/tihoangyeudau/hyperion.ng-1.git "$HYPERION_DIR"
 ```
 ### Get required submodules for Hyperion
 ```
