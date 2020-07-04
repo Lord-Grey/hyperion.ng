@@ -190,7 +190,7 @@ Maintainer: To build installer, install [NSIS](https://nsis.sourceforge.io/Main_
 
 ### Install hyperion into your system
 
-Copy all necessary files to ``/usr/local/share/ambilight-wifi``
+Copy all necessary files to ``/usr/local/share/ambilightwifi``
 ```bash
 sudo make install/strip
 ```
@@ -200,7 +200,7 @@ If you want to install into another location call this before installing
 ```bash
 cmake -DCMAKE_INSTALL_PREFIX=/home/pi/apps ..
 ```
-This will install to ``/home/pi/apps/share/ambilight-wifi``
+This will install to ``/home/pi/apps/share/ambilightwifi``
 
 
 ### Integrating hyperion into your system

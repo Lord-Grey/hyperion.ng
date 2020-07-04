@@ -32,14 +32,14 @@ endif()
 # https://cmake.org/cmake/help/v3.5/module/CPack.html
 
 SET ( CPACK_PACKAGE_NAME "Ambilight-WiFi" )
-SET ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Ambilight-WiFi is an open source ambient light implementation" )
+SET ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Ambilight WiFi is an open source ambient light implementation" )
 SET ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md" )
 SET ( CPACK_PACKAGE_FILE_NAME "Ambilight-WiFi-${HYPERION_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 
 SET ( CPACK_PACKAGE_CONTACT "rainbowmusicled@gmail.com")
 SET ( CPACK_PACKAGE_VENDOR "rainbow-music-led")
 SET ( CPACK_PACKAGE_EXECUTABLES "ambilightwifid;Ambilight WiFi" )
-SET ( CPACK_PACKAGE_INSTALL_DIRECTORY "ambilight-wifi" )
+SET ( CPACK_PACKAGE_INSTALL_DIRECTORY "ambilightwifi" )
 SET ( CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources/icons/ambilightwifi-icon-32px.png")
 
 SET ( CPACK_PACKAGE_VERSION_MAJOR "${HYPERION_VERSION_MAJOR}")
@@ -51,7 +51,7 @@ SET ( CPACK_CREATE_DESKTOP_LINKS "ambilightwifid;Ambilight WiFi" )
 
 # Define the install prefix path for cpack
 IF ( UNIX )
-	#SET ( CPACK_PACKAGING_INSTALL_PREFIX "share/ambilight-wifi")
+	#SET ( CPACK_PACKAGING_INSTALL_PREFIX "share/ambilightwifi")
 ENDIF()
 
 # Specific CPack Package Generators
