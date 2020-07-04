@@ -175,7 +175,7 @@ $(document).ready( function() {
 			(month<10 ? '0' : '') + month + '.' +
 			(day<10 ? '0' : '') + day;
 
-		download(JSON.stringify(window.serverConfig, null, "\t"), 'Hyperion-'+window.currentVersion+'-Backup ('+name+') '+timestamp+'.json', "application/json");
+		download(JSON.stringify(window.serverConfig, null, "\t"), 'Ambilightwifi-'+window.currentVersion+'-Backup ('+name+') '+timestamp+'.json', "application/json");
 	});
 
 	//create introduction
