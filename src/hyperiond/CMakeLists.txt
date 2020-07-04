@@ -92,10 +92,10 @@ if(NOT WIN32)
 	install ( TARGETS hyperiond DESTINATION "share/hyperion/bin" COMPONENT "Hyperion" )
 	install ( DIRECTORY ${CMAKE_SOURCE_DIR}/bin/service DESTINATION "share/hyperion/" COMPONENT "Hyperion" )
 	install ( FILES ${CMAKE_SOURCE_DIR}/effects/readme.txt DESTINATION "share/hyperion/effects" COMPONENT "Hyperion" )
-	install ( FILES ${CMAKE_SOURCE_DIR}/resources/icons/hyperion-icon-32px.png DESTINATION "share/hyperion/icons" COMPONENT "Hyperion" )
+	install ( FILES ${CMAKE_SOURCE_DIR}/resources/icons/ambilightwifi-icon-32px.png DESTINATION "share/hyperion/icons" COMPONENT "Hyperion" )
 
 	# Desktop file for hyperiond
-	install ( FILES ${CMAKE_SOURCE_DIR}/cmake/desktop/hyperiond_128.png DESTINATION "share/hyperion/desktop" COMPONENT "Hyperion" )
+	install ( FILES ${CMAKE_SOURCE_DIR}/cmake/desktop/ambilightwifid_128.png DESTINATION "share/hyperion/desktop" COMPONENT "Hyperion" )
 	install ( FILES ${CMAKE_SOURCE_DIR}/cmake/desktop/hyperiond.desktop DESTINATION "share/hyperion/desktop" COMPONENT "Hyperion" )
 else()
 	install ( TARGETS hyperiond DESTINATION "bin" COMPONENT "Hyperion" )

@@ -63,7 +63,7 @@ module.exports = {
     */
     sidebarDepth: 3,
     smoothScroll: true,
-    logo: '/hyperion-logo.png',
+    logo: '/ambilightwifi-logo.png',
     locales: {
       '/': {
         // text for the language dropdown

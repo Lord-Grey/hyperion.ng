@@ -126,7 +126,7 @@ QCoreApplication* createApplication(int &argc, char *argv[])
 		// add optional library path
 		app->addLibraryPath(QApplication::applicationDirPath() + "/../lib");
 		app->setApplicationDisplayName("Hyperion");
-		app->setWindowIcon(QIcon(":/hyperion-icon-32px.png"));
+		app->setWindowIcon(QIcon(":/ambilightwifi-icon-32px.png"));
 		return app;
 	}
 

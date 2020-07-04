@@ -2,7 +2,7 @@
 sidebar: false
 ---
 
-<img :src="$withBase('/hyperion-logo.png')" alt="Hyperion Logo">
+<img :src="$withBase('/ambilightwifi-logo.png')" alt="Hyperion Logo">
 
 Welcome in the colorful world of Hyperion. Please choose the documentation you want to view.
 

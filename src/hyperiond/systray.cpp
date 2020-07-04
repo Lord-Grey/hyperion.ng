@@ -182,7 +182,7 @@ void SysTray::handleInstanceStateChange(const instanceState& state, const quint8
 					this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
 
 				connect(&_colorDlg, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(setColor(const QColor &)));
-				QIcon icon(":/hyperion-icon-32px.png");
+				QIcon icon(":/ambilightwifi-icon-32px.png");
 				_trayIcon->setIcon(icon);
 				_trayIcon->show();
 				setWindowIcon(icon);
