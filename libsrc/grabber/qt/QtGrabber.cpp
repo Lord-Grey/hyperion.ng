@@ -238,40 +238,42 @@ QPixmap QtGrabber::grabWindow(quintptr window, int xIn, int yIn, int width, int 
 
 int QtGrabber::grabFrame(Image<ColorRgb>& image)
 {
-	int rc = 0;
-	if (_isEnabled && !_isDeviceInError)
-	{
-		if (_screen == nullptr)
-		{
-			// reinit, this will disable capture on failure
-			bool result = setupDisplay();
-			setEnabled(result);
-		}
+    if (!_isEnabled)
+    {
+        return -1;
+    }
 
-		if (_isEnabled)
-		{
+    if (_isDeviceInError)
+    {
+        Error(_log, "Cannot grab frame, device is in error state");
+        return -1;
+    }
+
+
 #ifdef _WIN32
-			QPixmap originalPixmap = grabWindow(0, _src_x, _src_y, _src_x_max, _src_y_max);
+	QPixmap const originalPixmap = grabWindow(0, _src_x, _src_y, _src_x_max, _src_y_max);
 #else
-			QPixmap originalPixmap = _screen->grabWindow(0, _src_x, _src_y, _src_x_max, _src_y_max);
+	QPixmap const originalPixmap = _screen->grabWindow(0, _src_x, _src_y, _src_x_max, _src_y_max);
 #endif
-			if (originalPixmap.isNull())
-			{
-				rc = -1;
-			}
-			else
-			{
-				QImage imageFrame = originalPixmap.toImage().scaled(_width, _height).convertToFormat(QImage::Format_RGB888);
-				image.resize(_width, _height);
-
-				for (int y = 0; y < imageFrame.height(); y++)
-				{
-					memcpy((unsigned char*)image.memptr() + y * image.width() * 3, static_cast<unsigned char*>(imageFrame.scanLine(y)), imageFrame.width() * 3);
-				}
-			}
-		}
+	if (originalPixmap.isNull())
+	{
+		return -1;
 	}
-	return rc;
+
+	QImage const imageFrame = originalPixmap.toImage().scaled(_width, _height).convertToFormat(QImage::Format_RGB888);
+	const int rawSize = imageFrame.width() * imageFrame.height() * 3;
+
+	// Get a modifiable pointer to the destination buffer.
+	// This will only trigger a deep copy if the image is shared AND we are the first to modify it.
+	unsigned char* destPtr = reinterpret_cast<unsigned char*>(image.memptr());
+
+	// Get a read-only pointer to the source QImage buffer.
+	const unsigned char* srcPtr = imageFrame.constBits();
+
+	// Copy the entire image data in one operation.
+	memcpy(destPtr, srcPtr, rawSize);
+
+	return 0;
 }
 
 int QtGrabber::updateScreenDimensions(bool force)
