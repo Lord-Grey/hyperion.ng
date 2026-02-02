@@ -1,12 +1,13 @@
 {
-	"type" : "object",
-	"title" : "edt_conf_effp_heading_title",
-	"properties" :
-	{
+	"type": "object",
+	"title": "edt_conf_effp_heading_title",
+	"properties": {
 		"paths": {
 			"type": "array",
 			"title": "edt_conf_effp_paths_title",
-			"default": [ "$ROOT/custom-effects" ],
+			"default": [
+				"$ROOT/custom-effects"
+			],
 			"items": {
 				"type": "string",
 				"title": "edt_conf_effp_paths_itemtitle"
@@ -16,11 +17,13 @@
 			"options": {
 				"infoText": "edt_conf_effp_paths_expl"
 			}
-			},
+		},
 		"disable": {
 			"type": "array",
 			"title": "edt_conf_effp_disable_title",
-			"default": [ "" ],
+			"default": [
+				""
+			],
 			"items": {
 				"type": "string",
 				"title": "edt_conf_effp_disable_itemtitle"
@@ -31,6 +34,6 @@
 				"infoText": "edt_conf_effp_disable_expl"
 			}
 		}
-		},
-	"additionalProperties" : false
+	},
+	"additionalProperties": false
 }

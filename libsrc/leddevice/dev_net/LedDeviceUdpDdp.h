@@ -4,6 +4,13 @@
 // hyperion includes
 #include "ProviderUdp.h"
 
+#include <QVector>
+#include <QByteArray>
+#include <QJsonObject>
+
+#include <utils/ColorRgb.h>
+#include "utils/ColorRgbw.h"
+
 ///
 /// Implementation of the LedDevice interface for sending LED colors via UDP and the Distributed Display Protocol (DDP)
 /// http://www.3waylabs.com/ddp/#Data%20Types
@@ -50,13 +57,14 @@ protected:
 	/// @param[in] ledValues The RGB-color per LED
 	/// @return Zero on success, else negative
 	///
-	int write(const std::vector<ColorRgb> & ledValues) override;
+	int write(const QVector<ColorRgb> & ledValues) override;
 
 private:
 
 	QByteArray  _ddpData;
 
 	int _packageSequenceNumber;
+	RGBW::WhiteAlgorithm _whiteAlgorithm;	
 };
 
 #endif // LEDEVICEUDPDDP_H

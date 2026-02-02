@@ -16,22 +16,29 @@
 
 using namespace hyperion;
 
-BoblightServer::BoblightServer(Hyperion* hyperion,const QJsonDocument& config)
-	: QObject()
-	, _hyperion(hyperion)
+BoblightServer::BoblightServer(const QSharedPointer<Hyperion>& hyperionInstance,const QJsonDocument& config)
+	: _hyperionWeak(hyperionInstance)
 	, _server(new QTcpServer(this))
 	, _openConnections()
 	, _priority(0)
 	, _log(nullptr)
 	, _port(0)
 {
-	QString subComponent = _hyperion->property("instance").toString();
-	_log= Logger::getInstance("BOBLIGHT", subComponent);
+	QString subComponent{ "__" };
+
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (hyperion)
+	{
+		subComponent = hyperion->property("instance").toString();
+
+		// listen for component change
+		connect(hyperion.get(), &Hyperion::compStateChangeRequest, this, &BoblightServer::compStateChangeRequest);
+	}
+	_log = Logger::getInstance("BOBLIGHT", subComponent);
+	TRACK_SCOPE_SUBCOMPONENT();
 
 	Debug(_log, "Instance created");
 
-	// listen for component change
-	connect(_hyperion, &Hyperion::compStateChangeRequest, this, &BoblightServer::compStateChangeRequest);
 	// listen new connection signal from server
 	connect(_server, &QTcpServer::newConnection, this, &BoblightServer::newConnection);
 
@@ -41,7 +48,7 @@ BoblightServer::BoblightServer(Hyperion* hyperion,const QJsonDocument& config)
 
 BoblightServer::~BoblightServer()
 {
-	stop();
+	TRACK_SCOPE_SUBCOMPONENT();
 }
 
 void BoblightServer::start()
@@ -52,9 +59,13 @@ void BoblightServer::start()
 	if (NetUtils::portAvailable(_port, _log))
 		_server->listen(QHostAddress::Any, _port);
 
-	Info(_log, "Started on port: %d", _port);
+	Info(_log, "Boblight service started on port: %d", _port);
 
-	_hyperion->setNewComponentState(COMP_BOBLIGHTSERVER, _server->isListening());
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (hyperion)
+	{
+		hyperion->setNewComponentState(COMP_BOBLIGHTSERVER, _server->isListening());
+	}
 }
 
 void BoblightServer::stop()
@@ -63,11 +74,17 @@ void BoblightServer::stop()
 		return;
 
 	qDeleteAll(_openConnections);
+	_openConnections.clear();
 
 	_server->close();
 
-	Info(_log, "Stopped");
-	_hyperion->setNewComponentState(COMP_BOBLIGHTSERVER, _server->isListening());
+	Info(_log, "Boblight service stopped");
+
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (hyperion)
+	{
+		hyperion->setNewComponentState(COMP_BOBLIGHTSERVER, _server->isListening());
+	}
 }
 
 bool BoblightServer::active() const
@@ -98,7 +115,7 @@ void BoblightServer::newConnection()
 	if (socket != nullptr)
 	{
 		Info(_log, "New connection from %s ", QSTRING_CSTR(QString("Boblight@%1").arg(socket->peerAddress().toString())));
-		BoblightClientConnection * connection = new BoblightClientConnection(_hyperion, socket, _priority);
+		auto* connection = new BoblightClientConnection(_hyperionWeak.toStrongRef(), socket, _priority);
 		_openConnections.insert(connection);
 
 		// register slot for cleaning up after the connection closed
@@ -120,7 +137,7 @@ void BoblightServer::handleSettingsUpdate(settings::type type, const QJsonDocume
 	if(type == settings::BOBLSERVER)
 	{
 		QJsonObject obj = config.object();
-		_port = obj["port"].toInt();
+		_port = static_cast<uint16_t>(obj["port"].toInt());
 		_priority = obj["priority"].toInt();
 		stop();
 		if(obj["enable"].toBool())

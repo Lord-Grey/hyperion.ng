@@ -1,15 +1,13 @@
 
 #pragma once
 
-// STL includes
-#include <ctime>
-#include <vector>
+// QT includes
+#include <QString>
+#include <QVector>
+#include <QJsonArray>
 
 // Local includes
 #include <utils/ColorRgb.h>
-
-// QT includes
-#include <QString>
 
 // Forward class declarations
 namespace Json { class Value; }
@@ -73,7 +71,7 @@ inline ColorOrder stringToColorOrder(const QString & order)
 }
 
 ///
-/// The Led structure contains the definition of the image portion used to determine a single led's
+/// The Led structure contains the definition of the image portion used to determine a single LED's
 /// color.
 /// @verbatim
 /// |--------------------image--|
@@ -89,39 +87,66 @@ inline ColorOrder stringToColorOrder(const QString & order)
 ///
 struct Led
 {
-	///  The minimum vertical scan line included for this leds color
+	///  The minimum vertical scan line included for this LEDs color
 	double minX_frac;
-	///  The maximum vertical scan line included for this leds color
+	///  The maximum vertical scan line included for this LEDs color
 	double maxX_frac;
-	///  The minimum horizontal scan line included for this leds color
+	///  The minimum horizontal scan line included for this LEDs color
 	double minY_frac;
-	///  The maximum horizontal scan line included for this leds color
+	///  The maximum horizontal scan line included for this LEDs color
 	double maxY_frac;
+	/// A LEDs at {0,0,0,0} is not visible and therefore treated as blacklisted
+	bool isBlacklisted {false};
 	/// the color order
 	ColorOrder colorOrder;
 };
 
 ///
-/// The LedString contains the image integration information of the leds
+/// The LedString contains the image integration information of the LEDs
 ///
 class LedString
 {
 public:
 	///
-	/// Returns the led specifications
+	/// Returns the LED specifications
 	///
 	/// @return The list with led specifications
 	///
-	std::vector<Led>& leds();
+	QVector<Led>& leds();
 
 	///
-	/// Returns the led specifications
+	/// Returns the LED specifications
 	///
 	/// @return The list with led specifications
 	///
-	const std::vector<Led>& leds() const;
+	const QVector<Led>& leds() const;
 
-private:
-	/// The list with led specifications
-	std::vector<Led> mLeds;
-};
+	///
+	/// Returns the IDs of blacklisted LEDs
+	///
+	/// @return ID List of blacklisted LEDs
+	///
+	QVector<int>& blacklistedLedIds();
+
+	///
+	/// Returns the IDs of blacklisted LEDs
+	///
+	/// @return ID List of blacklisted LEDs
+	///
+	const QVector<int>& blacklistedLedIds() const;
+
+	///
+	/// Check, if teh layout has blacklisted LEDs configured
+	///
+	/// @return True, if blacklisted LEDs are configured
+	///
+	bool hasBlackListedLeds () const;
+
+	static LedString createLedString(const QJsonArray& ledConfigArray, const ColorOrder deviceOrder, int maxLedCount);
+
+	private:
+		/// The list with LED specifications
+		QVector<Led> _leds;
+		/// The list containing IDs of blacklisted LED
+		QVector<int> _blacklistedLedIds;
+	};

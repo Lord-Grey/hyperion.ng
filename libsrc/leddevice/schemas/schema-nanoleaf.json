@@ -5,9 +5,13 @@
     "hostList": {
       "type": "string",
       "title": "edt_dev_spec_devices_discovered_title",
-      "enum": [ "NONE" ],
+      "enum": [
+        "NONE"
+      ],
       "options": {
-        "enum_titles": [ "edt_dev_spec_devices_discovery_inprogress" ],
+        "enum_titles": [
+          "edt_dev_spec_devices_discovery_inprogress"
+        ],
         "infoText": "edt_dev_spec_devices_discovered_title_info"
       },
       "required": true,
@@ -50,7 +54,7 @@
       "options": {
         "infoText": "edt_dev_spec_restoreOriginalState_title_info"
       },
-      "propertyOrder": 5
+      "propertyOrder": 4
     },
     "overwriteBrightness": {
       "type": "boolean",
@@ -59,7 +63,7 @@
       "default": true,
       "required": true,
       "access": "advanced",
-      "propertyOrder": 6
+      "propertyOrder": 5
     },
     "brightness": {
       "type": "integer",
@@ -73,50 +77,49 @@
         }
       },
       "access": "advanced",
-      "propertyOrder": 7
+      "propertyOrder": 6
     },
     "title": {
       "type": "object",
       "title": "edt_dev_spec_panelorganisation_title",
       "access": "advanced",
-      "propertyOrder": 8
+      "propertyOrder": 7
     },
     "panelOrderTopDown": {
-      "type": "integer",
+      "type": "string",
       "title": "edt_dev_spec_order_top_down_title",
-      "enum": [ 0, 1 ],
-      "default": 0,
+      "enum": [
+        "top2down",
+        "bottom2up"
+      ],
+      "default": "top2down",
       "required": true,
       "options": {
-        "enum_titles": [ "edt_conf_enum_top_down", "edt_conf_enum_bottom_up" ]
+        "enum_titles": [
+          "edt_conf_enum_top_down",
+          "edt_conf_enum_bottom_up"
+        ]
       },
-      "minimum": 0,
-      "maximum": 1,
       "access": "advanced",
-      "propertyOrder": 9
+      "propertyOrder": 8
     },
     "panelOrderLeftRight": {
-      "type": "integer",
+      "type": "string",
       "title": "edt_dev_spec_order_left_right_title",
-      "enum": [ 0, 1 ],
-      "default": 0,
+      "enum": [
+        "left2right",
+        "right2left"
+      ],
+      "default": "left2right",
       "required": true,
       "options": {
-        "enum_titles": [ "edt_conf_enum_left_right", "edt_conf_enum_right_left" ]
+        "enum_titles": [
+          "edt_conf_enum_left_right",
+          "edt_conf_enum_right_left"
+        ]
       },
-      "minimum": 0,
-      "maximum": 1,
       "access": "advanced",
-      "propertyOrder": 10
-    },
-    "panelStartPos": {
-      "type": "integer",
-      "title": "edt_dev_spec_panel_start_position",
-      "step": 1,
-      "minimum": 0,
-      "default": 0,
-      "access": "advanced",
-      "propertyOrder": 11
+      "propertyOrder": 9
     }
   },
   "additionalProperties": true

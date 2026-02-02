@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FLATBUFFERCONNECTION_H
+#define FLATBUFFERCONNECTION_H
 
 // Qt includes
 #include <QString>
@@ -8,6 +9,7 @@
 #include <QTimer>
 #include <QMap>
 #include <QHostAddress>
+#include <QLoggingCategory>
 
 // hyperion util
 #include <utils/Image.h>
@@ -16,6 +18,8 @@
 #include <utils/Logger.h>
 
 #include <flatbuffers/flatbuffers.h>
+
+Q_DECLARE_LOGGING_CATEGORY(flatbuffer_client_cmd);
 
 const int FLATBUFFER_DEFAULT_PORT = 19400;
 
@@ -39,7 +43,8 @@ public:
 	/// @param port The port of the Hyperion Flatpuffer server (default is 19400)
 	/// @param skipReply  If true skip reply
 	///
-	FlatBufferConnection(const QString& origin, const QString& host, int priority, bool skipReply, quint16 port = FLATBUFFER_DEFAULT_PORT);
+	FlatBufferConnection(const QString& origin, const QHostAddress& address, int priority, bool skipReply, quint16 port = FLATBUFFER_DEFAULT_PORT);
+	FlatBufferConnection(const QString& origin, const QString& hostname, int priority, bool skipReply, quint16 port = FLATBUFFER_DEFAULT_PORT);
 
 	///
 	/// @brief Destructor
@@ -47,14 +52,7 @@ public:
 	~FlatBufferConnection() override;
 
 	/// @brief Do not read reply messages from Hyperion if set to true
-	void setSkipReply(bool skip);
-
-	///
-	/// @brief Register a new priority with given origin
-	/// @param origin  The user friendly origin string
-	/// @param priority The priority to register
-	///
-	void setRegister(const QString& origin, int priority);
+	void setSkipReply(bool skip) const;
 
 	///
 	/// @brief Set all leds to the specified color
@@ -62,24 +60,24 @@ public:
 	/// @param priority The priority
 	/// @param duration The duration in milliseconds
 	///
-	void setColor(const ColorRgb & color, int priority, int duration = 1);
+	void setColor(const ColorRgb & color, int duration = 1);
 
 	///
 	/// @brief Clear the given priority channel
 	/// @param priority The priority
 	///
-	void clear(int priority);
+	void clearPriority(int priority);
 
 	///
 	/// @brief Clear all priority channels
 	///
-	void clearAll();
+	void clearAllPriorities();
 
 	///
-	/// @brief Send a command message and receive its reply
-	/// @param message The message to send
+	/// @brief Check, if client is already registered
+	/// @return True, if reistered
 	///
-	void sendMessage(const uint8_t* buffer, uint32_t size);
+	bool isClientRegistered();
 
 public slots:
 	///
@@ -87,17 +85,28 @@ public slots:
 	/// @param image The image
 	///
 	void setImage(const Image<ColorRgb> &image);
+	void setImage(const QByteArray& imageData, int width, int height, int duration = -1);
+
+signals:
+
+	void isReadyToSend();
+	void isDisconnected();
+	void errorOccured(const QString& error);
 
 private slots:
 	///
 	/// @brief Try to connect to the Hyperion host
 	///
-	void connectToHost();
+	void connectToRemoteHost();
 
 	///
 	/// @brief Slot called when new data has arrived
 	///
 	void readData();
+
+	void onConnected();
+	void onDisconnected();
+
 
 signals:
 
@@ -107,6 +116,15 @@ signals:
 	void setVideoMode(VideoMode videoMode);
 
 private:
+
+	///
+	/// @brief Register a new priority with given origin
+	/// @param origin  The user friendly origin string
+	/// @param priority The priority to register
+	///
+	void registerClient(const QString& origin, int priority);
+
+	void sendMessage(const uint8_t* data, size_t size);
 
 	///
 	/// @brief Parse a reply message
@@ -126,7 +144,7 @@ private:
 	QString _serviceName;
 
 	/// Host address
-	QString _host;
+	QString _hostname;
 
 	/// Host port
 	uint16_t _port;
@@ -135,10 +153,10 @@ private:
 	QByteArray _receiveBuffer;
 
 	QTimer _timer;
-	QAbstractSocket::SocketState  _prevSocketState;
+	QSharedPointer<Logger> _log;
 
-	Logger * _log;
 	flatbuffers::FlatBufferBuilder _builder;
-
-	bool _registered;
+	bool _isRegistered;
 };
+
+#endif // FLATBUFFERCONNECTION_H

@@ -2,18 +2,15 @@
 // QT includes
 #include <QTimer>
 
-#include <grabber/AmlogicGrabber.h>
+#include <grabber/amlogic/AmlogicGrabber.h>
 #include <hyperion/GrabberWrapper.h>
 
 class AmlogicWrapper : public QObject
 {
 	Q_OBJECT
 public:
-	AmlogicWrapper( int updateRate_Hz=GrabberWrapper::DEFAULT_RATE_HZ,
-					int pixelDecimation=GrabberWrapper::DEFAULT_PIXELDECIMATION,
-					int cropLeft=0, int cropRight=0,
-					int cropTop=0, int cropBottom=0
-					);
+	explicit AmlogicWrapper(int updateRate_Hz = GrabberWrapper::DEFAULT_RATE_HZ,
+							int pixelDecimation = GrabberWrapper::DEFAULT_PIXELDECIMATION);
 
 	const Image<ColorRgb> & getScreenshot();
 

@@ -3,6 +3,8 @@
 #include <utils/Logger.h>
 #include <utils/settings.h>
 
+#include <db/AuthTable.h>
+
 //qt
 #include <QMap>
 #include <QVector>
@@ -20,8 +22,7 @@ class AuthManager : public QObject
 	Q_OBJECT
 private:
 	friend class HyperionDaemon;
-	/// constructor is private, can be called from HyperionDaemon
-	AuthManager(QObject *parent = nullptr, bool readonlyMode = false);
+	AuthManager(QObject *parent = nullptr);
 
 public:
 	struct AuthDefinition
@@ -42,22 +43,10 @@ public:
 	QString getID() const { return _uuid; }
 
 	///
-	/// @brief Check authorization is required according to the user setting
-	/// @return       True if authorization required else false
-	///
-	bool isAuthRequired() const { return _authRequired; }
-
-	///
 	/// @brief Check if authorization is required for local network connections
 	/// @return       True if authorization required else false
 	///
 	bool isLocalAuthRequired() const { return _localAuthRequired; }
-
-	///
-	/// @brief Check if authorization is required for local network connections for admin access
-	/// @return       True if authorization required else false
-	///
-	bool isLocalAdminAuthRequired() const { return _localAdminAuthRequired; }
 
 	///
 	/// @brief Reset Hyperion user
@@ -77,10 +66,15 @@ public:
 	///
 	bool isTokenAuthBlocked() const { return (_tokenAuthAttempts.length() >= 25); }
 
-	/// Pointer of this instance
-	static AuthManager *manager;
-	/// Get Pointer of this instance
-	static AuthManager *getInstance() { return manager; }
+    // Singleton accessors
+	static void createInstance(QObject *parent = nullptr);
+	static QSharedPointer<AuthManager> getInstance();
+	static QWeakPointer<AuthManager> getInstanceWeak() { return _instance.toWeakRef(); }
+	static void destroyInstance();
+	static bool isValid();
+
+private:
+	static QSharedPointer<AuthManager> _instance;
 
 public slots:
 
@@ -91,6 +85,11 @@ public slots:
 	/// @return        True if authorized else false
 	///
 	bool isUserAuthorized(const QString &user, const QString &pw);
+
+	/// @brief Check if the default's user password is still set
+	/// @return        True if default password is set else false
+	///
+	bool isDefaultUserPassword() const;
 
 	///
 	/// @brief Check if token is authorized
@@ -152,7 +151,7 @@ public slots:
 	/// @param  caller  The QObject of the caller to deliver the reply
 	/// @param  id      The id created by the caller
 	///
-	void cancelNewTokenRequest(QObject *caller, const QString &, const QString &id);
+	void cancelNewTokenRequest(const QObject *caller, const QString &, const QString &id);
 
 	///
 	/// @brief Handle a token request by id, generate token and inform token caller or deny
@@ -172,7 +171,7 @@ public slots:
 	/// @param usr the defined user
 	/// @return       The token
 	///
-	QString getUserToken(const QString &usr = "Hyperion") const;
+	QString getUserToken(const QString &usr = hyperion::DEFAULT_USER) const;
 
 	///
 	/// @brief Get all available token entries
@@ -185,6 +184,7 @@ public slots:
 	/// @param config configuration object
 	///
 	void handleSettingsUpdate(settings::type type, const QJsonDocument &config);
+
 
 signals:
 	///
@@ -230,14 +230,8 @@ private:
 	/// All pending requests
 	QMap<QString, AuthDefinition> _pendingRequests;
 
-	/// Reflect state of global auth
-	bool _authRequired;
-
 	/// Reflect state of local auth
 	bool _localAuthRequired;
-
-	/// Reflect state of local admin auth
-	bool _localAdminAuthRequired;
 
 	/// Timer for counting against pendingRequest timeouts
 	QTimer *_timer;

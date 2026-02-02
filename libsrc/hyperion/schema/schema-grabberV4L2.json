@@ -1,7 +1,6 @@
 {
-	"type" : "object",
-	"required" : true,
-	"title" : "edt_conf_v4l2_heading_title",
+	"type": "object",
+	"title": "edt_conf_v4l2_heading_title",
 	"properties": {
 		"enable": {
 			"type": "boolean",
@@ -14,9 +13,13 @@
 		"available_devices": {
 			"type": "string",
 			"title": "edt_conf_grabber_discovered_title",
-			"enum": [ "NONE" ],
+			"enum": [
+				"NONE"
+			],
 			"options": {
-				"enum_titles": [ "edt_conf_grabber_discovery_inprogress" ],
+				"enum_titles": [
+					"edt_conf_grabber_discovery_inprogress"
+				],
 				"infoText": "edt_conf_grabber_discovered_title_info"
 			},
 			"required": false,
@@ -25,6 +28,7 @@
 		"device": {
 			"type": "string",
 			"title": "edt_conf_enum_custom",
+			"default": "none",
 			"options": {
 				"hidden": true
 			},
@@ -49,7 +53,6 @@
 			"propertyOrder": 5,
 			"comment": "The 'device_inputs' settings are dynamically inserted into the WebUI under PropertyOrder '4'."
 		},
-
 		"standard": {
 			"type": "string",
 			"title": "edt_conf_v4l2_standard_title",
@@ -127,10 +130,20 @@
 		"flip": {
 			"type": "string",
 			"title": "edt_conf_v4l2_flip_title",
-			"enum": [ "NO_CHANGE", "HORIZONTAL", "VERTICAL", "BOTH" ],
+			"enum": [
+				"NO_CHANGE",
+				"HORIZONTAL",
+				"VERTICAL",
+				"BOTH"
+			],
 			"default": "NO_CHANGE",
 			"options": {
-				"enum_titles": [ "edt_conf_enum_NO_CHANGE", "edt_conf_enum_HORIZONTAL", "edt_conf_enum_VERTICAL", "edt_conf_enum_BOTH" ]
+				"enum_titles": [
+					"edt_conf_enum_NO_CHANGE",
+					"edt_conf_enum_HORIZONTAL",
+					"edt_conf_enum_VERTICAL",
+					"edt_conf_enum_BOTH"
+				]
 			},
 			"required": true,
 			"access": "advanced",
@@ -213,21 +226,13 @@
 			"required": true,
 			"propertyOrder": 23
 		},
-		"cecDetection": {
-			"type": "boolean",
-			"title": "edt_conf_v4l2_cecDetection_title",
-			"default": false,
-			"required": true,
-			"access": "advanced",
-			"propertyOrder": 24
-		},
 		"signalDetection": {
 			"type": "boolean",
 			"title": "edt_conf_v4l2_signalDetection_title",
 			"default": false,
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 25
+			"propertyOrder": 24
 		},
 		"redSignalThreshold": {
 			"type": "integer",
@@ -243,7 +248,7 @@
 			},
 			"access": "expert",
 			"required": true,
-			"propertyOrder": 26
+			"propertyOrder": 25
 		},
 		"greenSignalThreshold": {
 			"type": "integer",
@@ -259,7 +264,7 @@
 			},
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 27
+			"propertyOrder": 26
 		},
 		"blueSignalThreshold": {
 			"type": "integer",
@@ -275,7 +280,7 @@
 			},
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 28
+			"propertyOrder": 27
 		},
 		"noSignalCounterThreshold": {
 			"type": "integer",
@@ -290,7 +295,7 @@
 			},
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 29
+			"propertyOrder": 28
 		},
 		"sDVOffsetMin": {
 			"type": "number",
@@ -306,7 +311,7 @@
 			},
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 30
+			"propertyOrder": 29
 		},
 		"sDVOffsetMax": {
 			"type": "number",
@@ -322,7 +327,7 @@
 			},
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 31
+			"propertyOrder": 30
 		},
 		"sDHOffsetMin": {
 			"type": "number",
@@ -338,7 +343,7 @@
 			},
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 32
+			"propertyOrder": 31
 		},
 		"sDHOffsetMax": {
 			"type": "number",
@@ -354,8 +359,8 @@
 			},
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 33
+			"propertyOrder": 32
 		}
 	},
-		"additionalProperties": true
-	}
+	"additionalProperties": true
+}

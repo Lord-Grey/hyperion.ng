@@ -1,0 +1,156 @@
+#ifndef OSEVENTHANDLER_H
+#define OSEVENTHANDLER_H
+
+#include <QObject>
+#include <QJsonDocument>
+#include <QLoggingCategory>
+
+#include <events/EventEnum.h>
+
+#if defined(_WIN32)
+#include <QAbstractNativeEventFilter>
+#include <QAbstractEventDispatcher>
+#include <QWidget>
+#include <windows.h>
+#include <powrprof.h>
+#endif
+
+#include <utils/Logger.h>
+#include <utils/settings.h>
+
+Q_DECLARE_LOGGING_CATEGORY(event_os);
+
+class Logger;
+
+class OsEventHandlerBase : public QObject
+{
+	Q_OBJECT
+
+public:
+
+	OsEventHandlerBase();
+	virtual ~OsEventHandlerBase();
+
+public slots:
+	void suspend(bool sleep);
+	void lock(bool isLocked);
+	void quit();
+
+	virtual void handleSettingsUpdate(settings::type type, const QJsonDocument& config);
+
+signals:
+	void signalEvent(Event event);
+
+protected:
+	virtual bool registerOsEventHandler() { return true; }
+	virtual void unregisterOsEventHandler() {}
+	virtual bool registerLockHandler() { return true; }
+	virtual void unregisterLockHandler() {}
+
+	bool _isSuspendEnabled;
+	bool _isLockEnabled;
+	bool _isSuspendOnLock;
+
+	bool _isSuspendRegistered;
+	bool _isLockRegistered;
+
+	bool _isService;
+
+	QSharedPointer<Logger> _log;
+};
+
+#if defined(_WIN32)
+
+class OsEventHandlerWindows : public OsEventHandlerBase, public QAbstractNativeEventFilter
+{
+public:
+	OsEventHandlerWindows();
+	~OsEventHandlerWindows();
+
+	static QScopedPointer<OsEventHandlerWindows>& getInstance();
+
+	void handleSuspendResumeEvent(bool sleep);
+
+protected:
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+	bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) override;
+#else
+	bool nativeEventFilter(const QByteArray& eventType, void* message, long int* result) override;
+#endif
+
+	bool registerOsEventHandler() override;
+	void unregisterOsEventHandler() override;
+	bool registerLockHandler() override;
+	void unregisterLockHandler() override;
+
+private:
+
+	static QScopedPointer<OsEventHandlerWindows> instance;
+
+	static DEVICE_NOTIFY_CALLBACK_ROUTINE handlePowerNotifications;
+
+	QWidget* _widget;
+	HPOWERNOTIFY	_notifyHandle;
+};
+
+using OsEventHandler = OsEventHandlerWindows;
+
+#elif defined(__linux__)
+class OsEventHandlerLinux : public OsEventHandlerBase
+{
+	Q_OBJECT
+
+	static void static_signaleHandler(int signum)
+	{
+		OsEventHandlerLinux::getInstance()->handleSignal(signum);
+	}
+
+public:
+	OsEventHandlerLinux();
+
+	static QScopedPointer<OsEventHandlerLinux>& getInstance();
+
+	void handleSignal(int signum);
+
+private:
+	static QScopedPointer<OsEventHandlerLinux> instance;
+
+#if defined(HYPERION_HAS_DBUS)
+	bool registerOsEventHandler() override;
+	void unregisterOsEventHandler() override;
+	bool registerLockHandler() override;
+	void unregisterLockHandler() override;
+#endif
+};
+
+using OsEventHandler = OsEventHandlerLinux;
+
+#elif defined(__APPLE__)
+class OsEventHandlerMacOS : public OsEventHandlerBase
+{
+	Q_OBJECT
+
+public:
+	OsEventHandlerMacOS();
+
+	static QScopedPointer<OsEventHandlerMacOS>& getInstance();
+
+private:
+	static QScopedPointer<OsEventHandlerMacOS> instance;
+
+	bool registerOsEventHandler() override;
+	void unregisterOsEventHandler() override;
+	bool registerLockHandler() override;
+	void unregisterLockHandler() override;
+
+	void* _sleepEventHandler;
+	void* _lockEventHandler;
+};
+
+using OsEventHandler = OsEventHandlerMacOS;
+
+#else
+using OsEventHandler = OsEventHandlerBase;
+#endif
+
+#endif // OSEVENTHANDLER_H

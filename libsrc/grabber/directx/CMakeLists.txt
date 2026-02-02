@@ -1,10 +1,13 @@
-# Define the current source locations
-SET( CURRENT_HEADER_DIR ${CMAKE_SOURCE_DIR}/include/grabber )
-SET( CURRENT_SOURCE_DIR ${CMAKE_SOURCE_DIR}/libsrc/grabber/directx )
+find_package(DirectX9 REQUIRED)
 
-FILE ( GLOB DIRECTX_GRAB_SOURCES "${CURRENT_HEADER_DIR}/DirectX*.h"  "${CURRENT_SOURCE_DIR}/*.h"  "${CURRENT_SOURCE_DIR}/*.cpp" )
+add_library(directx-grabber
+	${CMAKE_SOURCE_DIR}/include/grabber/directx/DirectXGrabber.h
+	${CMAKE_SOURCE_DIR}/include/grabber/directx/DirectXWrapper.h
+	${CMAKE_SOURCE_DIR}/libsrc/grabber/directx/DirectXGrabber.cpp
+	${CMAKE_SOURCE_DIR}/libsrc/grabber/directx/DirectXWrapper.cpp
+)
 
-add_library( directx-grabber ${DIRECTX_GRAB_SOURCES} )
-
-target_link_libraries(directx-grabber hyperion ${DIRECTX9_LIBRARIES})
-target_include_directories(directx-grabber PUBLIC ${DIRECTX9_INCLUDE_DIRS})
+target_link_libraries(directx-grabber
+	hyperion
+	directx9
+)

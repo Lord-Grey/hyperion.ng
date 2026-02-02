@@ -7,17 +7,17 @@
 // QT includes
 #include <QMap>
 #include <QObject>
-#include <QMap>
 #include <QVector>
 
 // Utils includes
 #include <utils/ColorRgb.h>
 #include <utils/Image.h>
 #include <utils/Components.h>
+#include <utils/Logger.h>
 
 // global defines
-#define SMOOTHING_MODE_DEFAULT 0
-#define SMOOTHING_MODE_PAUSE   1
+constexpr auto SMOOTHING_MODE_DEFAULT = 0;
+constexpr auto SMOOTHING_MODE_PAUSE = 1;
 
 class QTimer;
 class Logger;
@@ -41,7 +41,7 @@ public:
 		/// The absolute timeout of the channel
 		int64_t timeoutTime_ms;
 		/// The colors for each led of the channel
-		std::vector<ColorRgb> ledColors;
+		QVector<ColorRgb> ledColors;
 		/// The raw Image (size should be preprocessed!)
 		Image<ColorRgb> image;
 		/// The component
@@ -80,6 +80,16 @@ public:
 	/// Destructor
 	///
 	~PriorityMuxer() override;
+
+	///
+	/// @brief Start the PriorityMuxer and its timers
+	///
+	void start();
+
+	///
+	/// @brief Stop the PriorityMuxer and its timers
+	///
+	void stop();
 
 	///
 	/// @brief Start/Stop the PriorityMuxer update timer; On disabled no priority and timeout updates will be performend
@@ -141,6 +151,13 @@ public:
 	///
 	QList<int> getPriorities() const;
 
+    ///
+    /// Returns the information of all priority channels.
+    ///
+    /// @return The information fo all priority channels
+    ///
+    InputsMap getInputInfo() const;
+
 	///
 	/// Returns the information of a specified priority channel.
 	/// If a priority is no longer available the _lowestPriorityInfo (255) is returned
@@ -169,7 +186,7 @@ public:
 	/// @param  timeout_ms  The new timeout (defaults to -1 endless)
 	/// @return             True on success, false when priority is not found
 	///
-	bool setInput(int priority, const std::vector<ColorRgb>& ledColors, int64_t timeout_ms = ENDLESS);
+	bool setInput(int priority, const QVector<ColorRgb>& ledColors, int64_t timeout_ms = ENDLESS);
 
 	///
 	/// @brief   Update the current image of a priority (prev registered with registerInput())
@@ -249,7 +266,7 @@ private:
 	hyperion::Components getComponentOfPriority(int priority) const;
 
 	/// Logger instance
-	Logger* _log;
+	QSharedPointer<Logger> _log;
 
 	/// The current priority (lowest value in _activeInputs)
 	int _currentPriority;
@@ -273,8 +290,8 @@ private:
 	bool _sourceAutoSelectEnabled;
 
 	// Timer to update Muxer times independent
-	QTimer* _updateTimer;
+	QScopedPointer<QTimer> _updateTimer;
 
-	QTimer* _timer;
-	QTimer* _blockTimer;
+	QScopedPointer<QTimer> _timer;
+	QScopedPointer<QTimer> _blockTimer;
 };

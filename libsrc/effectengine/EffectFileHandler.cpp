@@ -1,4 +1,5 @@
 #include <effectengine/EffectFileHandler.h>
+#include <utils/MemoryTracker.h>
 
 // util
 #include <utils/JsonUtils.h>
@@ -10,14 +11,13 @@
 #include <QMap>
 #include <QByteArray>
 
-EffectFileHandler* EffectFileHandler::efhInstance;
+QSharedPointer<EffectFileHandler> EffectFileHandler::_instance;
 
 EffectFileHandler::EffectFileHandler(const QString& rootPath, const QJsonDocument& effectConfig, QObject* parent)
 	: QObject(parent)
 	, _log(Logger::getInstance("EFFECTFILES"))
 	, _rootPath(rootPath)
 {
-	EffectFileHandler::efhInstance = this;
 
 	Q_INIT_RESOURCE(EffectEngine);
 
@@ -25,11 +25,41 @@ EffectFileHandler::EffectFileHandler(const QString& rootPath, const QJsonDocumen
 	handleSettingsUpdate(settings::EFFECTS, effectConfig);
 }
 
+void EffectFileHandler::createInstance(const QString& rootPath, const QJsonDocument& effectConfig, QObject* parent)
+{
+	CREATE_INSTANCE_WITH_TRACKING(_instance, EffectFileHandler, parent, rootPath, effectConfig, nullptr);
+}
+
+QSharedPointer<EffectFileHandler> EffectFileHandler::getInstance()
+{
+	return _instance;
+}
+
+bool EffectFileHandler::isValid()
+{
+	return !_instance.isNull();
+}
+
+void EffectFileHandler::destroyInstance()
+{
+	_instance.reset();
+}
+
 void EffectFileHandler::handleSettingsUpdate(settings::type type, const QJsonDocument& config)
 {
 	if (type == settings::EFFECTS)
 	{
 		_effectConfig = config.object();
+
+		QJsonArray effectPathArray = _effectConfig["paths"].toArray();
+
+		// TODO: Remove workaround and move effect config to global settings
+		if (effectPathArray.empty())
+		{
+			effectPathArray.append("$ROOT/custom-effects");
+		}
+		_effectConfig["paths"] = effectPathArray;
+
 		// update effects and schemas
 		updateEffects();
 	}
@@ -38,12 +68,15 @@ void EffectFileHandler::handleSettingsUpdate(settings::type type, const QJsonDoc
 QString EffectFileHandler::deleteEffect(const QString& effectName)
 {
 	QString resultMsg;
-	std::list<EffectDefinition> effectsDefinition = getEffects();
-	std::list<EffectDefinition>::iterator it = std::find_if(effectsDefinition.begin(), effectsDefinition.end(),
-		[&effectName](const EffectDefinition& effectDefinition) {return effectDefinition.name == effectName; }
-	);
-
-	if (it != effectsDefinition.end())
+	const auto& effectsDefinition = getEffects();
+	auto it = effectsDefinition.cbegin();
+	for (; it != effectsDefinition.cend(); ++it)
+	{
+		if (it->name == effectName)
+			break;
+	}
+	
+	if (it != effectsDefinition.cend())
 	{
 		QFileInfo effectConfigurationFile(it->file);
 		if (!effectConfigurationFile.absoluteFilePath().startsWith(':'))
@@ -96,14 +129,17 @@ QString EffectFileHandler::saveEffect(const QJsonObject& message)
 	{
 		QString scriptName = message["script"].toString();
 
-		std::list<EffectSchema> effectsSchemas = getEffectSchemas();
-		std::list<EffectSchema>::iterator it = std::find_if(effectsSchemas.begin(), effectsSchemas.end(),
-			[&scriptName](const EffectSchema& schema) {return schema.pyFile == scriptName; }
-		);
-
-		if (it != effectsSchemas.end())
+		const auto& effectsSchemas = getEffectSchemas();
+		auto it = effectsSchemas.cbegin();
+		for (; it != effectsSchemas.cend(); ++it)
 		{
-			if (!JsonUtils::validate("EffectFileHandler", message["args"].toObject(), it->schemaFile, _log))
+			if (it->pyFile == scriptName)
+				break;
+		}
+
+		if (it != effectsSchemas.cend())
+		{
+			if (!JsonUtils::validate("EffectFileHandler", message["args"], it->schemaFile, _log).first)
 			{
 				return "Error during arg validation against schema, please consult the Hyperion Log";
 			}
@@ -124,13 +160,13 @@ QString EffectFileHandler::saveEffect(const QJsonObject& message)
 				effectJson["script"] = message["script"].toString();
 				effectJson["args"] = message["args"].toObject();
 
-				std::list<EffectDefinition> availableEffects = getEffects();
-				std::list<EffectDefinition>::iterator iter = std::find_if(availableEffects.begin(), availableEffects.end(),
-					[&effectName](const EffectDefinition& effectDefinition) {return effectDefinition.name == effectName; }
+				QList<EffectDefinition> availableEffects = getEffects();
+				auto iter = std::find_if(availableEffects.cbegin(), availableEffects.cend(),
+					[&effectName](const EffectDefinition& effectDefinition) { return effectDefinition.name == effectName; }
 				);
 
 				QFileInfo newFileName;
-				if (iter != availableEffects.end())
+				if (iter != availableEffects.cend())
 				{
 					newFileName.setFile(iter->file);
 					if (newFileName.absoluteFilePath().startsWith(':'))
@@ -224,7 +260,7 @@ void EffectFileHandler::updateEffects()
 	}
 
 	QMap<QString, EffectDefinition> availableEffects;
-	for (const QString& path : qAsConst(efxPathList))
+	for (const QString& path : std::as_const(efxPathList))
 	{
 		QDir directory(path);
 		if (!directory.exists())
@@ -241,8 +277,8 @@ void EffectFileHandler::updateEffects()
 		else
 		{
 			int efxCount = 0;
-			QStringList filenames = directory.entryList(QStringList() << "*.json", QDir::Files, QDir::Name | QDir::IgnoreCase);
-			for (const QString& filename : qAsConst(filenames))
+			const QStringList filenames = directory.entryList(QStringList() << "*.json", QDir::Files, QDir::Name | QDir::IgnoreCase);
+			for (const QString& filename : filenames)
 			{
 				EffectDefinition def;
 				if (loadEffectDefinition(path, filename, def))
@@ -268,8 +304,8 @@ void EffectFileHandler::updateEffects()
 
 			QString schemaPath = path + "schema" + '/';
 			directory.setPath(schemaPath);
-			QStringList schemaFileNames = directory.entryList(QStringList() << "*.json", QDir::Files, QDir::Name | QDir::IgnoreCase);
-			for (const QString& schemaFileName : qAsConst(schemaFileNames))
+			const QStringList schemaFileNames = directory.entryList(QStringList() << "*.json", QDir::Files, QDir::Name | QDir::IgnoreCase);
+			for (const QString& schemaFileName : schemaFileNames)
 			{
 				EffectSchema pyEffect;
 				if (loadEffectSchema(path, directory.filePath(schemaFileName), pyEffect))
@@ -282,7 +318,7 @@ void EffectFileHandler::updateEffects()
 		}
 	}
 
-	for (const auto& item : qAsConst(availableEffects))
+	for (const auto& item : std::as_const(availableEffects))
 	{
 		_availableEffects.push_back(item);
 	}
@@ -298,12 +334,12 @@ bool EffectFileHandler::loadEffectDefinition(const QString& path, const QString&
 
 	// Read and parse the effect json config file
 	QJsonObject configEffect;
-	if (!JsonUtils::readFile(fileName, configEffect, _log)) {
+	if (!JsonUtils::readFile(fileName, configEffect, _log).first) {
 		return false;
 	}
 
 	// validate effect config with effect schema(path)
-	if (!JsonUtils::validate(fileName, configEffect, ":effect-schema", _log)) {
+	if (!JsonUtils::validate(fileName, configEffect, ":effect-schema", _log).first) {
 		return false;
 	}
 
@@ -335,7 +371,7 @@ bool EffectFileHandler::loadEffectSchema(const QString& path, const QString& sch
 {
 	// Read and parse the effect schema file
 	QJsonObject schemaEffect;
-	if (!JsonUtils::readFile(schemaFilePath, schemaEffect, _log))
+	if (!JsonUtils::readFile(schemaFilePath, schemaEffect, _log).first)
 	{
 		return false;
 	}

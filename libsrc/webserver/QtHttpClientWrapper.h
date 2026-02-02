@@ -3,6 +3,12 @@
 
 #include <QObject>
 #include <QString>
+#include <QWebSocketServer>
+#include <QCoreApplication>
+#include <QSharedPointer>
+#include <QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(comm_http_client_track);
 
 class QTcpSocket;
 
@@ -10,6 +16,7 @@ class QtHttpRequest;
 class QtHttpReply;
 class QtHttpServer;
 class WebSocketClient;
+class WebSocketJsonHandler;
 class WebJsonRpc;
 
 class QtHttpClientWrapper : public QObject {
@@ -39,8 +46,20 @@ public:
 	///
 	void closeConnection();
 
+	void closeWebSocketConnection();
+
+	bool isWebSocketConnectionOpen() const
+	{
+		return !m_websocketClient.isNull();
+	}
+
+signals:
+	void newWebSocketConnection();
+	void disconnected();
+
 private slots:
 	void onClientDataReceived (void);
+	void onNewWebSocketConnection();
 
 protected:
 	ParsingStatus sendReplyToClient (QtHttpReply * reply);
@@ -50,14 +69,19 @@ protected slots:
 	void onReplySendDataRequested    (void);
 
 private:
+
+	void injectCorsHeaders(QtHttpReply* reply) const;
+
 	QString           m_guid;
 	ParsingStatus     m_parsingStatus;
 	QTcpSocket    *   m_sockClient;
 	QtHttpRequest *   m_currentRequest;
 	QtHttpServer  *   m_serverHandle;
 	const bool        m_localConnection;
-	WebSocketClient * m_websocketClient;
-	WebJsonRpc *      m_webJsonRpc;
+	QByteArray        m_fragment;
+	QSharedPointer<WebSocketJsonHandler> m_websocketClient;
+	QSharedPointer<WebJsonRpc> m_webJsonRpc;
+	QSharedPointer<QWebSocketServer> m_websocketServer;
 };
 
 #endif // QTHTTPCLIENTWRAPPER_H

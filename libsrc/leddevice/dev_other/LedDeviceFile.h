@@ -6,7 +6,8 @@
 
 // Qt includes
 #include <QFile>
-#include <QDateTime>
+#include <QScopedPointer>
+#include <QVector>
 
 ///
 /// Implementation of the LedDevice that write the LED-colors to an
@@ -22,11 +23,6 @@ public:
 	/// @param deviceConfig Device's configuration as JSON-Object
 	///
 	explicit LedDeviceFile(const QJsonObject &deviceConfig);
-
-	///
-	/// @brief Destructor of the LedDevice
-	///
-	~LedDeviceFile() override;
 
 	///
 	/// @brief Constructs the LED-device
@@ -60,19 +56,28 @@ protected:
 	int close() override;
 
 	///
+	/// @brief Power-/turn off a file-device
+	///
+	/// The off-state is simulated by writing "Black to LED"
+	///
+	/// @return True, if success
+	///
+	bool powerOff() override;
+
+	///
 	/// @brief Writes the RGB-Color values to the LEDs.
 	///
 	/// @param[in] ledValues The RGB-color per LED
 	/// @return Zero on success, else negative
 	///
-	int write(const std::vector<ColorRgb> & ledValues) override;
-
-	/// The outputstream
-	QFile* _file;
+	int write(const QVector<ColorRgb> & ledValues) override;
 
 private:
 
 	void initFile(const QString &filename);
+
+	/// The outputstream
+	QScopedPointer<QFile,QScopedPointerDeleteLater> _file;
 
 	QString _fileName;
 	/// Timestamp for the output record

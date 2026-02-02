@@ -1,4 +1,5 @@
 #include <hyperion/AuthManager.h>
+#include <utils/MemoryTracker.h>
 
 // db
 #include <db/AuthTable.h>
@@ -7,19 +8,18 @@
 // qt
 #include <QJsonObject>
 #include <QTimer>
+#include <QDateTime>
+#include <QUuid>
 
-AuthManager *AuthManager::manager = nullptr;
+QSharedPointer<AuthManager> AuthManager::_instance;
 
-AuthManager::AuthManager(QObject *parent, bool readonlyMode)
+AuthManager::AuthManager(QObject *parent)
 	: QObject(parent)
-	, _authTable(new AuthTable("", this, readonlyMode))
-	, _metaTable(new MetaTable(this, readonlyMode))
-	, _pendingRequests()
-	, _authRequired(true)
+	, _authTable(new AuthTable(this))
+	, _metaTable(new MetaTable(this))
 	, _timer(new QTimer(this))
 	, _authBlockTimer(new QTimer(this))
 {
-	AuthManager::manager = this;
 
 	// get uuid
 	_uuid = _metaTable->getUUID();
@@ -36,13 +36,33 @@ AuthManager::AuthManager(QObject *parent, bool readonlyMode)
 	connect(_authBlockTimer, &QTimer::timeout, this, &AuthManager::checkAuthBlockTimeout);
 
 	// init with default user and password
-	if (!_authTable->userExist("Hyperion"))
+	if (!_authTable->userExist(hyperion::DEFAULT_USER))
 	{
-		_authTable->createUser("Hyperion", "hyperion");
+		_authTable->createUser(hyperion::DEFAULT_USER, hyperion::DEFAULT_PASSWORD);
 	}
 
 	// update Hyperion user token on startup
-	_authTable->setUserToken("Hyperion");
+	_authTable->setUserToken(hyperion::DEFAULT_USER);
+}
+
+void AuthManager::createInstance(QObject *parent)
+{
+	CREATE_INSTANCE_WITH_TRACKING(_instance, AuthManager, parent, nullptr);
+}
+
+QSharedPointer<AuthManager> AuthManager::getInstance()
+{
+	return _instance;
+}
+
+bool AuthManager::isValid()
+{
+	return !_instance.isNull();
+}
+
+void AuthManager::destroyInstance()
+{
+	_instance.reset();
 }
 
 AuthManager::AuthDefinition AuthManager::createToken(const QString &comment)
@@ -109,6 +129,11 @@ bool AuthManager::isUserAuthorized(const QString &user, const QString &pw)
 	return true;
 }
 
+bool AuthManager::isDefaultUserPassword() const
+{
+	return _authTable->isUserAuthorized(hyperion::DEFAULT_USER, hyperion::DEFAULT_PASSWORD);
+}
+
 bool AuthManager::isTokenAuthorized(const QString &token)
 {
 	if (isTokenAuthBlocked())
@@ -161,7 +186,7 @@ void AuthManager::setNewTokenRequest(QObject *caller, const QString &comment, co
 	}
 }
 
-void AuthManager::cancelNewTokenRequest(QObject *caller, const QString &, const QString &id)
+void AuthManager::cancelNewTokenRequest(const QObject *caller, const QString &, const QString &id)
 {
 	if (_pendingRequests.contains(id))
 	{
@@ -201,6 +226,8 @@ QVector<AuthManager::AuthDefinition> AuthManager::getPendingRequests() const
 		def.comment = entry.comment;
 		def.id = entry.id;
 		def.timeoutTime = entry.timeoutTime - QDateTime::currentMSecsSinceEpoch();
+		def.tan = entry.tan;
+		def.caller = nullptr;
 		finalVec.append(def);
 	}
 	return finalVec;
@@ -208,20 +235,26 @@ QVector<AuthManager::AuthDefinition> AuthManager::getPendingRequests() const
 
 bool AuthManager::renameToken(const QString &id, const QString &comment)
 {
-	if (_authTable->renameToken(id, comment))
+	if (_authTable->identifierExist(id))
 	{
-		emit tokenChange(getTokenList());
-		return true;
+		if (_authTable->renameToken(id, comment))
+		{
+			emit tokenChange(getTokenList());
+			return true;
+		}
 	}
 	return false;
 }
 
 bool AuthManager::deleteToken(const QString &id)
 {
-	if (_authTable->deleteToken(id))
+	if (_authTable->identifierExist(id))
 	{
-		emit tokenChange(getTokenList());
-		return true;
+		if (_authTable->deleteToken(id))
+		{
+			emit tokenChange(getTokenList());
+			return true;
+		}
 	}
 	return false;
 }
@@ -231,9 +264,7 @@ void AuthManager::handleSettingsUpdate(settings::type type, const QJsonDocument 
 	if (type == settings::NETWORK)
 	{
 		const QJsonObject &obj = config.object();
-		_authRequired = obj["apiAuth"].toBool(true);
 		_localAuthRequired = obj["localApiAuth"].toBool(false);
-		_localAdminAuthRequired = obj["localAdminAuth"].toBool(true);
 	}
 }
 
@@ -241,7 +272,7 @@ void AuthManager::checkTimeout()
 {
 	const uint64_t now = QDateTime::currentMSecsSinceEpoch();
 
-	QMapIterator<QString, AuthDefinition> i(_pendingRequests);
+	QMapIterator i(_pendingRequests);
 	while (i.hasNext())
 	{
 		i.next();

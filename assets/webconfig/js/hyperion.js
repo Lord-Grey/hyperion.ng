@@ -1,104 +1,136 @@
-// global vars (read and write in window object)
-window.webPrio = 1;
-window.webOrigin = "Web Configuration";
-window.showOptHelp = true;
-window.gitHubReleaseApiUrl = "https://api.github.com/repos/hyperion-project/hyperion.ng/releases";
-window.currentChannel = null;
-window.currentVersion = null;
-window.latestVersion = null;
-window.latestStableVersion = null;
-window.latestBetaVersion = null;
-window.latestAlphaVersion = null;
-window.latestRcVersion = null;
-window.gitHubVersionList = null;
-window.serverInfo = {};
-window.serverSchema = {};
-window.serverConfig = {};
-window.schema = {};
-window.sysInfo = {};
-window.jsonPort = 8090;
-window.websocket = null;
-window.hyperion = {};
-window.wsTan = 1;
-window.ledStreamActive = false;
-window.imageStreamActive = false;
-window.loggingStreamActive = false;
-window.loggingHandlerInstalled = false;
-window.watchdog = 0;
-window.debugMessagesActive = true;
-window.currentHyperionInstance = 0;
-window.currentHyperionInstanceName = "?";
-window.comps = [];
-window.defaultPasswordIsSet = null;
-tokenList = {};
+//Constants
+const INPUT = Object.freeze({
+  ORIGIN: "Hyperion Web-UI",
+  FG_PRIORITY: 1
+});
 
-const ENDLESS = -1;
+// global vars (read and write in globalThis object)
+globalThis.showOptHelp = true;
+globalThis.gitHubReleaseApiUrl = "https://api.github.com/repos/hyperion-project/hyperion.ng/releases";
+globalThis.currentChannel = null;
+globalThis.currentVersion = null;
+globalThis.latestVersion = null;
+globalThis.latestStableVersion = null;
+globalThis.latestBetaVersion = null;
+globalThis.latestAlphaVersion = null;
+globalThis.latestRcVersion = null;
+globalThis.gitHubVersionList = null;
+globalThis.serverInfo = {};
+globalThis.serverSchema = {};
+globalThis.serverConfig = {};
+globalThis.schema = {};
+globalThis.sysInfo = {};
+globalThis.jsonPort = 8090;
+globalThis.websocket = null;
+globalThis.hyperion = {};
+globalThis.wsTan = 1;
+globalThis.ledStreamActive = false;
+globalThis.imageStreamActive = false;
+globalThis.loggingStreamActive = false;
+globalThis.loggingHandlerInstalled = false;
+globalThis.watchdog = 0;
+globalThis.debugMessagesActive = true;
+globalThis.currentHyperionInstance = null;
+globalThis.currentHyperionInstanceName = "?";
+globalThis.comps = [];
+globalThis.defaultPasswordIsSet = null;
 
-function initRestart()
-{
-  $(window.hyperion).off();
-  requestServerConfigReload();
-  window.watchdog = 10;
+let tokenList = [];
+globalThis.setTokenList = function(list) {
+  globalThis.tokenList = list;
+};
+globalThis.getTokenList = function() {
+  return globalThis.tokenList;
+};
+globalThis.addToTokenList = function(token) {
+  const currentList = globalThis.getTokenList() || [];
+  const updatedList = [...currentList, token];
+  globalThis.setTokenList(updatedList);
+};
+globalThis.deleteFromTokenList = function(id) {
+  const currentList = globalThis.getTokenList() || [];
+  const updatedList = currentList.filter(token => token.id !== id);
+  globalThis.setTokenList(updatedList);
+};
+
+function initRestart() {
+  $(globalThis.hyperion).off();
+  globalThis.watchdog = 10;
   connectionLostDetection('restart');
 }
 
-function connectionLostDetection(type)
-{
-  if ( window.watchdog > 2 )
-  {
-    var interval_id = window.setInterval(function(){clearInterval(interval_id);}, 9999); // Get a reference to the last
-    for (var i = 1; i < interval_id; i++)
-      window.clearInterval(i);
-    if(type == 'restart')
-    {
+function connectionLostDetection(type) {
+  if (globalThis.watchdog > 2) {
+    const interval_id = globalThis.setInterval(function () { clearInterval(interval_id); }, 9999); // Get a reference to the last
+    for (let i = 1; i < interval_id; i++)
+      globalThis.clearInterval(i);
+    if (type == 'restart') {
       $("body").html($("#container_restart").html());
       // setTimeout delay for probably slower systems, some browser don't execute THIS action
-      setTimeout(restartAction,250);
+      setTimeout(restartAction, 250);
     }
-    else
-    {
+    else {
       $("body").html($("#container_connection_lost").html());
       connectionLostAction();
     }
   }
-  else
-  {
-    $.get( "/cgi/cfg_jsonserver", function() {window.watchdog=0}).fail(function() {window.watchdog++;});
+  else {
+    $.get("/cgi/cfg_jsonserver", function () { globalThis.watchdog = 0 }).fail(function () { globalThis.watchdog++; });
   }
+}
+
+// Utility function to sanitize strings for safe logging
+function sanitizeForLog(input) {
+  if (typeof input !== 'string') return '';
+  return input
+    .replace(/[\n\r\t]/g, ' ') // Replace newlines, carriage returns, and tabs with space
+    .replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, ''); // Remove ANSI escape codes
 }
 
 setInterval(connectionLostDetection, 3000);
 
 // init websocket to hyperion and bind socket events to jquery events of $(hyperion) object
-
-function initWebSocket()
-{
-  if ("WebSocket" in window)
-  {
-    if (window.websocket == null)
-    {
-      window.jsonPort = '';
-      if(document.location.port == '' && document.location.protocol == "http:")
-        window.jsonPort = '80';
+function initWebSocket() {
+  if ("WebSocket" in globalThis) {
+    if (globalThis.websocket == null) {
+      globalThis.jsonPort = '';
+      if (document.location.port == '' && document.location.protocol == "http:")
+        globalThis.jsonPort = '80';
       else if (document.location.port == '' && document.location.protocol == "https:")
-        window.jsonPort = '443';
+        globalThis.jsonPort = '443';
       else
-        window.jsonPort = document.location.port;
-      window.websocket = (document.location.protocol == "https:") ? new WebSocket('wss://'+document.location.hostname+":"+window.jsonPort) : new WebSocket('ws://'+document.location.hostname+":"+window.jsonPort);
+        globalThis.jsonPort = document.location.port;
+      globalThis.websocket = (document.location.protocol == "https:") ? new WebSocket('wss://' + document.location.hostname + ":" + globalThis.jsonPort) : new WebSocket('ws://' + document.location.hostname + ":" + globalThis.jsonPort);
 
-      window.websocket.onopen = function (event) {
-        $(window.hyperion).trigger({type:"open"});
+      globalThis.websocket.onopen = function (event) {
+        $(globalThis.hyperion).trigger({ type: "open" });
 
-        $(window.hyperion).on("cmd-serverinfo", function(event) {
-          window.watchdog = 0;
+        $(globalThis.hyperion).on("cmd-serverinfo", function (event) {
+          globalThis.watchdog = 0;
         });
       };
 
-      window.websocket.onclose = function (event) {
+      globalThis.websocket.onerror = (error) => {
+          // Note: For security reasons, browsers don't give detailed error info here
+          console.error("WebSocket Error detected.");
+      };      
+
+      globalThis.websocket.onclose = function (event) {
+        // Check if the server sent the specific Policy Violation code (1008)
+        if (event.code === 1008) {
+          console.error("WebSocket closed due to policy violation (1008). Access forbidden.");
+          const interval_id = globalThis.setInterval(function () { clearInterval(interval_id); }, 9999); // Get highest currently active timer ID.
+          // Clear all other timers
+          for (let i = 1; i < interval_id; i++) {
+            globalThis.clearInterval(i);
+          }
+          $("body").html($("#container_forbidden").html());
+          return;
+        }
+
         // See http://tools.ietf.org/html/rfc6455#section-7.4.1
-        var reason;
-        switch(event.code)
-        {
+        let reason;
+        switch (event.code) {
           case 1000: reason = "Normal closure, meaning that the purpose for which the connection was established has been fulfilled."; break;
           case 1001: reason = "An endpoint is \"going away\", such as a server going down or a browser having navigated away from a page."; break;
           case 1002: reason = "An endpoint is terminating the connection due to a protocol error"; break;
@@ -114,70 +146,112 @@ function initWebSocket()
           case 1015: reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified)."; break;
           default: reason = "Unknown reason";
         }
-        $(window.hyperion).trigger({type:"close", reason:reason});
-        window.watchdog = 10;
-        connectionLostDetection();
+
+        if (event.code !== 1000) {
+          console.warn("WebSocket closed: ", sanitizeForLog(reason));
+          $(globalThis.hyperion).trigger({ type: "close", reason: reason });
+          globalThis.watchdog = 10;
+          connectionLostDetection();
+        }
       };
 
-      window.websocket.onmessage = function (event) {
-        try
-        {
-          var response = JSON.parse(event.data);
-          var success = response.success;
-          var cmd = response.command;
-          var tan = response.tan
-          if (success || typeof(success) == "undefined")
-          {
-            $(window.hyperion).trigger({type:"cmd-"+cmd, response:response});
+      globalThis.websocket.onmessage = function (event) {
+        try {
+          const response = JSON.parse(event.data);
+          const success = response.success;
+          const cmd = response.command;
+          const tan = response.tan
+          if (success || typeof (success) == "undefined") {
+            $(globalThis.hyperion).trigger({ type: "cmd-" + cmd, response: response });
           }
           else
-          {
+            if (tan != -1) {
               // skip tan -1 error handling
-              if(tan != -1){
-                var error = response.hasOwnProperty("error")? response.error : "unknown";
-                if (error == "Service Unavailable") {
-                  window.location.reload();
-                } else {
-                  $(window.hyperion).trigger({type:"error",reason:error});
-                }
-                console.log("[window.websocket::onmessage] ",error)
+              const error = response.hasOwnProperty("error") ? response.error : "unknown";
+              if (error == "Service Unavailable") {
+                globalThis.location.reload();
+              } else {
+                const errorData = Array.isArray(response.errorData) ? response.errorData : [];
+
+                // Sanitize provided input
+                const logError = error.replace(/\n|\r/g, "");
+                const logErrorData = JSON.stringify(errorData).replace(/[\r\n\t]/g, ' ')
+                console.error("[globalThis.websocket::onmessage] ", logError, ", Description:", logErrorData);
+
+                $(globalThis.hyperion).trigger({
+                  type: "error",
+                  reason: {
+                    cmd: cmd,
+                    message: error,
+                    details: errorData.map((item) => item.description || "")
+                  }
+                });
               }
-          }
+            }
         }
-        catch(exception_error)
-        {
-          $(window.hyperion).trigger({type:"error",reason:exception_error});
-          console.log("[window.websocket::onmessage] ",exception_error)
+        catch (exception_error) {
+          console.error("[globalThis.websocket::onmessage] ", exception_error);
+          showInfoDialog("error", $.i18n('Info_error_general_title'), $.i18n('Info_error_general_text', exception_error.message));
+          $(globalThis.hyperion).trigger({
+            type: "error",
+            reason: {
+              message: $.i18n("ws_processing_exception") + ": " + exception_error.message,
+              details: [exception_error.stack]
+            }
+          });
         }
       };
 
-      window.websocket.onerror = function (error) {
-        $(window.hyperion).trigger({type:"error",reason:error});
-        console.log("[window.websocket::onerror] ",error)
+      globalThis.websocket.onerror = function (error) {
+        console.error("[globalThis.websocket::onerror] ", error);
+        showInfoDialog("error", $.i18n('Info_error_con_lost_title'), $.i18n('Info_error_con_lost_text', "See browser console for details"));
+        $(globalThis.hyperion).trigger({
+          type: "error",
+          reason: {
+            message: $.i18n("ws_error_occured"),
+            details: [error]
+          }
+        });
       };
     }
   }
-  else
-  {
-    $(window.hyperion).trigger("error");
-    alert("Websocket is not supported by your browser");
-    return;
+  else {
+    $(globalThis.hyperion).trigger({
+      type: "error",
+      reason: {
+        message: $.i18n("ws_not_supported"),
+        details: []
+      }
+    });
   }
 }
 
-function sendToHyperion(command, subcommand, msg)
-{
-  if (typeof subcommand != 'undefined' && subcommand.length > 0)
-    subcommand = ',"subcommand":"'+subcommand+'"';
-  else
-    subcommand = "";
+function sendToHyperion(command, subcommand, msg, instanceIds = null) {
+  const tan = Math.floor(Math.random() * 1000); // Generate a transaction number
 
-  if (typeof msg != 'undefined' && msg.length > 0)
-    msg = ","+msg;
-  else
-    msg = "";
+  // Build the base object
+  const message = {
+    command: command,
+    tan: tan,
+  };
 
-  window.websocket.send('{"command":"'+command+'", "tan":'+window.wsTan+subcommand+msg+'}');
+  // Add the subcommand if provided
+  if (subcommand) {
+    message.subcommand = subcommand;
+  }
+
+  // Add the instanceID(s) the command is to be applied to
+  if (instanceIds != null) {
+    message.instance = instanceIds;
+  }
+
+  // Merge the msg object into the final message if provided
+  if (msg && typeof msg === "object") {
+    Object.assign(message, msg);
+  }
+
+  // Send the serialized message over WebSocket
+  globalThis.websocket.send(JSON.stringify(message));
 }
 
 // Send a json message to Hyperion and wait for a matching response
@@ -187,19 +261,18 @@ function sendToHyperion(command, subcommand, msg)
 // data:       The json data as Object
 // tan:        The optional tan, default 1. If the tan is -1, we skip global response error handling
 // Returns data of response or false if timeout
-async function sendAsyncToHyperion (command, subcommand, data, tan = 1) {
+async function sendAsyncToHyperion(command, subcommand, data, tan = Math.floor(Math.random() * 1000)) {
   let obj = { command, tan }
-  if (subcommand) {Object.assign(obj, {subcommand})}
+  if (subcommand) { Object.assign(obj, { subcommand }) }
   if (data) { Object.assign(obj, data) }
 
-  //if (process.env.DEV || sstore.getters['common/getDebugState']) console.log('SENDAS', obj)
   return __sendAsync(obj)
 }
 
 // Send a json message to Hyperion and wait for a matching response
 // A response matches, when command(+subcommand) of request and response is the same
 // Returns data of response or false if timeout
-async function __sendAsync (data) {
+async function __sendAsync(data) {
   return new Promise((resolve, reject) => {
     let cmd = data.command
     let subc = data.subcommand
@@ -212,18 +285,18 @@ async function __sendAsync (data) {
       try {
         rdata = JSON.parse(e.data)
       } catch (error) {
-        console.error("[window.websocket::onmessage] ",error)
+        console.error("[globalThis.websocket::onmessage] ", error)
         resolve(false)
       }
       if (rdata.command == cmd && rdata.tan == tan) {
-        window.websocket.removeEventListener('message', func)
+        globalThis.websocket.removeEventListener('message', func)
         resolve(rdata)
       }
     }
     // after 7 sec we resolve false
-    setTimeout(() => { window.websocket.removeEventListener('message', func); resolve(false) }, 7000)
-    window.websocket.addEventListener('message', func)
-    window.websocket.send(JSON.stringify(data) + '\n')
+    setTimeout(() => { globalThis.websocket.removeEventListener('message', func); resolve(false) }, 7000)
+    globalThis.websocket.addEventListener('message', func)
+    globalThis.websocket.send(JSON.stringify(data) + '\n')
   })
 }
 
@@ -231,293 +304,419 @@ async function __sendAsync (data) {
 // wrapped server commands
 
 // Test if admin requires authentication
-function requestRequiresAdminAuth()
-{
-  sendToHyperion("authorize","adminRequired");
+function requestRequiresAdminAuth() {
+  sendToHyperion("authorize", "adminRequired");
 }
 // Test if the default password needs to be changed
-function requestRequiresDefaultPasswortChange()
-{
-  sendToHyperion("authorize","newPasswordRequired");
+function requestRequiresDefaultPasswortChange() {
+  sendToHyperion("authorize", "newPasswordRequired");
 }
+
 // Change password
-function requestChangePassword(oldPw, newPw)
-{
-  sendToHyperion("authorize","newPassword",'"password": "'+oldPw+'", "newPassword":"'+newPw+'"');
+function requestChangePassword(password, newPassword) {
+  sendToHyperion("authorize", "newPassword", { password, newPassword });
 }
 
-function requestAuthorization(password)
-{
-  sendToHyperion("authorize","login",'"password": "' + password + '"');
+function requestAuthorization(password) {
+  sendToHyperion("authorize", "login", { password });
 }
 
-function requestTokenAuthorization(token)
-{
-  sendToHyperion("authorize","login",'"token": "' + token + '"');
+function requestTokenAuthorization(token) {
+  sendToHyperion("authorize", "login", { token });
 }
 
-function requestToken(comment)
-{
-  sendToHyperion("authorize","createToken",'"comment": "'+comment+'"');
+function requestToken(comment) {
+  sendToHyperion("authorize", "createToken", { comment });
 }
 
-function requestTokenInfo()
-{
-  sendToHyperion("authorize","getTokenList","");
+function requestTokenInfo() {
+  sendToHyperion("authorize", "getTokenList", {});
+  return Promise.resolve();
 }
 
-function requestGetPendingTokenRequests (id, state) {
-  sendToHyperion("authorize", "getPendingTokenRequests", "");
+function requestGetPendingTokenRequests(id, state) {
+  sendToHyperion("authorize", "getPendingTokenRequests", {});
 }
 
-function requestHandleTokenRequest(id, state)
-{
-  sendToHyperion("authorize","answerRequest",'"id":"'+id+'", "accept":'+state);
+function requestHandleTokenRequest(id, state) {
+  sendToHyperion("authorize", "answerRequest", { id, accept: state });
 }
 
-function requestTokenDelete(id)
-{
-  sendToHyperion("authorize","deleteToken",'"id":"'+id+'"');
+function requestTokenDelete(id) {
+  sendToHyperion("authorize", "deleteToken", { id });
 }
 
-function requestInstanceRename(inst, name)
-{
-  sendToHyperion("instance", "saveName",'"instance": '+inst+', "name": "'+name+'"');
+function requestInstanceRename(instance, name) {
+  sendToHyperion("instance", "saveName", { name }, Number(instance));
 }
 
-function requestInstanceStartStop(inst, start)
-{
-  if(start)
-    sendToHyperion("instance","startInstance",'"instance": '+inst);
+function requestInstanceStartStop(instance, start) {
+  if (start)
+    sendToHyperion("instance", "startInstance", {}, Number(instance));
   else
-    sendToHyperion("instance","stopInstance",'"instance": '+inst);
+    sendToHyperion("instance", "stopInstance", {}, Number(instance));
 }
 
-function requestInstanceDelete(inst)
-{
-  sendToHyperion("instance","deleteInstance",'"instance": '+inst);
+function requestInstanceDelete(instance) {
+  sendToHyperion("instance", "deleteInstance", {}, Number(instance));
 }
 
-function requestInstanceCreate(name)
-{
-  sendToHyperion("instance","createInstance",'"name": "'+name+'"');
+function requestInstanceCreate(name) {
+  sendToHyperion("instance", "createInstance", { name });
 }
 
-function requestInstanceSwitch(inst)
-{
-  sendToHyperion("instance","switchTo",'"instance": '+inst);
+function requestInstanceSwitch(instance) {
+  sendToHyperion("instance", "switchTo", {}, Number(instance));
 }
 
-function requestServerInfo()
-{
-  sendToHyperion("serverinfo","",'"subscribe":["components-update", "priorities-update", "imageToLedMapping-update", "adjustment-update", "videomode-update", "effects-update", "settings-update", "instance-update"]');
+function requestServerInfo(instance = null) {
+  const subscriptions = [
+    "components-update",
+    "priorities-update",
+    "imageToLedMapping-update",
+    "adjustment-update",
+    "videomode-update",
+    "effects-update",
+    "settings-update",
+    "instance-update",
+    "event-update"
+  ];
+
+  const data = { subscribe: subscriptions };
+  const targetInstance = instance !== null ? Number(instance) : null;
+
+  sendToHyperion("serverinfo", "getInfo", data, targetInstance);
+  return Promise.resolve();
 }
 
-function requestSysInfo()
-{
+function requestSysInfo() {
   sendToHyperion("sysinfo");
 }
 
-function requestSystemSuspend()
-{
-  sendToHyperion("system","suspend");
+function requestSystemSuspend() {
+  sendToHyperion("system", "suspend");
 }
 
-function requestSystemResume()
-{
-  sendToHyperion("system","resume");
+function requestSystemResume() {
+  sendToHyperion("system", "resume");
 }
 
-function requestSystemRestart()
-{
-  sendToHyperion("system","restart");
+function requestSystemRestart() {
+  sendToHyperion("system", "restart");
 }
 
-function requestServerConfigSchema()
-{
-  sendToHyperion("config","getschema");
+function requestServerConfigSchema() {
+  sendToHyperion("config", "getschema");
+  return Promise.resolve();
 }
 
-function requestServerConfig()
-{
-  sendToHyperion("config", "getconfig");
-}
+const requestServerConfig = {
+  // Shared logic encapsulated in a helper function
+  createFilter(globalTypes = [], instances = [], instanceTypes = []) {
+    const filter = {
+      configFilter: {
+        global: { types: globalTypes }
+      },
+    };
 
-function requestServerConfigReload()
-{
+    if (instances == null) {
+      filter.configFilter.instances = null; // Return no instances
+    } else if (instances.length > 0) {
+      filter.configFilter.instances = { ids: instances }; // Return selected instances
+    } else {
+      filter.configFilter.instances = instances; // Return all instances
+    }
+
+    if (instanceTypes.length > 0) {
+      filter.configFilter.instances = filter.configFilter.instances || {};
+      filter.configFilter.instances.types = instanceTypes;
+    }
+
+    return filter;
+  },
+
+  // Synchronous function
+  sync(globalTypes, instances, instanceTypes) {
+    const filter = this.createFilter(globalTypes, instances, instanceTypes);
+    sendToHyperion("config", "getconfig", filter);
+    return Promise.resolve();
+  },
+
+  // Asynchronous function
+  async async(globalTypes, instances, instanceTypes) {
+    const filter = this.createFilter(globalTypes, instances, instanceTypes);
+    return sendAsyncToHyperion("config", "getconfig", filter);
+  }
+};
+
+function requestServerConfigReload() {
   sendToHyperion("config", "reload");
 }
 
-function requestLedColorsStart()
-{
-  window.ledStreamActive=true;
-  sendToHyperion("ledcolors", "ledstream-start");
+function requestLedColorsStart(instanceId = globalThis.currentHyperionInstance) {
+  globalThis.ledStreamActive = true;
+  sendToHyperion("ledcolors", "ledstream-start", {}, instanceId);
 }
 
-function requestLedColorsStop()
-{
-  window.ledStreamActive=false;
-  sendToHyperion("ledcolors", "ledstream-stop");
+function requestLedColorsStop(instanceId = globalThis.currentHyperionInstance) {
+  globalThis.ledStreamActive = false;
+  sendToHyperion("ledcolors", "ledstream-stop", {}, instanceId);
 }
 
-function requestLedImageStart()
-{
-  window.imageStreamActive=true;
-  sendToHyperion("ledcolors", "imagestream-start");
+function requestLedImageStart(instanceId = globalThis.currentHyperionInstance) {
+  globalThis.imageStreamActive = true;
+  sendToHyperion("ledcolors", "imagestream-start", {}, instanceId);
 }
 
-function requestLedImageStop()
-{
-  window.imageStreamActive=false;
-  sendToHyperion("ledcolors", "imagestream-stop");
+function requestLedImageStop(instanceId = globalThis.currentHyperionInstance) {
+  globalThis.imageStreamActive = false;
+  sendToHyperion("ledcolors", "imagestream-stop", {}, instanceId);
 }
 
-function requestPriorityClear(prio)
-{
-  if(typeof prio !== 'number')
-    prio = window.webPrio;
+function requestPriorityClear(priority, instanceIds = [globalThis.currentHyperionInstance]) {
+  if (typeof priority !== 'number')
+    priority = INPUT.FG_PRIORITY;
 
-  $(window.hyperion).trigger({type:"stopBrowerScreenCapture"});   
-  sendToHyperion("clear", "", '"priority":'+prio+'');
+  $(globalThis.hyperion).trigger({ type: "stopBrowerScreenCapture" });
+  sendToHyperion("clear", "", { priority }, instanceIds);
 }
 
-function requestClearAll()
-{
-  $(window.hyperion).trigger({type:"stopBrowerScreenCapture"});   
-  requestPriorityClear(-1)
+function requestClearAll(instanceIds = [globalThis.currentHyperionInstance]) {
+  $(globalThis.hyperion).trigger({ type: "stopBrowerScreenCapture" });
+  requestPriorityClear(-1, instanceIds)
 }
 
-function requestPlayEffect(effectName, duration)
-{
-  $(window.hyperion).trigger({type:"stopBrowerScreenCapture"});   
-  sendToHyperion("effect", "", '"effect":{"name":"'+effectName+'"},"priority":'+window.webPrio+',"duration":'+validateDuration(duration)+',"origin":"'+window.webOrigin+'"');
+function requestPlayEffect(name, duration, instanceIds = [globalThis.currentHyperionInstance]) {
+  $(globalThis.hyperion).trigger({ type: "stopBrowerScreenCapture" });
+  const data = {
+    effect: { name },
+    priority: INPUT.FG_PRIORITY,
+    duration: validateDuration(duration),
+    origin: INPUT.ORIGIN,
+  };
+  sendToHyperion("effect", "", data, instanceIds);
 }
 
-function requestSetColor(r,g,b,duration)
-{
-  $(window.hyperion).trigger({type:"stopBrowerScreenCapture"});   
-  sendToHyperion("color", "",  '"color":['+r+','+g+','+b+'], "priority":'+window.webPrio+',"duration":'+validateDuration(duration)+',"origin":"'+window.webOrigin+'"');
+function requestSetColor(r, g, b, duration, instanceIds = [globalThis.currentHyperionInstance]) {
+  $(globalThis.hyperion).trigger({ type: "stopBrowerScreenCapture" });
+  const data = {
+    color: [r, g, b],
+    priority: INPUT.FG_PRIORITY,
+    duration: validateDuration(duration),
+    origin: INPUT.ORIGIN
+  };
+  sendToHyperion("color", "", data, instanceIds);
 }
 
-function requestSetImage(data,duration,name)
-{
-  sendToHyperion("image", "",  '"imagedata":"'+data+'", "priority":'+window.webPrio+',"duration":'+validateDuration(duration)+', "format":"auto", "origin":"'+window.webOrigin+'", "name":"'+name+'"');
+function requestSetImage(imagedata, duration, name, instanceIds = [globalThis.currentHyperionInstance]) {
+  const data = {
+    imagedata,
+    priority: INPUT.FG_PRIORITY,
+    duration: validateDuration(duration),
+    format: "auto",
+    origin: INPUT.ORIGIN,
+    name
+  };
+  sendToHyperion("image", "", data, instanceIds);
 }
 
-function requestSetComponentState(comp, state)
-{
-  var state_str = state ? "true" : "false";
-  sendToHyperion("componentstate", "", '"componentstate":{"component":"'+comp+'","state":'+state_str+'}');
+function requestSetComponentState(component, state, instanceIds = [globalThis.currentHyperionInstance]) {
+  sendToHyperion("componentstate", "", { componentstate: { component, state } }, instanceIds);
 }
 
-function requestSetSource(prio)
-{
-  if ( prio == "auto" )
-    sendToHyperion("sourceselect", "", '"auto":true');
+function requestSetSource(priority, instanceIds = [globalThis.currentHyperionInstance]) {
+  if (priority == "auto")
+    sendToHyperion("sourceselect", "", { auto: true }, instanceIds);
   else
-    sendToHyperion("sourceselect", "", '"priority":'+prio);
+    sendToHyperion("sourceselect", "", { priority }, instanceIds);
 }
 
-function requestWriteConfig(config, full)
-{
-  if(full === true)
-    window.serverConfig = config;
-  else
-  {
-    jQuery.each(config, function(i, val) {
-      window.serverConfig[i] = val;
-    });
+// Function to transform the legacy config into the new API format for a single instance
+function transformConfig(configInput, instanceId = 0 ) {
+  const globalConfig = {};
+  const instanceSettings = {};
+
+  for (const [key, value] of Object.entries(configInput)) {
+    if (globalThis.schema.propertiesTypes.globalProperties.includes(key)) {
+      globalConfig[key] = value;
+    } else if (globalThis.schema.propertiesTypes.instanceProperties.includes(key)) {
+      instanceSettings[key] = value;
+    }
   }
 
-  sendToHyperion("config","setconfig", '"config":'+JSON.stringify(window.serverConfig));
+  const transformedConfig = {};
+
+  if (Object.keys(globalConfig).length > 0) {
+    transformedConfig.global = { settings: globalConfig };
+  }
+
+  if (Object.keys(instanceSettings).length > 0) {
+    transformedConfig.instances = [
+      {
+        id: instanceId,
+        settings: instanceSettings
+      }
+    ];
+  }
+
+  return transformedConfig;
 }
 
-function requestRestoreConfig(config) {
-  sendToHyperion("config", "restoreconfig", '"config":' + JSON.stringify(config));
+// Function to transform a single config for multiple instance IDs and merge into one config object
+function transformConfigForInstances(configInput, instanceIds = [0]) {
+  const globalConfig = {};
+  const instanceSettings = {};
+
+  for (const [key, value] of Object.entries(configInput)) {
+    if (globalThis.schema.propertiesTypes.globalProperties.includes(key)) {
+      globalConfig[key] = value;
+    } else if (globalThis.schema.propertiesTypes.instanceProperties.includes(key)) {
+      instanceSettings[key] = value;
+    }
+  }
+
+  const transformedConfig = {};
+
+  if (Object.keys(globalConfig).length > 0) {
+    transformedConfig.global = { settings: globalConfig };
+  }
+
+  if (Object.keys(instanceSettings).length > 0 && Array.isArray(instanceIds) && instanceIds.length > 0) {
+    transformedConfig.instances = instanceIds.map(id => ({ id, settings: instanceSettings }));
+  }
+
+  return transformedConfig;
 }
 
-function requestWriteEffect(effectName,effectPy,effectArgs,data)
-{
-  var cutArgs = effectArgs.slice(1, -1);
-  sendToHyperion("create-effect", "", '"name":"'+effectName+'", "script":"'+effectPy+'", '+cutArgs+',"imageData":"'+data+'"');
+function requestWriteConfig(singleInstanceConfig, full, instances) {
+  let newConfig = "";
+  const instance = Number(globalThis.currentHyperionInstance);
+
+  if (full === true) {
+    globalThis.serverConfig = singleInstanceConfig;
+    // If a list of instances is provided, transform for all; otherwise use current instance
+    if (Array.isArray(instances) && instances.length > 0) {
+      newConfig = transformConfigForInstances(globalThis.serverConfig, instances.map(Number));
+    } else {
+      newConfig = transformConfig(globalThis.serverConfig, instance);
+    }
+  }
+  else {
+    jQuery.each(singleInstanceConfig, function (i, val) {
+      globalThis.serverConfig[i] = val;
+    });
+    // Build config targeting provided instance list or the current instance
+    if (Array.isArray(instances) && instances.length > 0) {
+      newConfig = transformConfigForInstances(singleInstanceConfig, instances.map(Number));
+    } else {
+      newConfig = transformConfig(singleInstanceConfig, instance);
+    }
+  }
+
+  sendToHyperion("config", "setconfig", { config: newConfig });
 }
 
-function requestTestEffect(effectName,effectPy,effectArgs,data)
-{
-  sendToHyperion("effect", "", '"effect":{"name":"'+effectName+'", "args":'+effectArgs+'}, "priority":'+window.webPrio+', "origin":"'+window.webOrigin+'", "pythonScript":"'+effectPy+'", "imageData":"'+data+'"');
+function requestRestoreConfig(newConfig) {
+  sendToHyperion("config", "restoreconfig", { config: newConfig });
 }
 
-function requestDeleteEffect(effectName)
-{
-  sendToHyperion("delete-effect", "", '"name":"'+effectName+'"');
+function requestWriteEffect(name, script, args, imageData) {
+  const data = {
+    name,
+    script,
+    args,
+    imageData
+  };
+  sendToHyperion("create-effect", "", data);
 }
 
-function requestLoggingStart()
-{
-  window.loggingStreamActive=true;
+function requestTestEffect(name, pythonScript, args, imageData, instanceIds = [globalThis.currentHyperionInstance]) {
+  const data = {
+    effect: { name, args },
+    priority: INPUT.FG_PRIORITY,
+    origin: INPUT.ORIGIN,
+    pythonScript,
+    imageData
+  };
+  sendToHyperion("effect", "", data, instanceIds);
+}
+
+function requestDeleteEffect(name) {
+  sendToHyperion("delete-effect", "", { name });
+}
+
+function requestLoggingStart() {
+  globalThis.loggingStreamActive = true;
   sendToHyperion("logging", "start");
 }
 
-function requestLoggingStop()
-{
-  window.loggingStreamActive=false;
+function requestLoggingStop() {
+  globalThis.loggingStreamActive = false;
   sendToHyperion("logging", "stop");
 }
 
-function requestMappingType(type)
-{
-  sendToHyperion("processing", "", '"mappingType": "'+type+'"');
+function requestMappingType(mappingType, instanceIds = [globalThis.currentHyperionInstance]) {
+  sendToHyperion("processing", "", { mappingType }, instanceIds);
 }
 
-function requestVideoMode(newMode)
-{
-  sendToHyperion("videomode", "", '"videoMode": "'+newMode+'"');
+function requestVideoMode(newMode) {
+  sendToHyperion("videomode", "", { videoMode: newMode });
 }
 
-function requestAdjustment(type, value, complete)
-{
-  if(complete === true)
-    sendToHyperion("adjustment", "", '"adjustment": '+type+'');
+function requestAdjustment(type, value, complete, instanceIds = [globalThis.currentHyperionInstance]) {
+  if (complete === true)
+    sendToHyperion("adjustment", "", { adjustment: type }, useCurrentInstance);
   else
-    sendToHyperion("adjustment", "", '"adjustment": {"'+type+'": '+value+'}');
+    sendToHyperion("adjustment", "", { adjustment: { [type]: value } }, instanceIds);
 }
 
-async function requestLedDeviceDiscovery(type, params)
-{
-  let data = { ledDeviceType: type, params: params };
-
-  return sendAsyncToHyperion("leddevice", "discover", data, Math.floor(Math.random() * 1000) );
+async function requestLedDeviceDiscovery(ledDeviceType, params) {
+  return sendAsyncToHyperion("leddevice", "discover", { ledDeviceType, params });
+}
+async function requestLedDeviceProperties(ledDeviceType, params) {
+  return sendAsyncToHyperion("leddevice", "getProperties", { ledDeviceType, params });
 }
 
-async function requestLedDeviceProperties(type, params)
-{
-  let data = { ledDeviceType: type, params: params };
-
-  return sendAsyncToHyperion("leddevice", "getProperties", data, Math.floor(Math.random() * 1000));
+function requestLedDeviceIdentification(ledDeviceType, params) {
+  return sendAsyncToHyperion("leddevice", "identify", { ledDeviceType, params });
 }
 
-function requestLedDeviceIdentification(type, params)
-{
-    let data = { ledDeviceType: type, params: params };
-
-  return sendAsyncToHyperion("leddevice", "identify", data, Math.floor(Math.random() * 1000));
+async function requestLedDeviceAddAuthorization(ledDeviceType, params) {
+  return sendAsyncToHyperion("leddevice", "addAuthorization", { ledDeviceType, params });
 }
 
-async function requestLedDeviceAddAuthorization(type, params) {
-  let data = { ledDeviceType: type, params: params };
-
-  return sendAsyncToHyperion("leddevice", "addAuthorization", data, Math.floor(Math.random() * 1000));
+async function requestInputSourcesDiscovery(sourceType, params) {
+  return sendAsyncToHyperion("inputsource", "discover", { sourceType, params });
 }
 
-async function requestInputSourcesDiscovery(type, params) {
-  let data = { sourceType: type, params: params };
-
-  return sendAsyncToHyperion("inputsource", "discover", data, Math.floor(Math.random() * 1000));
+async function requestServiceDiscovery(serviceType, params) {
+  return sendAsyncToHyperion("service", "discover", { serviceType, params });
 }
 
-async function requestServiceDiscovery(type, params) {
-  let data = { serviceType: type, params: params };
+function waitForEvent(eventName) {
+  return new Promise((resolve) => {
+    const handler = function (event) {
+      $(globalThis.hyperion).off(eventName, handler);
+      resolve(event);
+    };
+    $(globalThis.hyperion).on(eventName, handler);
+  });
+}
 
-  return sendAsyncToHyperion("service", "discover", data, Math.floor(Math.random() * 1000));
+function waitForEventWithTimeout(eventName, timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    const handler = (event) => {
+      clearTimeout(timer);
+      $(globalThis.hyperion).off(eventName, handler);
+      resolve(event);
+    };
+
+    const timer = setTimeout(() => {
+      $(globalThis.hyperion).off(eventName, handler);
+      reject(new Error(`Timeout waiting for ${eventName}`));
+    }, timeout);
+
+    $(globalThis.hyperion).on(eventName, handler);
+  });
 }
 

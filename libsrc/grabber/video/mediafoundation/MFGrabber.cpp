@@ -1,8 +1,6 @@
 #include "MFSourceReaderCB.h"
-#include "grabber/MFGrabber.h"
+#include "grabber/video/mediafoundation/MFGrabber.h"
 
-// Constants
-namespace { const bool verbose = false; }
 
 // Need more video properties? Visit https://docs.microsoft.com/en-us/windows/win32/api/strmif/ne-strmif-videoprocampproperty
 using VideoProcAmpPropertyMap = QMap<VideoProcAmpProperty, QString>;
@@ -42,7 +40,7 @@ MFGrabber::MFGrabber()
 	, _currentFrame(0)
 	, _noSignalThresholdColor(ColorRgb{0,0,0})
 	, _signalDetectionEnabled(true)
-	, _noSignalDetected(false)
+	, _signalDetected(false)
 	, _initialized(false)
 	, _reload(false)
 	, _x_frac_min(0.25)
@@ -99,7 +97,7 @@ bool MFGrabber::start()
 		{
 			connect(_threadManager, &EncoderThreadManager::newFrame, this, &MFGrabber::newThreadFrame);
 			_threadManager->start();
-			DebugIf(verbose, _log, "Decoding threads: %d", _threadManager->_threadCount);
+			qCDebug(grabber_video_flow) << "Decoding threads:" << _threadManager->_threadCount;
 
 			start_capturing();
 			Info(_log, "Started");
@@ -196,7 +194,7 @@ HRESULT MFGrabber::init_device(QString deviceName, DeviceProperties props)
 	IAMVideoProcAmp* pProcAmp = nullptr;
 
 	Debug(_log, "Init %s, %d x %d @ %d fps (%s)", QSTRING_CSTR(deviceName), props.width, props.height, props.fps, QSTRING_CSTR(pixelFormatToString(pixelformat)));
-	DebugIf (verbose, _log, "Symbolic link: %s", QSTRING_CSTR(props.symlink));
+	qCDebug(grabber_video_flow) << "Symbolic link: " << props.symlink;
 
 	hr = MFCreateAttributes(&deviceAttributes, 2);
 	if (FAILED(hr))
@@ -363,6 +361,18 @@ done:
 		_height = props.height;
 		_frameByteSize = _width * _height * 3;
 		_lineLength = _width * 3;
+		// adjust flipMode for bottom-up images
+		if (props.defstride < 0)
+		{
+			if (_flipMode == FlipMode::NO_CHANGE)
+				_flipMode = FlipMode::HORIZONTAL;
+			else if (_flipMode == FlipMode::HORIZONTAL)
+				_flipMode = FlipMode::NO_CHANGE;
+			else if (_flipMode == FlipMode::VERTICAL)
+				_flipMode = FlipMode::BOTH;
+			else if (_flipMode == FlipMode::BOTH)
+				_flipMode = FlipMode::VERTICAL;
+		}
 	}
 
 	// Cleanup
@@ -389,7 +399,7 @@ void MFGrabber::enumVideoCaptureDevices()
 			IMFActivate** devices;
 			if (SUCCEEDED(MFEnumDeviceSources(attr, &devices, &count)))
 			{
-				DebugIf (verbose, _log, "Detected devices: %u", count);
+				qCDebug(grabber_video_flow) << "Detected devices: " << count;
 				for (UINT32 i = 0; i < count; i++)
 				{
 					UINT32 length;
@@ -406,7 +416,7 @@ void MFGrabber::enumVideoCaptureDevices()
 							IMFMediaSource *pSource = nullptr;
 							if (SUCCEEDED(devices[i]->ActivateObject(IID_PPV_ARGS(&pSource))))
 							{
-								DebugIf (verbose, _log, "Found capture device: %s", QSTRING_CSTR(dev));
+								qCDebug(grabber_video_flow) << "Found capture device: " << dev;
 
 								IMFMediaType *pType = nullptr;
 								IMFSourceReader* reader;
@@ -436,9 +446,19 @@ void MFGrabber::enumVideoCaptureDevices()
 												properties.denominator = denominator;
 												properties.pf = pixelformat;
 												properties.guid = format;
+
+												HRESULT hr = pType->GetUINT32(MF_MT_DEFAULT_STRIDE, (UINT32*)&properties.defstride);
+												if (FAILED(hr))
+												{
+													hr = MFGetStrideForBitmapInfoHeader(format.Data1, width, &properties.defstride);
+													if (FAILED(hr))
+													{
+														qCDebug(grabber_video_flow) << "failed to get default stride";
+													}
+												}
 												devicePropertyList.append(properties);
 
-												DebugIf (verbose, _log, "%s %d x %d @ %d fps (%s)", QSTRING_CSTR(dev), properties.width, properties.height, properties.fps, QSTRING_CSTR(pixelFormatToString(properties.pf)));
+												qCDebug(grabber_video_properties) << "" << dev << properties.width << "x" << properties.height << "@" << properties.fps << "fps (" << pixelFormatToString(properties.pf) << ")";
 											}
 										}
 
@@ -467,7 +487,7 @@ void MFGrabber::enumVideoCaptureDevices()
 													if (SUCCEEDED(videoProcAmp->Get(it.key(), &currentVal,  &flag)))
 													{
 														control.currentValue = currentVal;
-														DebugIf(verbose, _log, "%s: min=%i, max=%i, step=%i, default=%i, current=%i", QSTRING_CSTR(it.value()), minVal, maxVal, stepVal, defaultVal, currentVal);
+														qCDebug(grabber_video_properties) << "" << it.value() << ": min=" << minVal << ", max=" << maxVal << ", step=" << stepVal << ", default=" << defaultVal << ", current=" << currentVal;
 													}
 													else
 														break;
@@ -537,7 +557,7 @@ void MFGrabber::process_image(const void *frameImageBuffer, int size)
 		Error(_log, "Frame too small: %d != %d", size, _frameByteSize);
 	else if (_threadManager != nullptr)
 	{
-		for (unsigned long i = 0; i < _threadManager->_threadCount; i++)
+		for (int i = 0; i < _threadManager->_threadCount; i++)
 		{
 			if (!_threadManager->_threads[i]->isBusy())
 			{
@@ -580,7 +600,7 @@ void MFGrabber::newThreadFrame(Image<ColorRgb> image)
 		{
 			if (_noSignalCounter >= _noSignalCounterThreshold)
 			{
-				_noSignalDetected = true;
+				_signalDetected = true;
 				Info(_log, "Signal detected");
 			}
 
@@ -593,7 +613,7 @@ void MFGrabber::newThreadFrame(Image<ColorRgb> image)
 		}
 		else if (_noSignalCounter == _noSignalCounterThreshold)
 		{
-			_noSignalDetected = false;
+			_signalDetected = false;
 			Info(_log, "Signal lost");
 		}
 	}
@@ -716,8 +736,6 @@ bool MFGrabber::reload(bool force)
 
 QJsonArray MFGrabber::discover(const QJsonObject& params)
 {
-	DebugIf (verbose, _log, "params: [%s]", QString(QJsonDocument(params).toJson(QJsonDocument::Compact)).toUtf8().constData());
-
 	enumVideoCaptureDevices();
 
 	QJsonArray inputsDiscovered;
@@ -797,7 +815,7 @@ QJsonArray MFGrabber::discover(const QJsonObject& params)
 		resolution_default["width"] = 640;
 		resolution_default["height"] = 480;
 		resolution_default["fps"] = 25;
-		format_default["format"] = "bgr24";
+		format_default["format"] = "rgb24";
 		format_default["resolution"] = resolution_default;
 		video_inputs_default["inputIdx"] = 0;
 		video_inputs_default["standards"] = "PAL";
@@ -812,7 +830,6 @@ QJsonArray MFGrabber::discover(const QJsonObject& params)
 
 	_deviceProperties.clear();
 	_deviceControls.clear();
-	DebugIf (verbose, _log, "device: [%s]", QString(QJsonDocument(inputsDiscovered).toJson(QJsonDocument::Compact)).toUtf8().constData());
 
 	return inputsDiscovered;
 }

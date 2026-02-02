@@ -1,76 +1,74 @@
 #include <utils/NetOrigin.h>
+#include <utils/MemoryTracker.h>
 
 #include <QJsonObject>
+#include <QNetworkInterface>
 
-NetOrigin* NetOrigin::instance = nullptr;
+QSharedPointer<NetOrigin> NetOrigin::_instance;
 
-NetOrigin::NetOrigin(QObject* parent, Logger* log)
+NetOrigin::NetOrigin(QObject* parent, QSharedPointer<Logger> log)
 	: QObject(parent)
 	, _log(log)
-	, _internetAccessAllowed(false)
-	, _ipWhitelist()
+{}
+
+void NetOrigin::createInstance(QObject* parent)
 {
-	NetOrigin::instance = this;
+	CREATE_INSTANCE_WITH_TRACKING(_instance, NetOrigin, parent, nullptr);
 }
 
-bool NetOrigin::accessAllowed(const QHostAddress& address, const QHostAddress& local) const
+QSharedPointer<NetOrigin> NetOrigin::getInstance()
 {
-	if(_internetAccessAllowed)
+	return _instance;
+}
+
+bool NetOrigin::isValid()
+{
+	return !_instance.isNull();
+}
+
+void NetOrigin::destroyInstance()
+{
+	_instance.reset();
+}
+
+
+bool NetOrigin::isLocalAddress(const QHostAddress& ipAddress, const QHostAddress& /*local*/) const
+{
+	QHostAddress address = ipAddress;
+
+	if (address.isLoopback() || address.isLinkLocal())
+	{
 		return true;
-
-	if(_ipWhitelist.contains(address)) // v4 and v6
-		return true;
-
-	if(!isLocalAddress(address, local))
-	{
-		Warning(_log,"Client connection with IP address '%s' has been rejected! It's not whitelisted, access denied.",QSTRING_CSTR(address.toString()));
-		return false;
 	}
-	return true;
-}
 
-bool NetOrigin::isLocalAddress(const QHostAddress& address, const QHostAddress& local) const
-{
-	if(address.protocol() == QAbstractSocket::IPv4Protocol)
+	// Convert IPv4-mapped IPv6 to pure IPv4
+	QHostAddress const ipv4Address(address.toIPv4Address());
+	if (ipv4Address != QHostAddress::AnyIPv4)
 	{
-		if(!address.isInSubnet(local, 24)) // 255.255.255.xxx; IPv4 0-32
-		{
-			return false;
-		}
+		address = ipv4Address;
 	}
-	else if(address.protocol() == QAbstractSocket::IPv6Protocol)
+
+	QList<QNetworkInterface> const allInterfaces = QNetworkInterface::allInterfaces();
+	for (const QNetworkInterface &networkInterface : allInterfaces)
 	{
-		if(!address.isInSubnet(local, 64)) // 2001:db8:abcd:0012:XXXX:XXXX:XXXX:XXXX; IPv6 0-128
+		QList<QNetworkAddressEntry> const addressEntries = networkInterface.addressEntries();
+		for (const QNetworkAddressEntry &localNetworkAddressEntry : addressEntries)
 		{
-			return false;
-		}
-	}
-	return true;
-}
+			QHostAddress const localIP = localNetworkAddressEntry.ip();
 
-void NetOrigin::handleSettingsUpdate(settings::type type, const QJsonDocument& config)
-{
-	if(type == settings::NETWORK)
-	{
-		const QJsonObject& obj = config.object();
-		_internetAccessAllowed = obj["internetAccessAPI"].toBool(false);
-
-		const QJsonArray& arr = obj["ipWhitelist"].toArray();
-		_ipWhitelist.clear();
-
-		for(const auto& e : arr)
-		{
-			const QString& entry = e.toString("");
-			if(entry.isEmpty())
-				continue;
-
-			QHostAddress host(entry);
-			if(host.isNull())
+			// Skip protocol mismatch
+			if (localIP.protocol() != address.protocol())
 			{
-				Warning(_log,"The whitelisted IP address '%s' isn't valid! Skipped",QSTRING_CSTR(entry));
 				continue;
 			}
-			_ipWhitelist << host;
+
+			if (address.isInSubnet(localIP, localNetworkAddressEntry.prefixLength()))
+			{
+				return true;
+			}
 		}
 	}
+
+	return false;
 }
+

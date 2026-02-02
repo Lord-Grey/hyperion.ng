@@ -1,4 +1,4 @@
-#include "grabber/EncoderThread.h"
+#include "grabber/video/EncoderThread.h"
 
 #include <QDebug>
 
@@ -92,7 +92,7 @@ void EncoderThread::setup(
 		tjFree(_localData);
 		_localData = nullptr;
 	}
-	_localData = static_cast<uint8_t*>(tjAlloc(size + 1));
+	_localData = tjAlloc(size + 1);
 #else
 	if (_localData != nullptr)
 	{
@@ -122,18 +122,6 @@ void EncoderThread::process()
 		else
 #endif
 		{
-			if (_pixelFormat == PixelFormat::BGR24)
-			{
-				if (_flipMode == FlipMode::NO_CHANGE)
-					_imageResampler.setFlipMode(FlipMode::HORIZONTAL);
-				else if (_flipMode == FlipMode::HORIZONTAL)
-					_imageResampler.setFlipMode(FlipMode::NO_CHANGE);
-				else if (_flipMode == FlipMode::VERTICAL)
-					_imageResampler.setFlipMode(FlipMode::BOTH);
-				else if (_flipMode == FlipMode::BOTH)
-					_imageResampler.setFlipMode(FlipMode::VERTICAL);
-			}
-
 			Image<ColorRgb> image = Image<ColorRgb>();
 			_imageResampler.processImage(
 				_localData,
@@ -143,7 +131,7 @@ void EncoderThread::process()
 #if defined(ENABLE_V4L2)
 				_pixelFormat,
 #else
-				PixelFormat::BGR24,
+				PixelFormat::BGR24,  // MF-Grabber always sends RGB24, but memory layout is RGBTRIPLE (b,g,r) -> process as BGR24
 #endif
 				image
 			);
@@ -318,7 +306,7 @@ void EncoderThread::processImageMjpeg()
 		}
 	}
 
-	Image<ColorRgb> srcImage(static_cast<unsigned>(_width), static_cast<unsigned>(_height));
+	Image<ColorRgb> srcImage(_width, _height);
 
 	if (tjDecompress2(_tjInstance, _localData , _size,
 					  reinterpret_cast<unsigned char*>(srcImage.memptr()), _width, 0, _height,

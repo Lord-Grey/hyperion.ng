@@ -1,7 +1,8 @@
+
 #include <cassert>
-#include <csignal>
 #include <stdlib.h>
 #include <stdio.h>
+#include <cstdlib>
 
 #if !defined(__APPLE__) && !defined(_WIN32)
 /* prctl is Linux only */
@@ -28,6 +29,7 @@
 #include <QSystemTrayIcon>
 #include <QNetworkInterface>
 #include <QHostInfo>
+#include <QScopedPointer>
 
 #include "HyperionConfig.h"
 
@@ -36,6 +38,9 @@
 #include <commandline/Parser.h>
 #include <commandline/IntOption.h>
 #include <utils/DefaultSignalHandler.h>
+#include <utils/ErrorManager.h>
+
+#include <db/DBConfigManager.h>
 #include <../../include/db/AuthTable.h>
 
 #include "detectProcess.h"
@@ -46,41 +51,17 @@
 
 #include "hyperiond.h"
 #include "systray.h"
-#include "SuspendHandler.h"
+#include <events/EventHandler.h>
 
 using namespace commandline;
 
+namespace {
+	inline const QString APPLICATION_NAME = QStringLiteral("Hyperion Daemon");
+}
+
 #define PERM0664 (QFileDevice::ReadOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther | QFileDevice::WriteOwner | QFileDevice::WriteGroup)
 
-#ifndef _WIN32
-void signal_handler(int signum)
-{
-	HyperionDaemon* hyperiond = HyperionDaemon::getInstance();
-	SuspendHandler* suspendHandler = hyperiond->getSuspendHandlerInstance();
-
-	if (signum == SIGCHLD)
-	{
-		// only quit when a registered child process is gone
-		// currently this feature is not active ...
-	}
-	else if (signum == SIGUSR1)
-	{
-		if (suspendHandler != nullptr)
-		{
-			suspendHandler->suspend();
-		}
-	}
-	else if (signum == SIGUSR2)
-	{
-		if (suspendHandler != nullptr)
-		{
-			suspendHandler->resume();
-		}
-	}
-}
-#endif
-
-QCoreApplication* createApplication(int &argc, char *argv[])
+QCoreApplication* createApplication(int& argc, char* argv[])
 {
 	bool isGuiApp = false;
 	bool forceNoGui = false;
@@ -100,105 +81,103 @@ QCoreApplication* createApplication(int &argc, char *argv[])
 
 	// on osx/windows gui always available
 #if defined(__APPLE__) || defined(_WIN32)
-	isGuiApp = true && ! forceNoGui;
+	isGuiApp = true && !forceNoGui;
 #else
 	if (!forceNoGui)
 	{
-		isGuiApp = (getenv("DISPLAY") != NULL && (getenv("XDG_SESSION_TYPE") != NULL || getenv("WAYLAND_DISPLAY") != NULL));
+		isGuiApp = (getenv("DISPLAY") != nullptr && (getenv("XDG_SESSION_TYPE") != nullptr || getenv("WAYLAND_DISPLAY") != NULL));
 	}
 #endif
 
 	if (isGuiApp)
 	{
-		QApplication* app = new QApplication(argc, argv);
+		auto* app = new QApplication(argc, argv);
 		// add optional library path
-		app->addLibraryPath(QApplication::applicationDirPath() + "/../lib");
-		app->setApplicationDisplayName("Hyperion");
+		QApplication::addLibraryPath(QApplication::applicationDirPath() + "/../lib");
+		QApplication::setApplicationDisplayName("Hyperion");
 #ifndef __APPLE__
-		app->setWindowIcon(QIcon(":/hyperion-icon-32px.png"));
+		QApplication::setWindowIcon(QIcon(":/hyperion-32px.png"));
 #endif
 		return app;
 	}
 
-	QCoreApplication* app = new QCoreApplication(argc, argv);
-	app->setApplicationName("Hyperion");
-	app->setApplicationVersion(HYPERION_VERSION);
+	auto* app = new QCoreApplication(argc, argv);
+	QCoreApplication::setApplicationName("Hyperion");
+	QCoreApplication::setApplicationVersion(HYPERION_VERSION);
 	// add optional library path
-	app->addLibraryPath(QApplication::applicationDirPath() + "/../lib");
+	QCoreApplication::addLibraryPath(QCoreApplication::applicationDirPath() + "/../lib");
 
 	return app;
 }
 
 int main(int argc, char** argv)
 {
-	// initialize main logger and set global log level
-	Logger *log = Logger::getInstance("MAIN");
-	Logger::setLogLevel(Logger::WARNING);
+	//Initialize tracing pattern for QT logging
+	setTracingLogPattern();
 
-	// check if we are running already an instance
-	// TODO Allow one session per user
-	#ifdef _WIN32
-		const char* processName = "hyperiond.exe";
-	#else
-		const char* processName = "hyperiond";
-	#endif
+	// initialize main logger and set global log level
+	QSharedPointer<Logger> log = Logger::getInstance("MAIN");
+	Logger::setLogLevel(Logger::LogLevel::Warning);
+
+	ErrorManager errorManager;
+	DefaultSignalHandler::install();
 
 	// Initialising QCoreApplication
 	QScopedPointer<QCoreApplication> app(createApplication(argc, argv));
 
-	bool isGuiApp = !(qobject_cast<QApplication *>(app.data()) == nullptr) && QSystemTrayIcon::isSystemTrayAvailable();
+	// check if we are running already an instance
+	// TODO Allow one session per user
+	QString processName = QCoreApplication::applicationName();
+#ifdef _WIN32
+	processName.append(".exe");
 
-	DefaultSignalHandler::install();
-
-#ifndef _WIN32
-	signal(SIGCHLD, signal_handler);
-	signal(SIGUSR1, signal_handler);
-	signal(SIGUSR2, signal_handler);
+	// This prevents INNO Setup from being (un)installed while Hyperion is running!
+	CreateMutexA(0, FALSE, "Hyperion");
 #endif
-	// force the locale
-	setlocale(LC_ALL, "C");
+
+	QObject::connect(&errorManager, &ErrorManager::errorOccurred, [&log](const QString& error) {
+		Error(log, "Error occured: %s", QSTRING_CSTR(error));
+		QTimer::singleShot(0, []() { QCoreApplication::quit(); });
+		});
+
+	bool isGuiApp = !(qobject_cast<QApplication*>(app.data()) == nullptr) && QSystemTrayIcon::isSystemTrayAvailable();
+
+	QCoreApplication::setApplicationName(APPLICATION_NAME);
+	QCoreApplication::setApplicationVersion(QString("%1 (%2)").arg(HYPERION_VERSION, HYPERION_BUILD_ID));
+
+	// Force locale to have predictable, minimal behavior while still supporting full Unicode.
+	setlocale(LC_ALL, "C.UTF-8");
 	QLocale::setDefault(QLocale::c());
 
-	Parser parser("Hyperion Daemon");
+	Parser parser(APPLICATION_NAME);
 	parser.addHelpOption();
+	parser.addVersionOption();
 
-	BooleanOption & versionOption       = parser.add<BooleanOption> (0x0, "version", "Show version information");
-	Option        & userDataOption      = parser.add<Option>        ('u', "userdata", "Overwrite user data path, defaults to home directory of current user (%1)", QDir::homePath() + "/.hyperion");
-	BooleanOption & resetPassword       = parser.add<BooleanOption> (0x0, "resetPassword", "Lost your password? Reset it with this option back to 'hyperion'");
-	BooleanOption & deleteDB            = parser.add<BooleanOption> (0x0, "deleteDatabase", "Start all over? This Option will delete the database");
-	BooleanOption & silentOption        = parser.add<BooleanOption> ('s', "silent", "Do not print any outputs");
-	BooleanOption & verboseOption       = parser.add<BooleanOption> ('v', "verbose", "Increase verbosity");
-	BooleanOption & debugOption         = parser.add<BooleanOption> ('d', "debug", "Show debug messages");
-#ifdef WIN32
-	BooleanOption & consoleOption       = parser.add<BooleanOption> ('c', "console", "Open a console window to view log output");
-#endif
-										  parser.add<BooleanOption> (0x0, "desktop", "Show systray on desktop");
-										  parser.add<BooleanOption> (0x0, "service", "Force hyperion to start as console service");
+	Option const & userDataOption = parser.add<Option>('u', "userdata", "Overwrite user data path, defaults to home directory of current user (%1)", QDir::homePath() + "/.hyperion");
+	BooleanOption const &resetPassword = parser.add<BooleanOption>(0x0, "resetPassword", "Lost your password? Reset it with this option back to 'hyperion'");
+	BooleanOption const &readOnlyModeOption = parser.add<BooleanOption>(0x0, "readonlyMode", "Start in read-only mode. No updates will be written to the database");
+	BooleanOption const &deleteDB = parser.add<BooleanOption>(0x0, "deleteDatabase", "Start all over? This Option will delete the database");
+	Option const &importConfig = parser.add<Option>(0x0, "importConfig", "Replace the current configuration database by a new configuration");
+	Option const &exportConfigPath = parser.add<Option>(0x0, "exportConfig", "Export the current configuration database, defaults to home directory of current user (%1)", QDir::homePath() + "/.hyperion//archive");
+	BooleanOption const &silentLogOption = parser.add<BooleanOption>('s', "silent", "Do not print any log outputs");
+	BooleanOption const &infoLogOption = parser.add<BooleanOption>('i', "info", "Show Info log messages");
+	BooleanOption const &debugLogOption = parser.add<BooleanOption>('d', "debug", "Show Debug log messages");
+
+	parser.add<BooleanOption>(0x0, "desktop", "Show systray on desktop");
+	parser.add<BooleanOption>(0x0, "service", "Force hyperion to start as console service");
 #if defined(ENABLE_EFFECTENGINE)
-	Option        & exportEfxOption     = parser.add<Option>        (0x0, "export-effects", "Export effects to given path");
+	Option const &exportEfxOption = parser.add<Option>(0x0, "export-effects", "Export effects to given path");
 #endif
 
 	/* Internal options, invisible to help */
-	BooleanOption & waitOption          = parser.addHidden<BooleanOption> (0x0, "wait-hyperion", "Do not exit if other Hyperion instances are running, wait them to finish");
+	BooleanOption const &waitOption = parser.addHidden<BooleanOption>(0x0, "wait-hyperion", "Do not exit if other Hyperion instances are running, wait them to finish");
 
 	parser.process(*qApp);
 
 #ifdef WIN32
-	if (parser.isSet(consoleOption))
-	{
-		CreateConsole();
-	}
+		//Attach the output to an existing console if available
+	openConsole(false);
 #endif
-
-	if (parser.isSet(versionOption))
-	{
-		std::cout
-			<< "Hyperion Ambilight Deamon" << std::endl
-			<< "\tVersion   : " << HYPERION_VERSION << " (" << HYPERION_BUILD_ID << ")" << std::endl
-			<< "\tBuild Time: " << __DATE__ << " " << __TIME__ << std::endl;
-
-		return 0;
-	}
 
 	if (!parser.isSet(waitOption))
 	{
@@ -206,24 +185,27 @@ int main(int argc, char** argv)
 		{
 			Error(log, "The Hyperion Daemon is already running, abort start");
 
-			// use the first non-localhost IPv4 address, IPv6 are not supported by Yeelight currently
-			for (const auto& address : QNetworkInterface::allAddresses())
-			{
-				if (!address.isLoopback() && (address.protocol() == QAbstractSocket::IPv4Protocol))
+			// use the first non-localhost IPv4 address
+			QList<QHostAddress> const allNetworkAddresses{ QNetworkInterface::allAddresses() };
+			auto it = std::find_if(allNetworkAddresses.begin(), allNetworkAddresses.end(),
+				[](const QHostAddress& address)
 				{
-					std::cout << "Access the Hyperion User-Interface for configuration and control via:" << std::endl;
-					std::cout << "http://" << address.toString().toStdString() << ":8090" << std::endl;
+					return !address.isLoopback() && (address.protocol() == QAbstractSocket::IPv4Protocol);
+				});
 
-					QHostInfo hostInfo = QHostInfo::fromName(address.toString());
-					if (hostInfo.error() == QHostInfo::NoError)
-					{
-						QString hostname = hostInfo.hostName();
-						std::cout << "http://" << hostname.toStdString() << ":8090" << std::endl;
-					}
-					break;
+			if (it != allNetworkAddresses.end())
+			{
+				std::cout << "Access the Hyperion User-Interface for configuration and control via:" << "\n";
+				std::cout << "http://" << it->toString().toStdString() << ":8090" << "\n";
+
+				QHostInfo const hostInfo = QHostInfo::fromName(it->toString());
+				if (hostInfo.error() == QHostInfo::NoError)
+				{
+					QString const hostname = hostInfo.hostName();
+					std::cout << "http://" << hostname.toStdString() << ":8090" << "\n";
 				}
 			}
-			return 0;
+			return EXIT_SUCCESS;
 		}
 	}
 	else
@@ -235,203 +217,284 @@ int main(int argc, char** argv)
 	}
 
 	int logLevelCheck = 0;
-	if (parser.isSet(silentOption))
+	if (parser.isSet(silentLogOption))
 	{
-		Logger::setLogLevel(Logger::OFF);
+		Logger::setLogLevel(Logger::LogLevel::Off);
 		logLevelCheck++;
 	}
 
-	if (parser.isSet(verboseOption))
+	if (parser.isSet(infoLogOption))
 	{
-		Logger::setLogLevel(Logger::INFO);
+		Logger::setLogLevel(Logger::LogLevel::Info);
 		logLevelCheck++;
 	}
 
-	if (parser.isSet(debugOption))
+	if (parser.isSet(debugLogOption))
 	{
-		Logger::setLogLevel(Logger::DEBUG);
+		Logger::setLogLevel(Logger::LogLevel::Debug);
 		logLevelCheck++;
 	}
+
+	Info(log, "%s %s, %s, built: %s", QSTRING_CSTR(APPLICATION_NAME), HYPERION_VERSION, HYPERION_BUILD_ID, BUILD_TIMESTAMP);
+	Debug(log, "QtVersion [%s]", QT_VERSION_STR);
 
 	if (logLevelCheck > 1)
 	{
-		Error(log, "aborting, because options --silent --verbose --debug can't be used together");
-		return 0;
+		emit errorManager.errorOccurred("Options --silent --info --debug cannot be used all together.");
+		return EXIT_FAILURE;
 	}
 
 #if defined(ENABLE_EFFECTENGINE)
 	if (parser.isSet(exportEfxOption))
 	{
 		Q_INIT_RESOURCE(EffectEngine);
-		QDir directory(":/effects/");
-		QDir destDir(exportEfxOption.value(parser));
-		if (directory.exists() && destDir.exists())
-		{
-			std::cout << "Extract to folder: " << destDir.absolutePath().toStdString() << std::endl;
-			QStringList filenames = directory.entryList(QStringList() << "*", QDir::Files, QDir::Name | QDir::IgnoreCase);
-			QString destFileName;
-			for (const QString & filename : qAsConst(filenames))
-			{
-				destFileName = destDir.dirName()+"/"+filename;
-				if (QFile::exists(destFileName))
-				{
-					QFile::remove(destFileName);
-				}
+		QDir const sourceDir(":/effects/");
+		QDir const destinationDir(exportEfxOption.value(parser));
 
-				std::cout << "Extract: " << filename.toStdString() << " ... ";
-				if (QFile::copy(QString(":/effects/")+filename, destFileName))
-				{
-					QFile::setPermissions(destFileName, PERM0664 );
-					std::cout << "OK" << std::endl;
-				}
-				else
-				{
-					std::cout << "Error, aborting" << std::endl;
-					return 1;
-				}
+		// Create destination if it does not exist
+		if (!destinationDir.exists())
+		{
+			std::cout << "Creating target directory: " << destinationDir.absolutePath().toStdString() << '\n';
+			if (!QDir().mkpath(destinationDir.absolutePath()))
+			{
+				emit errorManager.errorOccurred(QString("Failed to create directory: '%1'.").arg(destinationDir.absolutePath()));
+				return EXIT_FAILURE;
 			}
-			return 0;
 		}
 
-		Error(log, "Can not export to %s",exportEfxOption.getCString(parser));
-		return 1;
+		if (!sourceDir.exists())
+		{
+			emit errorManager.errorOccurred(QString("Can not export to %1.").arg(exportEfxOption.getCString(parser)));
+			return EXIT_FAILURE;
+		}
+
+		std::cout << "Extract to folder: " << destinationDir.absolutePath().toStdString() << '\n';
+		const QStringList filenames = sourceDir.entryList(QStringList() << "*", QDir::Files, QDir::Name | QDir::IgnoreCase);
+		for (const QString& filename : filenames)
+		{
+			QString const sourceFilePath = sourceDir.absoluteFilePath(filename);
+			QString const destinationFilePath = destinationDir.absoluteFilePath(filename);
+
+			if (QFile::exists(destinationFilePath))
+			{
+				QFile::remove(destinationFilePath);
+			}
+
+			if (Logger::getLogLevel() == Logger::LogLevel::Debug)
+			{
+				std::cout << "Copy \"" << sourceFilePath.toStdString() << "\" -> \"" << destinationFilePath.toStdString() << "\"" << '\n';
+			}
+
+			std::cout << "Extract: " << filename.toStdString() << " ... ";
+			if (!QFile::copy(sourceFilePath, destinationFilePath))
+			{
+				std::cerr << "Error copying [" << sourceFilePath.toStdString() << " -> [" << destinationFilePath.toStdString() << "]" << '\n';
+
+				emit errorManager.errorOccurred("Failed to copy effect(s) to target directory.");
+				return EXIT_FAILURE;
+			}
+
+			QFile::setPermissions(destinationFilePath, PERM0664);
+			std::cout << "OK" << '\n';
+		}
+		return EXIT_SUCCESS;
 	}
 #endif
 
-	int rc = 1;
 	bool readonlyMode = false;
+	QString const userDataPath(userDataOption.value(parser));
+	QDir const userDataDirectory(userDataPath);
 
-	QString userDataPath(userDataOption.value(parser));
 
-	QDir userDataDirectory(userDataPath);
-	QFileInfo dbFile(userDataDirectory.absolutePath() +"/db/hyperion.db");
+	if (parser.isSet(readOnlyModeOption))
+	{
+		readonlyMode = true;
+		Debug(log, "Force readonlyMode");
+	}
 
+	DBManager::initializeDatabase(userDataDirectory, readonlyMode);
+
+	Info(log, "Hyperion configuration and user data location: '%s'", QSTRING_CSTR(userDataDirectory.absolutePath()));
+
+	QFileInfo const dbFile(DBManager::getFileInfo());
+
+	DBConfigManager configManager;
+	if (dbFile.exists())
+	{
+		if (!dbFile.isReadable())
+		{
+			emit errorManager.errorOccurred(QString("Configuration database '%1' is not readable. Please setup permissions correctly.").arg(dbFile.absoluteFilePath()));
+			return EXIT_FAILURE;
+		}
+
+		if (!dbFile.isWritable())
+		{
+			readonlyMode = true;
+		}
+
+		if (parser.isSet(exportConfigPath))
+		{
+			QString path = exportConfigPath.value(parser);
+			if (path.isEmpty())
+			{
+				path = userDataDirectory.absolutePath().append("/archive");
+			}
+
+			if (!configManager.exportJson(path))
+			{
+				emit errorManager.errorOccurred("Configuration export failed.");
+				return EXIT_FAILURE;
+			}
+
+			return EXIT_SUCCESS;
+		}
+	}
+	else
+	{
+		if (parser.isSet(exportConfigPath))
+		{
+			emit errorManager.errorOccurred(QString("The configuration cannot be exported. The database file '%1' does not exist.").arg(dbFile.absoluteFilePath()));
+			return EXIT_FAILURE;
+		}
+
+		if (!userDataDirectory.mkpath(dbFile.absolutePath()))
+		{
+			if (!userDataDirectory.isReadable() || !dbFile.isWritable())
+			{
+				emit errorManager.errorOccurred(QString("The user data path '%1' cannot be created or nor is readable/writable. Please setup permissions correctly.").arg(userDataDirectory.absolutePath()));
+				return EXIT_FAILURE;
+			}
+		}
+	}
+
+	// reset Password without spawning daemon
+	if (parser.isSet(resetPassword))
+	{
+		if (readonlyMode)
+		{
+			emit errorManager.errorOccurred(QString("Password reset is not possible. Hyperion's database '%1' is not writable.").arg(dbFile.absoluteFilePath()));
+			return EXIT_FAILURE;
+		}
+
+		QScopedPointer<AuthTable> const table(new AuthTable());
+		if (!table->resetHyperionUser())
+		{
+			emit errorManager.errorOccurred("Failed to reset password.");
+			return EXIT_FAILURE;
+		}
+
+		Info(log, "Password reset successful.");
+		return EXIT_SUCCESS;
+	}
+
+	// delete database before start
+	if (parser.isSet(deleteDB))
+	{
+		if (readonlyMode)
+		{
+			emit errorManager.errorOccurred(QString("Deleting the configuration database failed. Hyperion's database '%1' is not writable.").arg(dbFile.absoluteFilePath()));
+			return EXIT_FAILURE;
+		}
+
+		if (QFile::exists(dbFile.absoluteFilePath()))
+		{
+			if (!QFile::remove(dbFile.absoluteFilePath()))
+			{
+				emit errorManager.errorOccurred("Failed to delete Database.");
+				return EXIT_FAILURE;
+			}
+
+			Info(log, "Configuration database deleted successfully.");
+		}
+		else
+		{
+			Warning(log, "Configuration database '%s' does not exist.", QSTRING_CSTR(dbFile.absoluteFilePath()));
+		}
+	}
+
+	QString const configFile(importConfig.value(parser));
+	if (!configFile.isEmpty())
+	{
+		if (readonlyMode)
+		{
+			emit errorManager.errorOccurred(QString("Configuration import failed. Hyperion's database '%1' is not writable.").arg(dbFile.absoluteFilePath()));
+
+			return EXIT_FAILURE;
+		}
+
+		if (!configManager.importJson(configFile).first)
+		{
+			emit errorManager.errorOccurred("Configuration import failed.");
+			return EXIT_FAILURE;
+		}
+	}
+
+	if (!configManager.isConfigVersionCompatible())
+	{
+		return EXIT_FAILURE;
+	}
+
+	if (!configManager.addMissingDefaults().first)
+	{
+		emit errorManager.errorOccurred("Updating configuration database with missing defaults failed.");
+		return EXIT_FAILURE;
+	}
+
+	if (!configManager.migrateConfiguration().first)
+	{
+		emit errorManager.errorOccurred("Migrating the configuration database failed.");
+		return EXIT_FAILURE;
+	}
+
+	if (!configManager.validateConfiguration().first)
+	{
+		if (!configManager.updateConfiguration().first)
+		{
+			emit errorManager.errorOccurred("Invalid configuration database. Correcting the configuration database failed.");
+			return EXIT_FAILURE;
+		}
+	}
+
+	if (!configFile.isEmpty())
+	{
+		Info(log, "Configuration imported sucessfully. You can start Hyperion now.");
+		return EXIT_SUCCESS;
+	}
+
+	Info(log, "Starting Hyperion in %sGUI mode, DB is %s", isGuiApp ? "" : "non-", readonlyMode ? "read-only" : "read/write");
+
+	if (readonlyMode)
+	{
+		Warning(log, "The database file '%s' is set not writable. Hyperion starts in read-only mode. Configuration updates will not be persisted.", QSTRING_CSTR(dbFile.absoluteFilePath()));
+	}
+
+	QScopedPointer<HyperionDaemon> hyperiond;
 	try
 	{
-		if (dbFile.exists())
-		{
-			if (!dbFile.isReadable())
-			{
-				throw std::runtime_error("Configuration database '" + dbFile.absoluteFilePath().toStdString() + "' is not readable. Please setup permissions correctly!");
-			}
-
-			if (!dbFile.isWritable())
-			{
-				readonlyMode = true;
-			}
-		}
-		else
-		{
-			if (!userDataDirectory.mkpath(dbFile.absolutePath()))
-			{
-				if (!userDataDirectory.isReadable() || !dbFile.isWritable())
-				{
-					throw std::runtime_error("The user data path '" + userDataDirectory.absolutePath().toStdString() + "' can't be created or isn't read/writeable. Please setup permissions correctly!");
-				}
-			}
-		}
-
-		// reset Password without spawning daemon
-		if(parser.isSet(resetPassword))
-		{
-			if ( readonlyMode )
-			{
-				Error(log,"Password reset is not possible. The user data path '%s' is not writeable.", QSTRING_CSTR(userDataDirectory.absolutePath()));
-				throw std::runtime_error("Password reset failed");
-			}
-
-			AuthTable* table = new AuthTable(userDataDirectory.absolutePath());
-			if(table->resetHyperionUser()){
-				Info(log,"Password reset successful");
-				delete table;
-				exit(0);
-			} else {
-				Error(log,"Failed to reset password!");
-				delete table;
-				exit(1);
-			}
-		}
-
-		// delete database before start
-		if(parser.isSet(deleteDB))
-		{
-			if ( readonlyMode )
-			{
-				Error(log,"Deleting the configuration database is not possible. The user data path '%s' is not writeable.", QSTRING_CSTR(dbFile.absolutePath()));
-				throw std::runtime_error("Deleting the configuration database failed");
-			}
-
-			if (QFile::exists(dbFile.absoluteFilePath()))
-			{
-				if (!QFile::remove(dbFile.absoluteFilePath()))
-				{
-					Info(log,"Failed to delete Database!");
-					exit(1);
-				}
-				else
-				{
-					Info(log,"Configuration database deleted successfully.");
-				}
-			}
-			else
-			{
-				Warning(log,"Configuration database [%s] does not exist!", QSTRING_CSTR(dbFile.absoluteFilePath()));
-			}
-		}
-
-		Info(log,"Starting Hyperion [%sGUI mode] - %s, %s, built: %s:%s", isGuiApp ? "": "non-", HYPERION_VERSION, HYPERION_BUILD_ID, __DATE__, __TIME__);
-		Debug(log,"QtVersion [%s]", QT_VERSION_STR);
-
-		if ( !readonlyMode )
-		{
-			Info(log, "Set user data path to '%s'", QSTRING_CSTR(userDataDirectory.absolutePath()));
-		}
-		else
-		{
-			Warning(log,"The user data path '%s' is not writeable. Hyperion starts in read-only mode. Configuration updates will not be persisted!", QSTRING_CSTR(userDataDirectory.absolutePath()));
-		}
-
-		HyperionDaemon* hyperiond = nullptr;
-		try
-		{
-			hyperiond = new HyperionDaemon(userDataDirectory.absolutePath(), qApp, bool(logLevelCheck), readonlyMode);
-		}
-		catch (std::exception& e)
-		{
-			Error(log, "Hyperion Daemon aborted: %s", e.what());
-			throw;
-		}
-
-		// run the application
-		if (isGuiApp)
-		{
-			Info(log, "Start Systray menu");
-			QApplication::setQuitOnLastWindowClosed(false);
-			SysTray tray(hyperiond);
-			tray.hide();
-			rc = (qobject_cast<QApplication *>(app.data()))->exec();
-		}
-		else
-		{
-			rc = app->exec();
-		}
-		Info(log, "Application closed with code %d", rc);
-		delete hyperiond;
+		hyperiond.reset(new HyperionDaemon(userDataDirectory.absolutePath(), qApp, bool(logLevelCheck)));
 	}
 	catch (std::exception& e)
 	{
-		Error(log, "Hyperion aborted: %s", e.what());
+		Error(log, "Hyperion Daemon aborted: %s", e.what());
+		return EXIT_FAILURE;
 	}
 
-	// delete components
-	Logger::deleteInstance();
-
-#ifdef _WIN32
-	if (parser.isSet(consoleOption))
+	int exitCode{ EXIT_FAILURE };
+	// run the application
+	if (isGuiApp)
 	{
-		system("pause");
+		Info(log, "Start Systray menu");
+		QApplication::setQuitOnLastWindowClosed(false);
+		SysTray tray(hyperiond.get());
+		tray.hide();
+		exitCode = QApplication::exec();
 	}
-#endif
+	else
+	{
+		exitCode = QCoreApplication::exec();
+	}
 
-	return rc;
+	Info(log, "Application ended with code %d", exitCode);
+
+	return exitCode;
 }

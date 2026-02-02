@@ -29,52 +29,49 @@ LedDevice* LedDeviceAdalight::construct(const QJsonObject &deviceConfig)
 
 bool LedDeviceAdalight::init(const QJsonObject &deviceConfig)
 {
-	bool isInitOK = false;
-
 	// Initialise sub-class
-	if ( ProviderRs232::init(deviceConfig) )
+	if ( !ProviderRs232::init(deviceConfig) )
 	{
-		_streamProtocol = static_cast<Adalight::PROTOCOLTYPE>(deviceConfig[CONFIG_STREAM_PROTOCOL].toString().toInt());
-		switch (_streamProtocol) {
-
-		case Adalight::AWA:
-		{
-			Debug( _log, "Adalight driver uses Hyperserial protocol");
-			_white_channel_calibration  = deviceConfig[CONFIG_WHITE_CHANNEL_CALLIBRATION].toBool(false);
-			double _white_channel_limit_percent = deviceConfig[CONFIG_WHITE_CHANNEL_LIMIT].toDouble(1);
-			_white_channel_limit  = static_cast<uint8_t>(qMin(qRound(_white_channel_limit_percent * 255.0 / 100.0), 255));
-			_white_channel_red  = static_cast<uint8_t>(qMin(deviceConfig[CONFIG_WHITE_CHANNEL_RED].toInt(255), 255));
-			_white_channel_green = static_cast<uint8_t>(qMin(deviceConfig[CONFIG_WHITE_CHANNEL_GREEN].toInt(255), 255));
-			_white_channel_blue = static_cast<uint8_t>(qMin(deviceConfig[CONFIG_WHITE_CHANNEL_BLUE].toInt(255), 255));
-
-			DebugIf(_white_channel_calibration, _log, "White channel limit: %i (%.2f%), red: %i, green: %i, blue: %i", _white_channel_limit, _white_channel_limit_percent, _white_channel_red, _white_channel_green, _white_channel_blue);
-		}
-			break;
-
-		case Adalight::LBAPA:
-			Debug( _log, "Adalight driver uses LightBerry APA102 protocol");
-			break;
-
-		case Adalight::ADA:
-			Debug( _log, "Adalight driver uses standard Adalight protocol");
-			break;
-		default:
-			Error( _log, "Adalight driver - unsupported protocol");
-			return false;
-		}
-
-		prepareHeader();
-		isInitOK = true;
+		return false;
 	}
-	return isInitOK;
+
+	_streamProtocol = static_cast<Adalight::PROTOCOLTYPE>(deviceConfig[CONFIG_STREAM_PROTOCOL].toString().toInt());
+	switch (_streamProtocol) {
+
+	case Adalight::AWA:
+	{
+		Debug( _log, "Adalight driver uses Hyperserial protocol");
+		_white_channel_calibration  = deviceConfig[CONFIG_WHITE_CHANNEL_CALLIBRATION].toBool(false);
+		double _white_channel_limit_percent = deviceConfig[CONFIG_WHITE_CHANNEL_LIMIT].toDouble(1);
+		_white_channel_limit  = static_cast<uint8_t>(qMin(qRound(_white_channel_limit_percent * 255.0 / 100.0), 255));
+		_white_channel_red  = static_cast<uint8_t>(qMin(deviceConfig[CONFIG_WHITE_CHANNEL_RED].toInt(255), 255));
+		_white_channel_green = static_cast<uint8_t>(qMin(deviceConfig[CONFIG_WHITE_CHANNEL_GREEN].toInt(255), 255));
+		_white_channel_blue = static_cast<uint8_t>(qMin(deviceConfig[CONFIG_WHITE_CHANNEL_BLUE].toInt(255), 255));
+
+		DebugIf(_white_channel_calibration, _log, "White channel limit: %i (%.2f%), red: %i, green: %i, blue: %i", _white_channel_limit, _white_channel_limit_percent, _white_channel_red, _white_channel_green, _white_channel_blue);
+	}
+		break;
+
+	case Adalight::LBAPA:
+		Debug( _log, "Adalight driver uses LightBerry APA102 protocol");
+		break;
+
+	case Adalight::ADA:
+		Debug( _log, "Adalight driver uses standard Adalight protocol");
+		break;
+
+	default:
+		Error( _log, "Adalight driver - unsupported protocol");
+		return false;
+	}
+
+	prepareHeader();
+
+	return true;
 }
 
 void LedDeviceAdalight::prepareHeader()
 {
-	// create ledBuffer
-	uint totalLedCount = _ledCount;
-	_bufferLength = static_cast<qint64>(HEADER_SIZE + _ledRGBCount);
-
 	switch (_streamProtocol) {
 	case Adalight::LBAPA:
 	{
@@ -82,8 +79,13 @@ void LedDeviceAdalight::prepareHeader()
 		const unsigned int bytesPerRGBLed = 4;
 		const unsigned int endFrameSize = qMax<unsigned int>(((_ledCount + 15) / 16), bytesPerRGBLed);
 		_bufferLength = HEADER_SIZE + (_ledCount * bytesPerRGBLed) + startFrameSize + endFrameSize;
+		_ledBuffer.fill(0x00, _bufferLength);
 
-		_ledBuffer.resize(static_cast<size_t>(_bufferLength), 0x00);
+		_ledBuffer[0] = 'A';
+		_ledBuffer[1] = 'd';
+		_ledBuffer[2] = 'a';
+		qToBigEndian<quint16>(static_cast<quint16>(_ledCount), &_ledBuffer[3]);
+		_ledBuffer[5] = _ledBuffer[3] ^ _ledBuffer[4] ^ 0x55; // Checksum
 
 		// init constant data values
 		for (uint iLed=1; iLed <= _ledCount; iLed++)
@@ -91,41 +93,39 @@ void LedDeviceAdalight::prepareHeader()
 			_ledBuffer[iLed*4+HEADER_SIZE] = 0xFF;
 		}
 	}
-		break;
-
+	break;
 	case Adalight::AWA:
-		_bufferLength += 8;
-		[[fallthrough]];
+	{
+		_bufferLength = static_cast<qint64>(HEADER_SIZE + _ledRGBCount + 8);
+		_ledBuffer.fill(0x00, _bufferLength);
+		_ledBuffer[0] = 'A';
+		_ledBuffer[1] = 'w';
+		_ledBuffer[2] = _white_channel_calibration ? 'A' : 'a';
+		qToBigEndian<quint16>(static_cast<quint16>(_ledCount-1), &_ledBuffer[3]);
+		_ledBuffer[5] = _ledBuffer[3] ^ _ledBuffer[4] ^ 0x55; // Checksum
+	}
+	break;
 	case Adalight::ADA:
 		[[fallthrough]];
 	default:
-		totalLedCount -= 1;
-		_ledBuffer.resize(static_cast<size_t>(_bufferLength), 0x00);
-		break;
-	}
-
-	_ledBuffer[0] = 'A';
-	if (_streamProtocol == Adalight::AWA )
-	{
-		_ledBuffer[1] = 'w';
-		_ledBuffer[2] = _white_channel_calibration ? 'A' : 'a';
-	}
-	else
-	{
+		_bufferLength = static_cast<qint64>(HEADER_SIZE + _ledRGBCount);
+		_ledBuffer.fill(0x00, _bufferLength);
+		_ledBuffer[0] = 'A';
 		_ledBuffer[1] = 'd';
 		_ledBuffer[2] = 'a';
+		qToBigEndian<quint16>(static_cast<quint16>(_ledCount-1), &_ledBuffer[3]);
+		_ledBuffer[5] = _ledBuffer[3] ^ _ledBuffer[4] ^ 0x55; // Checksum
+		break;
 	}
-
-	qToBigEndian<quint16>(static_cast<quint16>(totalLedCount), &_ledBuffer[3]);
-	_ledBuffer[5] = _ledBuffer[3] ^ _ledBuffer[4] ^ 0x55; // Checksum
 
 	Debug( _log, "Adalight header for %d leds (size: %d): %c%c%c 0x%02x 0x%02x 0x%02x", _ledCount, _ledBuffer.size(),
 		   _ledBuffer[0], _ledBuffer[1], _ledBuffer[2], _ledBuffer[3], _ledBuffer[4], _ledBuffer[5] );
 }
 
-
-int LedDeviceAdalight::write(const std::vector<ColorRgb> & ledValues)
+int LedDeviceAdalight::write(const QVector<ColorRgb> & ledValues)
 {
+	qCDebug(leddevice_write) << limitForDebug(ledValues, 10);
+	
 	if (_ledCount != ledValues.size())
 	{
 		Warning(_log, "Adalight LED count has changed (old: %d, new: %d). Rebuilding header.", _ledCount, ledValues.size());
@@ -134,7 +134,7 @@ int LedDeviceAdalight::write(const std::vector<ColorRgb> & ledValues)
 		prepareHeader();
 	}
 
-	if (_bufferLength >  static_cast<qint64>(_ledBuffer.size()))
+	if (_bufferLength >  _ledBuffer.size())
 	{
 		Warning(_log, "Adalight buffer's size has changed. Skipping refresh.");
 		return 0;
@@ -153,7 +153,7 @@ int LedDeviceAdalight::write(const std::vector<ColorRgb> & ledValues)
 	else
 	{
 		uint8_t* writer = _ledBuffer.data() + HEADER_SIZE;
-		uint8_t* hasher = writer;
+		const uint8_t* hasher = writer;
 
 		memcpy(writer, ledValues.data(), ledValues.size() * sizeof(ColorRgb));
 		writer += ledValues.size() * sizeof(ColorRgb);
@@ -210,7 +210,7 @@ void LedDeviceAdalight::readFeedback()
 	}
 }
 
-void LedDeviceAdalight::whiteChannelExtension(uint8_t*& writer)
+void LedDeviceAdalight::whiteChannelExtension(uint8_t*& writer) const
 {
 	if (_streamProtocol == Adalight::AWA && _white_channel_calibration)
 	{

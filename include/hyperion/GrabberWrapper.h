@@ -6,6 +6,8 @@
 #include <QString>
 #include <QStringList>
 #include <QMultiMap>
+#include <QScopedPointer>
+#include <QLoggingCategory>
 
 #include <utils/Logger.h>
 #include <utils/Components.h>
@@ -18,6 +20,10 @@
 
 #include <grabber/GrabberType.h>
 
+#include <events/EventEnum.h>
+
+Q_DECLARE_LOGGING_CATEGORY(grabber_flow);
+
 class Grabber;
 class GlobalSignals;
 class QTimer;
@@ -29,6 +35,14 @@ class GrabberWrapper : public QObject
 {
 	Q_OBJECT
 public:
+
+	static constexpr const char* GRABBERTYPE = "Base";
+
+	template<typename GrabberType>
+	static QSharedPointer<GrabberType> create(const QJsonDocument& config) {
+		return QSharedPointer<GrabberType>::create(config);
+	}
+
 	GrabberWrapper(const QString& grabberName, Grabber * ggrabber,int updateRate_Hz = DEFAULT_RATE_HZ);
 
 	~GrabberWrapper() override;
@@ -59,14 +73,22 @@ public:
 	virtual void tryStart();
 
 	///
-	/// Stop grabber
+	/// Stop the grabber
 	///
 	virtual void stop();
+
+	///
+	/// Restart the grabber
+	///
+	bool restart();
 
 	///
 	/// Check if grabber is active
 	///
 	virtual bool isActive() const;
+
+	QString getName() const { return _grabberName; }
+	Grabber* getGrabber() const { return _ggrabber; }
 
 	///
 	/// @brief Get active grabber name
@@ -77,22 +99,23 @@ public:
 	virtual QStringList getActive(int inst, GrabberTypeFilter type = GrabberTypeFilter::ALL) const;
 
 	bool getSysGrabberState() const { return GLOBAL_GRABBER_SYS_ENABLE; }
-	void setSysGrabberState(bool sysGrabberState){ GLOBAL_GRABBER_SYS_ENABLE = sysGrabberState; }
+	void setSysGrabberState(bool sysGrabberState) const { GLOBAL_GRABBER_SYS_ENABLE = sysGrabberState; }
 	bool getV4lGrabberState() const { return GLOBAL_GRABBER_V4L_ENABLE; }
-	void setV4lGrabberState(bool v4lGrabberState){ GLOBAL_GRABBER_V4L_ENABLE = v4lGrabberState; }
+	void setV4lGrabberState(bool v4lGrabberState) const { GLOBAL_GRABBER_V4L_ENABLE = v4lGrabberState; }
 	bool getAudioGrabberState() const { return GLOBAL_GRABBER_AUDIO_ENABLE; }
-	void setAudioGrabberState(bool audioGrabberState) { GLOBAL_GRABBER_AUDIO_ENABLE = audioGrabberState; }
+	void setAudioGrabberState(bool audioGrabberState) const { GLOBAL_GRABBER_AUDIO_ENABLE = audioGrabberState; }
 
 	static QStringList availableGrabbers(GrabberTypeFilter type = GrabberTypeFilter::ALL);
 
-public:
 	template <typename Grabber_T>
 	bool transferFrame(Grabber_T &grabber)
 	{
-		unsigned w = grabber.getImageWidth();
-		unsigned h = grabber.getImageHeight();
-		if ( _image.width() != w || _image.height() != h)
+		int w = grabber.getImageWidth();
+		int h = grabber.getImageHeight();
+
+		if (_image.width() != w || _image.height() != h)
 		{
+			qCDebug(image_track) << "Image [" << _image.id() << "], resizing image from " << _image.width() << "x" << _image.height() << " to " << w << "x" << h;
 			_image.resize(w, h);
 		}
 
@@ -139,6 +162,8 @@ public slots:
 	///
 	virtual void handleSettingsUpdate(settings::type type, const QJsonDocument& config);
 
+	virtual void handleEvent(Event event);
+
 signals:
 	///
 	/// @brief Emit the final processed image
@@ -149,9 +174,6 @@ private slots:
 	/// @brief Handle a source request event from Hyperion.
 	/// Will start and stop grabber based on active listeners count
 	void handleSourceRequest(hyperion::Components component, int hyperionInd, bool listen);
-
-	///
-
 
 protected:
 
@@ -174,19 +196,23 @@ protected:
 	///
 	void updateTimer(int interval);
 
+	/// The Logger instance
+	QSharedPointer<Logger> _log;
 
+private:
+
+	void handleSourceRequestScreen(hyperion::Components component, int hyperionInd, bool listen);
+	void handleSourceRequestVideo(hyperion::Components component, int hyperionInd, bool listen);
+	void handleSourceRequestAudio(hyperion::Components component, int hyperionInd, bool listen);
+
+	Grabber *_ggrabber;
 	QString _grabberName;
 
-	/// The Logger instance
-	Logger * _log;
-
 	/// The timer for generating events with the specified update rate
-	QTimer* _timer;
+	QScopedPointer<QTimer> _timer;
 
 	/// The calculated update rate [ms]
 	int _updateInterval_ms;
-
-	Grabber *_ggrabber;
 
 	/// The image used for grabbing frames
 	Image<ColorRgb> _image;

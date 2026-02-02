@@ -1,4 +1,5 @@
 // STL includes
+#include "hyperion/HyperionIManager.h"
 #include <chrono>
 
 // project includes
@@ -9,6 +10,7 @@
 
 // utils includes
 #include <utils/Logger.h>
+#include <utils/GlobalSignals.h>
 #include <utils/NetUtils.h>
 
 // qt includes
@@ -19,104 +21,232 @@
 
 #include <flatbufserver/FlatBufferConnection.h>
 
-// mDNS discover
-#ifdef ENABLE_MDNS
-#include <mdns/MdnsBrowser.h>
-#include <mdns/MdnsServiceRegister.h>
-#endif
+Q_LOGGING_CATEGORY(forwarder_flow, "hyperion.forwarder.flow");
+Q_LOGGING_CATEGORY(forwarder_write, "hyperion.forwarder.write");
 
 // Constants
 namespace {
-
-const int DEFAULT_FORWARDER_FLATBUFFFER_PRIORITY = 140;
-
-constexpr std::chrono::milliseconds CONNECT_TIMEOUT{500};		 // JSON-socket connect timeout in ms
+	const int DEFAULT_FORWARDER_FLATBUFFFER_PRIORITY = 140;
+	constexpr std::chrono::milliseconds JSON_SOCKET_CONNECT_TIMEOUT{ 500 };
 
 } //End of constants
 
-MessageForwarder::MessageForwarder(Hyperion* hyperion)
-	: _hyperion(hyperion)
-	  , _log(nullptr)
-	  , _muxer(_hyperion->getMuxerInstance())
-	  , _forwarder_enabled(false)
-	  , _priority(DEFAULT_FORWARDER_FLATBUFFFER_PRIORITY)
-	  , _messageForwarderFlatBufHelper(nullptr)
+MessageForwarder::MessageForwarder(const QJsonDocument& config)
+	:
+	_log(Logger::getInstance("NETFORWARDER"))
+	, _config(config)
+	, _isActive(false)
+	, _priority(DEFAULT_FORWARDER_FLATBUFFFER_PRIORITY)
+	, _isEnabled(false)
+	, _toBeForwardedInstanceID(NO_INSTANCE_ID)
+	, _hyperionWeak(nullptr)
+	, _muxerWeak(nullptr)
+	, _messageForwarderFlatBufHelper(nullptr)
 {
-	QString subComponent = hyperion->property("instance").toString();
-	_log= Logger::getInstance("NETFORWARDER", subComponent);
-
+	TRACK_SCOPE();
 	qRegisterMetaType<TargetHost>("TargetHost");
-
-#ifdef ENABLE_MDNS
-	QMetaObject::invokeMethod(&MdnsBrowser::getInstance(), "browseForServiceType",
-							   Qt::QueuedConnection, Q_ARG(QByteArray, MdnsServiceRegister::getServiceType("jsonapi")));
-#endif
-
-	// get settings updates
-	connect(_hyperion, &Hyperion::settingsChanged, this, &MessageForwarder::handleSettingsUpdate);
-
-	// component changes
-	connect(_hyperion, &Hyperion::compStateChangeRequest, this, &MessageForwarder::handleCompStateChangeRequest);
-
-	// connect with Muxer visible priority changes
-	connect(_muxer, &PriorityMuxer::visiblePriorityChanged, this, &MessageForwarder::handlePriorityChanges);
 }
 
 MessageForwarder::~MessageForwarder()
 {
-	stopJsonTargets();
-	stopFlatbufferTargets();
+	TRACK_SCOPE();
 }
 
+void MessageForwarder::init()
+{
+	TRACK_SCOPE();
+	NetUtils::discoverMdnsServices("jsonapi");
+
+	handleSettingsUpdate(settings::NETFORWARD, _config);
+}
+
+void MessageForwarder::start()
+{
+	TRACK_SCOPE_CATEGORY(forwarder_flow) << "is Enabled" << _isEnabled;
+	if (_isEnabled)
+	{
+		handleTargets(true, _config.object());
+	}
+}
+
+void MessageForwarder::stop()
+{
+	TRACK_SCOPE_CATEGORY(forwarder_flow);
+
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (!hyperion.isNull())
+	{
+		disconnectFromInstance(_toBeForwardedInstanceID);
+
+		Info(_log, "Forwarding service stopped");
+	}
+
+	emit stopped();
+}
+
+bool MessageForwarder::connectToInstance(quint8 instanceID)
+{
+	TRACK_SCOPE_CATEGORY(forwarder_flow) << "instanceID" << instanceID << "( to be forwarded instanceID" << _toBeForwardedInstanceID << ")";
+
+	if (instanceID != _toBeForwardedInstanceID)
+	{
+		Debug(_log, "Forwarder not connecting to instance [%u] as it is not the configured one [%u]", instanceID, _toBeForwardedInstanceID);
+		return false;
+	}
+
+	bool isConnected{false};
+	if (auto mgr = HyperionIManager::getInstanceWeak().toStrongRef())
+	{
+		if (!mgr->isInstanceRunning(_toBeForwardedInstanceID))
+		{
+			Debug(_log, "Forwarder not connected as instance [%u] is not running", _toBeForwardedInstanceID);
+			return false;
+		}
+			
+		Info(_log, "Connect forwarder to instance [%u]", _toBeForwardedInstanceID);
+		QSharedPointer<Hyperion> const hyperion = mgr->getHyperionInstance(_toBeForwardedInstanceID);
+		if (hyperion)
+		{
+			_hyperionWeak = hyperion;
+			_muxerWeak = hyperion->getMuxerInstance();
+
+			// component changes
+			QObject::connect(hyperion.get(), &Hyperion::compStateChangeRequest, this, &MessageForwarder::handleCompStateChangeRequest);
+
+			// connect with Muxer visible priority changes
+			QObject::connect(_muxerWeak.toStrongRef().get(), &PriorityMuxer::visiblePriorityChanged, this, &MessageForwarder::handlePriorityChanges);
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+			QObject::connect(GlobalSignals::getInstance(), &GlobalSignals::setBufferImage, hyperion.get(), &Hyperion::forwardBufferMessage);
+#endif
+			isConnected = true;
+		}
+
+	}
+	return isConnected;
+}
+
+void MessageForwarder::disconnectFromInstance(quint8 instanceID)
+{
+	TRACK_SCOPE_CATEGORY(forwarder_flow) << "instanceID" << instanceID;
+
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (instanceID == _toBeForwardedInstanceID && !hyperion.isNull())
+	{
+		Debug(_log, "Disconnect forwarder from instance [%u]", instanceID);
+
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+		QObject::disconnect(GlobalSignals::getInstance(), &GlobalSignals::setBufferImage, hyperion.get(), &Hyperion::forwardBufferMessage);
+#endif
+
+		handleTargets(false, _config.object());
+	}
+}
 
 void MessageForwarder::handleSettingsUpdate(settings::type type, const QJsonDocument& config)
 {
-	if (type == settings::NETFORWARD)
-	{
-		const QJsonObject& obj = config.object();
+	if (type != settings::NETFORWARD) return;
 
-		bool isForwarderEnabledinSettings = obj["enable"].toBool(false);
-		enableTargets(isForwarderEnabledinSettings, obj);
+	auto const newInstanceID = static_cast<quint8>(config["instance"].toInt(NO_INSTANCE_ID));
+
+	TRACK_SCOPE() << "newInstanceID" << newInstanceID;
+
+	if (newInstanceID != _toBeForwardedInstanceID)
+	{
+		disconnectFromInstance(_toBeForwardedInstanceID);
+		_toBeForwardedInstanceID = newInstanceID;
+	}
+
+	_config = config;
+	_isEnabled = config["enable"].toBool(false);
+
+	if (_isEnabled && connectToInstance(_toBeForwardedInstanceID))
+	{
+		start();
+	}
+	else
+	{
+		stop();
 	}
 }
 
 void MessageForwarder::handleCompStateChangeRequest(hyperion::Components component, bool enable)
 {
-	if (component == hyperion::COMP_FORWARDER && _forwarder_enabled != enable)
+	if (component == hyperion::COMP_FORWARDER && _isActive != enable)
 	{
-		Info(_log, "Forwarder is %s", (enable ? "enabled" : "disabled"));
-		QJsonDocument config {_hyperion->getSetting(settings::type::NETFORWARD)};
-		enableTargets(enable, config.object());
+		Info(_log, "Forwarding of instance [%u] is %s", _toBeForwardedInstanceID, (enable ? "active" : "inactive"));
+
+		if (enable)
+		{
+			if (_hyperionWeak.isNull())
+			{
+				connectToInstance(_toBeForwardedInstanceID);
+			}
+			handleTargets(true, _config.object());
+		}
+		else
+		{
+			handleTargets(false, _config.object());
+		}
 	}
 }
 
-void MessageForwarder::enableTargets(bool enable, const QJsonObject& config)
+bool MessageForwarder::isFlatbufferComponent(int priority) const
 {
-	if (!enable)
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (hyperion.isNull())
 	{
-		_forwarder_enabled = false;
-		stopJsonTargets();
-		stopFlatbufferTargets();
-
+		return false;
 	}
-	else
+
+	bool isFlatbufferComponent{ false };
+	hyperion::Components const activeCompId = hyperion->getPriorityInfo(priority).componentId;
+
+	switch (activeCompId) {
+	case hyperion::COMP_GRABBER:
+	case hyperion::COMP_V4L:
+	case hyperion::COMP_AUDIO:
+#if defined(ENABLE_FLATBUF_SERVER)
+	case hyperion::COMP_FLATBUFSERVER:
+#endif
+#if defined(ENABLE_PROTOBUF_SERVER)
+	case hyperion::COMP_PROTOSERVER:
+#endif
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+		isFlatbufferComponent = true;
+		break;
+#endif
+	default:
+		break;
+	}
+	return isFlatbufferComponent;
+}
+
+bool MessageForwarder::activateFlatbufferTargets(int priority)
+{
+	TRACK_SCOPE_CATEGORY(forwarder_flow) << "priority" << priority;
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (hyperion.isNull())
 	{
-		int jsonTargetNum = startJsonTargets(config);
-		int flatbufTargetNum = startFlatbufferTargets(config);
+		return false;
+	}
 
-		if (flatbufTargetNum > 0)
+	int startedFlatbufTargets{ 0 };
+
+	if (priority != PriorityMuxer::LOWEST_PRIORITY && isFlatbufferComponent(priority))
+	{
+		startedFlatbufTargets = startFlatbufferTargets(_config.object());
+		if (startedFlatbufTargets > 0)
 		{
-			hyperion::Components activeCompId = _hyperion->getPriorityInfo(_hyperion->getCurrentPriority()).componentId;
-
+			hyperion::Components const activeCompId = hyperion->getPriorityInfo(priority).componentId;
 			switch (activeCompId) {
 			case hyperion::COMP_GRABBER:
-				connect(_hyperion, &Hyperion::forwardSystemProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
+				QObject::connect(hyperion.get(), &Hyperion::forwardSystemProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
 				break;
 			case hyperion::COMP_V4L:
-				connect(_hyperion, &Hyperion::forwardV4lProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
+				QObject::connect(hyperion.get(), &Hyperion::forwardV4lProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
 				break;
 			case hyperion::COMP_AUDIO:
-				connect(_hyperion, &Hyperion::forwardAudioProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
+				QObject::connect(hyperion.get(), &Hyperion::forwardAudioProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
 				break;
 #if defined(ENABLE_FLATBUF_SERVER)
 			case hyperion::COMP_FLATBUFSERVER:
@@ -126,79 +256,139 @@ void MessageForwarder::enableTargets(bool enable, const QJsonObject& config)
 #endif
 #if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
 
-				connect(_hyperion, &Hyperion::forwardBufferMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
+				QObject::connect(hyperion.get(), &Hyperion::forwardBufferMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
 				break;
 #endif
 			default:
 				break;
 			}
 		}
+	}
 
-		if (jsonTargetNum > 0 || flatbufTargetNum > 0)
+	return (startedFlatbufTargets > 0);
+}
+
+void MessageForwarder::handleTargets(bool start, const QJsonObject& config)
+{
+	if (!start )
+	{
+		forwardJsonMessage({{"command", "clear"}, {"priority", 1}}, _toBeForwardedInstanceID);
+	}
+
+	_isActive = false;
+	stopJsonTargets();
+	stopFlatbufferTargets();
+
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (hyperion.isNull())
+	{
+		return;
+	}
+
+	if (start )
+	{
+		int const jsonTargetNum = startJsonTargets(config);
+
+		int const currentPriority = hyperion->getCurrentPriority();
+		bool const isActiveFlatbufferTarget = activateFlatbufferTargets(currentPriority);
+
+		if (jsonTargetNum > 0 || isActiveFlatbufferTarget)
 		{
-			_forwarder_enabled = true;
+			_isActive = true;
 		}
 		else
 		{
-			_forwarder_enabled = false;
-			Warning(_log,"No JSON- nor Flatbuffer-Forwarder configured -> Forwarding disabled");
+			_isActive = false;
+			Warning(_log, "No JSON- nor Flatbuffer targets configured/active -> Forwarding deactivated");
 		}
 	}
-	_hyperion->setNewComponentState(hyperion::COMP_FORWARDER, _forwarder_enabled);
+
+	hyperion->setNewComponentState(hyperion::COMP_FORWARDER, _isActive);
+}
+
+void MessageForwarder::disconnectFlatBufferComponents(int priority) const
+{
+	TRACK_SCOPE_CATEGORY(forwarder_flow) << "priority" << priority;
+
+	QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+	if (hyperion.isNull())
+	{
+		return;
+	}
+
+	hyperion::Components const activeCompId = hyperion->getPriorityInfo(priority).componentId;
+
+	switch (activeCompId) {
+	case hyperion::COMP_GRABBER:
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardV4lProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardAudioProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardBufferMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#endif
+		break;
+	case hyperion::COMP_V4L:
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardSystemProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardAudioProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardBufferMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#endif
+		break;
+	case hyperion::COMP_AUDIO:
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardSystemProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardV4lProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardBufferMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#endif
+		break;
+#if defined(ENABLE_FLATBUF_SERVER)
+	case hyperion::COMP_FLATBUFSERVER:
+#endif
+#if defined(ENABLE_PROTOBUF_SERVER)
+	case hyperion::COMP_PROTOSERVER:
+#endif
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardAudioProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardSystemProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardV4lProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+		break;
+#endif
+	default:
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardSystemProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardV4lProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardAudioProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+		QObject::disconnect(hyperion.get(), &Hyperion::forwardBufferMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#endif
+		break;
+	}
 }
 
 void MessageForwarder::handlePriorityChanges(int priority)
 {
-	if (priority != 0 && _forwarder_enabled)
+	if (priority != 0)
 	{
-		hyperion::Components activeCompId = _hyperion->getPriorityInfo(priority).componentId;
+		disconnectFlatBufferComponents(priority);
 
-		switch (activeCompId) {
-		case hyperion::COMP_GRABBER:
-			disconnect(_hyperion, &Hyperion::forwardV4lProtoMessage, nullptr, nullptr);
-			disconnect(_hyperion, &Hyperion::forwardAudioProtoMessage, nullptr, nullptr);
-#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
-			disconnect(_hyperion, &Hyperion::forwardBufferMessage, nullptr, nullptr);
-#endif
-			connect(_hyperion, &Hyperion::forwardSystemProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
-			break;
-		case hyperion::COMP_V4L:
-			disconnect(_hyperion, &Hyperion::forwardSystemProtoMessage, nullptr, nullptr);
-			disconnect(_hyperion, &Hyperion::forwardAudioProtoMessage, nullptr, nullptr);
-#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
-			disconnect(_hyperion, &Hyperion::forwardBufferMessage, nullptr, nullptr);
-#endif
-			connect(_hyperion, &Hyperion::forwardV4lProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
-			break;
-		case hyperion::COMP_AUDIO:
-			disconnect(_hyperion, &Hyperion::forwardSystemProtoMessage, nullptr, nullptr);
-			disconnect(_hyperion, &Hyperion::forwardV4lProtoMessage, nullptr, nullptr);
-#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
-			disconnect(_hyperion, &Hyperion::forwardBufferMessage, nullptr, nullptr);
-#endif
-			connect(_hyperion, &Hyperion::forwardAudioProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
-			break;
-#if defined(ENABLE_FLATBUF_SERVER)
-		case hyperion::COMP_FLATBUFSERVER:
-#endif
-#if defined(ENABLE_PROTOBUF_SERVER)
-		case hyperion::COMP_PROTOSERVER:
-#endif
-#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
-			disconnect(_hyperion, &Hyperion::forwardAudioProtoMessage, nullptr, nullptr);
-			disconnect(_hyperion, &Hyperion::forwardSystemProtoMessage, nullptr, nullptr);
-			disconnect(_hyperion, &Hyperion::forwardV4lProtoMessage, nullptr, nullptr);
-			connect(_hyperion, &Hyperion::forwardBufferMessage, this, &MessageForwarder::forwardFlatbufferMessage, Qt::UniqueConnection);
-			break;
-#endif
-		default:
-			disconnect(_hyperion, &Hyperion::forwardSystemProtoMessage, nullptr, nullptr);
-			disconnect(_hyperion, &Hyperion::forwardV4lProtoMessage, nullptr, nullptr);
-			disconnect(_hyperion, &Hyperion::forwardAudioProtoMessage, nullptr, nullptr);
-#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
-			disconnect(_hyperion, &Hyperion::forwardBufferMessage, nullptr, nullptr);
-#endif
-			break;
+		if (priority == PriorityMuxer::LOWEST_PRIORITY)
+		{
+			stopFlatbufferTargets();
+			return;
+		}
+
+		if (!isFlatbufferComponent(priority))
+		{
+			stopFlatbufferTargets();
+		}
+		else
+		{
+			if (_isActive)
+			{
+				activateFlatbufferTargets(priority);
+			}
+			else
+			{
+				start();
+			}
 		}
 	}
 }
@@ -207,44 +397,59 @@ void MessageForwarder::addJsonTarget(const QJsonObject& targetConfig)
 {
 	TargetHost targetHost;
 
-	QString hostName = targetConfig["host"].toString();
+	QString const hostName = targetConfig["host"].toString();
 	int port = targetConfig["port"].toInt();
 
-	if (!hostName.isEmpty())
+	if (hostName.isEmpty() || _hyperionWeak.isNull())
 	{
-		if (NetUtils::resolveHostToAddress(_log, hostName, targetHost.host, port))
-		{
-			QString address = targetHost.host.toString();
-			if (hostName != address)
-			{
-				Info(_log, "Resolved hostname [%s] to address [%s]",  QSTRING_CSTR(hostName), QSTRING_CSTR(address));
-			}
-
-			if (NetUtils::isValidPort(_log, port, targetHost.host.toString()))
-			{
-				targetHost.port = static_cast<quint16>(port);
-
-				// verify loop with JSON-server
-				const QJsonObject& obj = _hyperion->getSetting(settings::JSONSERVER).object();
-				if ((QNetworkInterface::allAddresses().indexOf(targetHost.host) != -1) && targetHost.port == static_cast<quint16>(obj["port"].toInt()))
-				{
-					Error(_log, "Loop between JSON-Server and Forwarder! Configuration for host: %s, port: %d is ignored.", QSTRING_CSTR(targetHost.host.toString()), port);
-				}
-				else
-				{
-					if (_jsonTargets.indexOf(targetHost) == -1)
-					{
-						Debug(_log, "JSON-Forwarder settings: Adding target host: %s port: %u", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
-						_jsonTargets << targetHost;
-					}
-					else
-					{
-						Warning(_log, "JSON-Forwarder settings: Duplicate target host configuration! Configuration for host: %s, port: %d is ignored.", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
-					}
-				}
-			}
-		}
+		return;
 	}
+
+	if (!NetUtils::resolveHostToAddress(_log, hostName, targetHost.host, port))
+	{
+		return;
+	}
+
+	QString const address = targetHost.host.toString();
+	if (hostName != address)
+	{
+		Debug(_log, "Resolved hostname [%s] to address [%s]", QSTRING_CSTR(hostName), QSTRING_CSTR(address));
+	}
+
+	if (!NetUtils::isValidPort(_log, port, targetHost.host.toString()))
+	{
+		return;
+	}
+
+	targetHost.port = static_cast<quint16>(port);
+
+	// check for loop with JSON-server
+	const QJsonObject& obj = _settings.getSettingsRecordJson(typeToString(settings::JSONSERVER)).object();
+	if ((QNetworkInterface::allAddresses().indexOf(targetHost.host) != -1) && targetHost.port == static_cast<quint16>(obj["port"].toInt()))
+	{
+		Error(_log, "Loop between JSON-Server and Forwarder! Configuration for host: %s, port: %d is ignored.", QSTRING_CSTR(targetHost.host.toString()), port);
+		return;
+	}
+
+	if (_jsonTargets.indexOf(targetHost) != -1)
+	{
+		Warning(_log, "JSON-Forwarder settings: Duplicate target host configuration! Configuration for host: %s, port: %d is ignored.", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
+		return;
+	}
+
+	QJsonArray const targetInstanceIds = targetConfig["instanceIds"].toArray();
+
+	if (targetInstanceIds.contains(255))
+	{
+		targetHost.instanceIds = { "all" };
+	}
+	else
+	{
+		targetHost.instanceIds = targetInstanceIds;
+	}
+
+	Debug(_log, "JSON-Forwarder settings: Adding target host: %s port: %u, instance-IDs: %s", QSTRING_CSTR(targetHost.host.toString()), targetHost.port, QSTRING_CSTR(JsonUtils::jsonValueToQString(targetHost.instanceIds)));
+	_jsonTargets << targetHost;
 }
 
 int MessageForwarder::startJsonTargets(const QJsonObject& config)
@@ -257,8 +462,7 @@ int MessageForwarder::startJsonTargets(const QJsonObject& config)
 #ifdef ENABLE_MDNS
 		if (!addr.isEmpty())
 		{
-			QMetaObject::invokeMethod(&MdnsBrowser::getInstance(), "browseForServiceType",
-									   Qt::QueuedConnection, Q_ARG(QByteArray, MdnsServiceRegister::getServiceType("jsonapi")));
+			NetUtils::discoverMdnsServices("jsonapi");
 		}
 #endif
 
@@ -269,26 +473,30 @@ int MessageForwarder::startJsonTargets(const QJsonObject& config)
 
 		if (!_jsonTargets.isEmpty())
 		{
-			for (const auto& targetHost : qAsConst(_jsonTargets))
+			for (const auto& targetHost : std::as_const(_jsonTargets))
 			{
-				Info(_log, "Forwarding now to JSON-target host: %s port: %u", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
+				Info(_log, "Forwarding instance [%u] now to JSON-target host: %s port: %u", _toBeForwardedInstanceID, QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
 			}
-
-			connect(_hyperion, &Hyperion::forwardJsonMessage, this, &MessageForwarder::forwardJsonMessage, Qt::UniqueConnection);
+			QObject::connect(GlobalSignals::getInstance(), &GlobalSignals::forwardJsonMessage, this, &MessageForwarder::forwardJsonMessage, Qt::UniqueConnection);
 		}
 	}
-	return _jsonTargets.size();
+
+	TRACK_SCOPE_CATEGORY(forwarder_flow) << "JSON" << _jsonTargets;
+
+	return static_cast<int>(_jsonTargets.size());
 }
 
 
 void MessageForwarder::stopJsonTargets()
 {
+	TRACK_SCOPE_CATEGORY(forwarder_flow) << "JSON" << _jsonTargets;
+
 	if (!_jsonTargets.isEmpty())
 	{
-		disconnect(_hyperion, &Hyperion::forwardJsonMessage, nullptr, nullptr);
-		for (const auto& targetHost : qAsConst(_jsonTargets))
+		QObject::disconnect(GlobalSignals::getInstance(), &GlobalSignals::forwardJsonMessage, this, &MessageForwarder::forwardJsonMessage);
+		for (const auto& targetHost : std::as_const(_jsonTargets))
 		{
-			Info(_log, "Stopped forwarding to JSON-target host: %s port: %u", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
+			Info(_log, "Stopped instance [%u] forwarding to JSON-target host: %s port: %u", _toBeForwardedInstanceID, QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
 		}
 		_jsonTargets.clear();
 	}
@@ -298,48 +506,52 @@ void MessageForwarder::addFlatbufferTarget(const QJsonObject& targetConfig)
 {
 	TargetHost targetHost;
 
-	QString hostName = targetConfig["host"].toString();
+	QString const hostName = targetConfig["host"].toString();
 	int port = targetConfig["port"].toInt();
 
-	if (!hostName.isEmpty())
+	if (hostName.isEmpty() || _hyperionWeak.isNull())
 	{
-		if (NetUtils::resolveHostToAddress(_log, hostName, targetHost.host, port))
-		{
-			QString address = targetHost.host.toString();
-			if (hostName != address)
-			{
-				Info(_log, "Resolved hostname [%s] to address [%s]",  QSTRING_CSTR(hostName), QSTRING_CSTR(address));
-			}
+		return;
+	}
 
-			if (NetUtils::isValidPort(_log, port, targetHost.host.toString()))
-			{
-				targetHost.port = static_cast<quint16>(port);
+	if (!NetUtils::resolveHostToAddress(_log, hostName, targetHost.host, port))
+	{
+		return;
+	}
 
-				// verify loop with Flatbuffer-server
-				const QJsonObject& obj = _hyperion->getSetting(settings::FLATBUFSERVER).object();
-				if ((QNetworkInterface::allAddresses().indexOf(targetHost.host) != -1) && targetHost.port == static_cast<quint16>(obj["port"].toInt()))
-				{
-					Error(_log, "Loop between Flatbuffer-Server and Forwarder! Configuration for host: %s, port: %d is ignored.", QSTRING_CSTR(targetHost.host.toString()), port);
-				}
-				else
-				{
-					if (_flatbufferTargets.indexOf(targetHost) == -1)
-					{
-						Debug(_log, "Flatbuffer-Forwarder settings: Adding target host: %s port: %u", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
-						_flatbufferTargets << targetHost;
+	QString const address = targetHost.host.toString();
+	if (hostName != address)
+	{
+		Debug(_log, "Resolved hostname [%s] to address [%s]", QSTRING_CSTR(hostName), QSTRING_CSTR(address));
+	}
 
-						if (_messageForwarderFlatBufHelper != nullptr)
-						{
-							emit _messageForwarderFlatBufHelper->addClient("Forwarder", targetHost, _priority, false);
-						}
-					}
-					else
-					{
-						Warning(_log, "Flatbuffer Forwarder settings: Duplicate target host configuration! Configuration for host: %s, port: %d is ignored.", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
-					}
-				}
-			}
-		}
+	if (!NetUtils::isValidPort(_log, port, targetHost.host.toString()))
+	{
+		return;
+	}
+
+	targetHost.port = static_cast<quint16>(port);
+
+	// check for loop with Flatbuffer-server
+	const QJsonObject& obj = _settings.getSettingsRecordJson(typeToString(settings::FLATBUFSERVER)).object();
+	if ((QNetworkInterface::allAddresses().indexOf(targetHost.host) != -1) && targetHost.port == static_cast<quint16>(obj["port"].toInt()))
+	{
+		Error(_log, "Loop between Flatbuffer-Server and Forwarder! Configuration for host: %s, port: %d is ignored.", QSTRING_CSTR(targetHost.host.toString()), port);
+		return;
+	}
+
+	if (_flatbufferTargets.indexOf(targetHost) != -1)
+	{
+		Warning(_log, "Flatbuffer Forwarder settings: Duplicate target host configuration! Configuration for host: %s, port: %d is ignored.", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
+		return;
+	}
+
+	Debug(_log, "Flatbuffer-Forwarder settings: Adding target host: %s port: %u", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
+	_flatbufferTargets << targetHost;
+
+	if (_messageForwarderFlatBufHelper != nullptr)
+	{
+		emit _messageForwarderFlatBufHelper->addClient("Forwarder", targetHost, _priority, false);
 	}
 }
 
@@ -347,9 +559,9 @@ int MessageForwarder::startFlatbufferTargets(const QJsonObject& config)
 {
 	if (!config["flatbuffer"].isNull())
 	{
-		if (_messageForwarderFlatBufHelper == nullptr)
+		if (_messageForwarderFlatBufHelper.isNull())
 		{
-			_messageForwarderFlatBufHelper = new MessageForwarderFlatbufferClientsHelper();
+			_messageForwarderFlatBufHelper = QSharedPointer<MessageForwarderFlatbufferClientsHelper>::create();
 		}
 		else
 		{
@@ -362,8 +574,7 @@ int MessageForwarder::startFlatbufferTargets(const QJsonObject& config)
 #ifdef ENABLE_MDNS
 		if (!addr.isEmpty())
 		{
-			QMetaObject::invokeMethod(&MdnsBrowser::getInstance(), "browseForServiceType",
-									   Qt::QueuedConnection, Q_ARG(QByteArray, MdnsServiceRegister::getServiceType("flatbuffer")));
+			NetUtils::discoverMdnsServices("flatbuffer");
 		}
 #endif
 		for (const auto& entry : addr)
@@ -373,71 +584,81 @@ int MessageForwarder::startFlatbufferTargets(const QJsonObject& config)
 
 		if (!_flatbufferTargets.isEmpty())
 		{
-			for (const auto& targetHost : qAsConst(_flatbufferTargets))
+			for (const auto& targetHost : std::as_const(_flatbufferTargets))
 			{
-				Info(_log, "Forwarding now to Flatbuffer-target host: %s port: %u", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
+				Info(_log, "Forwarding instance [%u] now to Flatbuffer-target host: %s port: %u", _toBeForwardedInstanceID, QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
 			}
 		}
 	}
-	return _flatbufferTargets.size();
+
+ 	TRACK_SCOPE_CATEGORY(forwarder_flow) << "Flatbuffer" << _flatbufferTargets;
+
+	return static_cast<int>(_flatbufferTargets.size());
 }
 
 void MessageForwarder::stopFlatbufferTargets()
 {
+	TRACK_SCOPE_CATEGORY(forwarder_flow) << "Flatbuffer" << _flatbufferTargets;
+
 	if (!_flatbufferTargets.isEmpty())
 	{
-		disconnect(_hyperion, &Hyperion::forwardSystemProtoMessage, nullptr, nullptr);
-		disconnect(_hyperion, &Hyperion::forwardV4lProtoMessage, nullptr, nullptr);
-		disconnect(_hyperion, &Hyperion::forwardAudioProtoMessage, nullptr, nullptr);
-#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
-		disconnect(_hyperion, &Hyperion::forwardBufferMessage, nullptr, nullptr);
-#endif
-
-		if (_messageForwarderFlatBufHelper != nullptr)
+		QSharedPointer<Hyperion> const hyperion = _hyperionWeak.toStrongRef();
+		if (!hyperion.isNull())
 		{
-			delete _messageForwarderFlatBufHelper;
-			_messageForwarderFlatBufHelper = nullptr;
+			QObject::disconnect(hyperion.get(), &Hyperion::forwardSystemProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+			QObject::disconnect(hyperion.get(), &Hyperion::forwardV4lProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+			QObject::disconnect(hyperion.get(), &Hyperion::forwardAudioProtoMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#if defined(ENABLE_FLATBUF_SERVER) || defined(ENABLE_PROTOBUF_SERVER)
+			QObject::disconnect(hyperion.get(), &Hyperion::forwardBufferMessage, this, &MessageForwarder::forwardFlatbufferMessage);
+#endif
 		}
 
-		for (const auto& targetHost : qAsConst(_flatbufferTargets))
+		emit _messageForwarderFlatBufHelper->clearClients();
+		for (const auto& targetHost : std::as_const(_flatbufferTargets))
 		{
-			Info(_log, "Stopped forwarding to Flatbuffer-target host: %s port: %u", QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
+			Info(_log, "Stopped instance [%u] forwarding to Flatbuffer-target host: %s port: %u", _toBeForwardedInstanceID, QSTRING_CSTR(targetHost.host.toString()), targetHost.port);
 		}
 		_flatbufferTargets.clear();
 	}
 }
 
-void MessageForwarder::forwardJsonMessage(const QJsonObject& message)
+void MessageForwarder::forwardJsonMessage(const QJsonObject& message, quint8 instanceId)
 {
-	if (_forwarder_enabled)
+	TRACK_SCOPE_CATEGORY(forwarder_write) << "instanceId" << instanceId << "_toBeForwardedInstanceID" << _toBeForwardedInstanceID;
+
+	if (!_isActive)
+	{
+		return;
+	}
+	if (instanceId == _toBeForwardedInstanceID)
 	{
 		QTcpSocket client;
-		for (const auto& targetHost : qAsConst(_jsonTargets))
+		for (const auto& targetHost : std::as_const(_jsonTargets))
 		{
 			client.connectToHost(targetHost.host, targetHost.port);
-			if (client.waitForConnected(CONNECT_TIMEOUT.count()))
+			if (client.waitForConnected(JSON_SOCKET_CONNECT_TIMEOUT.count()))
 			{
-				sendJsonMessage(message, &client);
+				sendJsonMessage(message, &client, targetHost.instanceIds);
 				client.close();
 			}
 		}
 	}
 }
 
-void MessageForwarder::forwardFlatbufferMessage(const QString& /*name*/, const Image<ColorRgb>& image)
+void MessageForwarder::forwardFlatbufferMessage(const QString& /*name*/, const Image<ColorRgb>& image) const
 {
-	if (_messageForwarderFlatBufHelper != nullptr)
+	if (_messageForwarderFlatBufHelper)
 	{
-		bool isfree = _messageForwarderFlatBufHelper->isFree();
+		bool const isfree = _messageForwarderFlatBufHelper->isFree();
 
-		if (isfree && _forwarder_enabled)
+		if (isfree && _isActive)
 		{
-			QMetaObject::invokeMethod(_messageForwarderFlatBufHelper, "forwardImage", Qt::QueuedConnection, Q_ARG(Image<ColorRgb>, image));
+			QMetaObject::invokeMethod(_messageForwarderFlatBufHelper.get(), "forwardImage", Qt::QueuedConnection, Q_ARG(Image<ColorRgb>, image));
 		}
 	}
 }
 
-void MessageForwarder::sendJsonMessage(const QJsonObject& message, QTcpSocket* socket)
+void MessageForwarder::sendJsonMessage(const QJsonObject& message, QTcpSocket* socket, const QJsonArray& targetInstanceIds)
 {
 	// for hyperion classic compatibility
 	QJsonObject jsonMessage = message;
@@ -446,9 +667,20 @@ void MessageForwarder::sendJsonMessage(const QJsonObject& message, QTcpSocket* s
 		jsonMessage["tan"] = 100;
 	}
 
+	// remove instance IDs from original message, as they are the instance IDs of the sending system
+	jsonMessage.remove("instance");
+
+	// set target instance IDs
+	if (!targetInstanceIds.empty())
+	{
+		jsonMessage["instance"] = targetInstanceIds;
+	}
+
 	// serialize message
-	QJsonDocument writer(jsonMessage);
-	QByteArray serializedMessage = writer.toJson(QJsonDocument::Compact) + "\n";
+	QJsonDocument const writer(jsonMessage);
+	qCDebug(forwarder_write) << "Source instance [" << _toBeForwardedInstanceID << "], target" << socket->peerAddress().toString() << "JSON-Request: [" << writer.toJson(QJsonDocument::Compact).constData()<< "]";
+
+	QByteArray const serializedMessage = writer.toJson(QJsonDocument::Compact) + "\n";
 
 	// write message
 	socket->write(serializedMessage);
@@ -465,81 +697,109 @@ void MessageForwarder::sendJsonMessage(const QJsonObject& message, QTcpSocket* s
 		// receive reply
 		if (!socket->waitForReadyRead())
 		{
-			Debug(_log, "Error while writing data from host");
+			Debug(_log, "Error while reading data from host");
 			return;
 		}
 
 		serializedReply += socket->readAll();
 	}
+	QList const replies = serializedReply.trimmed().split('\n');
 
 	// parse reply data
-	QJsonParseError error;
-	/* QJsonDocument reply = */ QJsonDocument::fromJson(serializedReply, &error);
+	QJsonObject response;
+	const QString ident = "JsonForwarderTarget@" + socket->peerAddress().toString();
+	bool isParsingError{ false };
+	QList<QString> errorList;
 
-	if (error.error != QJsonParseError::NoError)
+	for (const QByteArray& reply : replies)
 	{
-		Error(_log, "Error while parsing reply: invalid JSON");
-		return;
+		auto const [isParsed, errorMessages] = JsonUtils::parse(ident, reply, response, _log);
+		if (!isParsed)
+		{
+			qCDebug(forwarder_write) << "Response: [" << JsonUtils::toCompact(response) << "]";
+			isParsingError = true;
+			errorList.append(errorMessages);
+		}
+		else
+		{
+			QString reason = "No error info";
+			bool const success = response["success"].toBool(false);
+			if (!success)
+			{
+				Debug(_log, "Source instance [%u], JSON-Request: [%s]", _toBeForwardedInstanceID, writer.toJson(QJsonDocument::Compact).constData());
+				reason = response["error"].toString(reason);
+				Error(_log, "Request to %s failed with error: %s", QSTRING_CSTR(ident), QSTRING_CSTR(reason));
+			}
+		}
+	}
+
+	if (isParsingError)
+	{
+		QString const errorText = errorList.join(";");
+		Error(_log, "Error parsing response(s. Errors: %s", QSTRING_CSTR(errorText));
 	}
 }
 
 MessageForwarderFlatbufferClientsHelper::MessageForwarderFlatbufferClientsHelper()
 {
-	QThread* mainThread = new QThread();
+	TRACK_SCOPE();
+
+	auto* mainThread = new QThread();
 	mainThread->setObjectName("ForwarderHelperThread");
 	this->moveToThread(mainThread);
 	mainThread->start();
 
-	_free = true;
-	connect(this, &MessageForwarderFlatbufferClientsHelper::addClient, this, &MessageForwarderFlatbufferClientsHelper::addClientHandler);
-	connect(this, &MessageForwarderFlatbufferClientsHelper::clearClients, this, &MessageForwarderFlatbufferClientsHelper::clearClientsHandler);
+	_isFree = true;
+
+	QObject::connect(this, &MessageForwarderFlatbufferClientsHelper::addClient, this, &MessageForwarderFlatbufferClientsHelper::addClientHandler);
+	QObject::connect(this, &MessageForwarderFlatbufferClientsHelper::clearClients, this, &MessageForwarderFlatbufferClientsHelper::clearClientsHandler);
+
 }
 
 MessageForwarderFlatbufferClientsHelper::~MessageForwarderFlatbufferClientsHelper()
 {
-	_free=false;
-	while (!_forwardClients.isEmpty())
+	clearClientsHandler();
+
+	auto* oldThread = this->thread();
+	if (oldThread != nullptr)
 	{
-		_forwardClients.takeFirst()->deleteLater();
+		QObject::disconnect(oldThread, nullptr, nullptr, nullptr);
+		oldThread->quit();
+		oldThread->wait();
+		delete oldThread;
 	}
-
-
-	QThread* oldThread = this->thread();
-	disconnect(oldThread, nullptr, nullptr, nullptr);
-	oldThread->quit();
-	oldThread->wait();
-	delete oldThread;
 }
 
 void MessageForwarderFlatbufferClientsHelper::addClientHandler(const QString& origin, const TargetHost& targetHost, int priority, bool skipReply)
 {
-	FlatBufferConnection* flatbuf = new FlatBufferConnection(origin, targetHost.host.toString(), priority, skipReply, targetHost.port);
-	_forwardClients << flatbuf;
-	_free = true;
+	QSharedPointer<FlatBufferConnection> flatbufClient = QSharedPointer<FlatBufferConnection>::create(origin, targetHost.host, priority, skipReply, targetHost.port);
+	_forwardClients.append(flatbufClient);
+	_isFree = true;
 }
 
 void MessageForwarderFlatbufferClientsHelper::clearClientsHandler()
 {
-	while (!_forwardClients.isEmpty())
-	{
-		delete _forwardClients.takeFirst();
-	}
-	_free = false;
+	_forwardClients.clear();
+	_isFree = false;
 }
 
 bool MessageForwarderFlatbufferClientsHelper::isFree() const
 {
-	return _free;
+	return _isFree;
 }
 
 void MessageForwarderFlatbufferClientsHelper::forwardImage(const Image<ColorRgb>& image)
 {
-	_free = false;
+	qCDebug(forwarder_write) << "Forwarding image to" << _forwardClients.size() << "client(s)";
+	_isFree = false;
 
-	for (int i = 0; i < _forwardClients.size(); i++)
+	for (const auto& client : _forwardClients)
 	{
-		_forwardClients.at(i)->setImage(image);
+		if (client->isClientRegistered())
+		{
+			client->setImage(image);
+		}
 	}
 
-	_free = true;
+	_isFree = true;
 }

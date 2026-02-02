@@ -16,6 +16,13 @@ namespace {
 	const char HTTPS_SERVICE_TYPE[] = "https";
 	const char HYPERION_SERVICENAME[] = "Hyperion";
 
+	const char WEBSERVER_DEFAULT_PATH[] = ":/webconfig";
+	const char WEBSERVER_DEFAULT_CRT_PATH[] = ":/hyperion.crt";
+	const char WEBSERVER_DEFAULT_KEY_PATH[] = ":/hyperion.key";
+
+	quint16 WEBSERVER_DEFAULT_PORT     = 8090;
+	quint16 WBSERVERR_DEFAULT_SSL_PORT = 8092;
+
 } //End of constants
 
 WebServer::WebServer(const QJsonDocument& config, bool useSsl, QObject* parent)
@@ -23,34 +30,36 @@ WebServer::WebServer(const QJsonDocument& config, bool useSsl, QObject* parent)
 	, _config(config)
 	, _useSsl(useSsl)
 	, _log(Logger::getInstance("WEBSERVER"))
-	, _server()
+	, _port(WEBSERVER_DEFAULT_PORT)
+	, _staticFileServing (nullptr)
+	, _server(nullptr)
 {
+	TRACK_SCOPE();
 }
 
 WebServer::~WebServer()
 {
-	stop();
+	TRACK_SCOPE();
 }
 
 void WebServer::initServer()
 {
 	Debug(_log, "Initialize %s-Webserver", _useSsl ? "https" : "http");
-	_server = new QtHttpServer(this);
+	_server.reset(new QtHttpServer());
 	_server->setServerName(QStringLiteral("Hyperion %1-Webserver").arg(_useSsl ? "https" : "http"));
 
 	if (_useSsl)
 	{
 		_server->setUseSecure();
-		WEBSERVER_DEFAULT_PORT = 8092;
 	}
 
-	connect(_server, &QtHttpServer::started, this, &WebServer::onServerStarted);
-	connect(_server, &QtHttpServer::stopped, this, &WebServer::onServerStopped);
-	connect(_server, &QtHttpServer::error, this, &WebServer::onServerError);
+	connect(_server.get(), &QtHttpServer::started, this, &WebServer::onServerStarted);
+	connect(_server.get(), &QtHttpServer::stopped, this, &WebServer::onServerStopped);
+	connect(_server.get(), &QtHttpServer::error, this, &WebServer::onServerError);
 
 	// create StaticFileServing
 	_staticFileServing = new StaticFileServing(this);
-	connect(_server, &QtHttpServer::requestNeedsReply, _staticFileServing, &StaticFileServing::onRequestNeedsReply);
+	connect(_server.get(), &QtHttpServer::requestNeedsReply, _staticFileServing, &StaticFileServing::onRequestNeedsReply);
 
 	// init
 	handleSettingsUpdate(settings::WEBSERVER, _config);
@@ -60,7 +69,7 @@ void WebServer::onServerStarted(quint16 port)
 {
 	_inited = true;
 
-	Info(_log, "'%s' started on port %d", _server->getServerName().toStdString().c_str(), port);
+	Info(_log, "%s started on port %d", _server->getServerName().toStdString().c_str(), port);
 
 	if (_useSsl)
 	{
@@ -76,11 +85,12 @@ void WebServer::onServerStarted(quint16 port)
 
 void WebServer::onServerStopped()
 {
-	Info(_log, "Stopped %s", _server->getServerName().toStdString().c_str());
+	Info(_log, "%s stopped", _server->getServerName().toStdString().c_str());
 	emit stateChange(false);
+	emit isStopped();
 }
 
-void WebServer::onServerError(QString msg)
+void WebServer::onServerError(const QString& msg)
 {
 	Error(_log, "%s", msg.toStdString().c_str());
 }
@@ -105,13 +115,15 @@ void WebServer::handleSettingsUpdate(settings::type type, const QJsonDocument& c
 			}
 		}
 		else
+		{
 			_baseUrl = WEBSERVER_DEFAULT_PATH;
+		}
 
 		Debug(_log, "Set document root to: %s", _baseUrl.toUtf8().constData());
 		_staticFileServing->setBaseUrl(_baseUrl);
 
 		// ssl different port
-		quint16 newPort = _useSsl ? obj["sslPort"].toInt(WEBSERVER_DEFAULT_PORT) : obj["port"].toInt(WEBSERVER_DEFAULT_PORT);
+		quint16 newPort = _useSsl ? obj["sslPort"].toInt(WBSERVERR_DEFAULT_SSL_PORT) : obj["port"].toInt(WEBSERVER_DEFAULT_PORT);
 		if (_port != newPort)
 		{
 			_port = newPort;
@@ -120,7 +132,9 @@ void WebServer::handleSettingsUpdate(settings::type type, const QJsonDocument& c
 
 		// eval if the port is available, will be incremented if not
 		if (!_server->isListening())
+		{
 			NetUtils::portAvailable(_port, _log);
+		}
 
 		// on ssl we want .key .cert and probably key password
 		if (_useSsl)
@@ -142,7 +156,9 @@ void WebServer::handleSettingsUpdate(settings::type type, const QJsonDocument& c
 				}
 			}
 			else
+			{
 				keyPath = WEBSERVER_DEFAULT_KEY_PATH;
+			}
 
 			// check crtPath
 			if ((crtPath != WEBSERVER_DEFAULT_CRT_PATH) && !crtPath.trimmed().isEmpty())
@@ -155,44 +171,68 @@ void WebServer::handleSettingsUpdate(settings::type type, const QJsonDocument& c
 				}
 			}
 			else
+			{
 				crtPath = WEBSERVER_DEFAULT_CRT_PATH;
-
-			// load and verify crt
-			QFile cfile(crtPath);
-			cfile.open(QIODevice::ReadOnly);
-			QList<QSslCertificate> validList;
-			QList<QSslCertificate> cList = QSslCertificate::fromDevice(&cfile, QSsl::Pem);
-			cfile.close();
-
-			// Filter for valid certs
-			for (const auto& entry : cList) {
-				if (!entry.isNull() && QDateTime::currentDateTime().daysTo(entry.expiryDate()) > 0)
-					validList.append(entry);
-				else
-					Error(_log, "The provided SSL certificate is invalid/not supported/reached expiry date ('%s')", crtPath.toUtf8().constData());
 			}
 
-			if (!validList.isEmpty()) {
+			// load and verify crt
+			QList<QSslCertificate> cList;
+			QFile cfile(crtPath);
+            if (!cfile.open(QIODevice::ReadOnly))
+            {
+                Error(_log, "Error opening SSL certificate file: %s", QSTRING_CSTR(cfile.errorString()));
+            }
+			else
+			{
+				cList = QSslCertificate::fromDevice(&cfile, QSsl::Pem);
+				cfile.close();
+			}
+
+			// Filter for valid certs
+			QList<QSslCertificate> validList;			
+			for (const auto& entry : cList)
+			{
+				if (!entry.isNull() && QDateTime::currentDateTime().daysTo(entry.expiryDate()) > 0)
+				{
+					validList.append(entry);
+				}
+				else
+				{
+					Error(_log, "The provided SSL certificate is invalid/not supported/reached expiry date ('%s')", crtPath.toUtf8().constData());
+				}
+			}
+
+			if (!validList.isEmpty())
+			{
 				Debug(_log, "Setup SSL certificate");
 				_server->setCertificates(validList);
 			}
-			else {
+			else 
+			{
 				Error(_log, "No valid SSL certificate has been found ('%s')", crtPath.toUtf8().constData());
 			}
 
 			// load and verify key
 			QFile kfile(keyPath);
-			kfile.open(QIODevice::ReadOnly);
-			// The key should be RSA enrcrypted and PEM format, optional the passPhrase
-			QSslKey key(&kfile, QSsl::Rsa, QSsl::Pem, QSsl::PrivateKey, obj["keyPassPhrase"].toString().toUtf8());
-			kfile.close();
+			if (!kfile.open(QIODevice::ReadOnly))
+			{
+                Error(_log, "Error opening SSL key file: %s", QSTRING_CSTR(kfile.errorString()));
+            }
+			else
+			{
+				// The key should be RSA enrcrypted and PEM format, optional the passPhrase
+				QSslKey key(&kfile, QSsl::Rsa, QSsl::Pem, QSsl::PrivateKey, obj["keyPassPhrase"].toString().toUtf8());
+				kfile.close();
 
-			if (key.isNull()) {
-				Error(_log, "The provided SSL key is invalid or not supported use RSA encrypt and PEM format ('%s')", keyPath.toUtf8().constData());
-			}
-			else {
-				Debug(_log, "Setup private SSL key");
-				_server->setPrivateKey(key);
+				if (key.isNull())
+				{
+					Error(_log, "The provided SSL key is invalid or not supported use RSA encrypt and PEM format ('%s')", keyPath.toUtf8().constData());
+				}
+				else
+				{
+					Debug(_log, "Setup private SSL key");
+					_server->setPrivateKey(key);
+				}
 			}
 		}
 
@@ -208,10 +248,18 @@ void WebServer::start()
 
 void WebServer::stop()
 {
-	_server->stop();
+	if (_server != nullptr)
+	{
+		_server->stop();
+	}
+	else
+	{
+		// server was never started
+		emit isStopped();
+	}
 }
 
-void WebServer::setSSDPDescription(const QString& desc)
+void WebServer::onSsdpDescriptionUpdated(const QString& desc)
 {
 	_staticFileServing->setSSDPDescription(desc);
 }

@@ -1,5 +1,5 @@
 #include <utils/Logger.h>
-#include <grabber/XcbGrabber.h>
+#include <grabber/xcb/XcbGrabber.h>
 
 #include "XcbCommands.h"
 #include "XcbCommandExecutor.h"
@@ -10,15 +10,10 @@
 
 #include <memory>
 
-// Constants
-namespace {
-	const bool verbose = false;
-} //End of constants
-
 #define DOUBLE_TO_FIXED(d) ((xcb_render_fixed_t) ((d) * 65536))
 
 XcbGrabber::XcbGrabber(int cropLeft, int cropRight, int cropTop, int cropBottom)
-	: Grabber("XCBGRABBER", cropLeft, cropRight, cropTop, cropBottom)
+	: Grabber("GRABBER-XCB", cropLeft, cropRight, cropTop, cropBottom)
 	, _connection{}
 	, _screen{}
 	, _pixmap{}
@@ -37,12 +32,9 @@ XcbGrabber::XcbGrabber(int cropLeft, int cropRight, int cropTop, int cropBottom)
 	, _XcbShmAvailable{}
 	, _XcbShmPixmapAvailable{}
 	, _isWayland (false)
-	, _logger{}
 	, _shmData{}
 	, _XcbRandREventBase{-1}
 {
-	_logger = Logger::getInstance("XCB");
-
 	// cropping is performed by XcbRender, XcbShmGetImage or XcbGetImage
 	_useImageResampler = false;
 	_imageResampler.setCropping(0, 0, 0, 0);
@@ -68,7 +60,7 @@ void XcbGrabber::freeResources()
 	{
 		query<ShmDetach>(_connection, _shminfo);
 		shmdt(_shmData);
-		shmctl(_shminfo, IPC_RMID, 0);
+		shmctl(_shminfo, IPC_RMID, nullptr);
 
 	}
 
@@ -182,22 +174,30 @@ void XcbGrabber::setupShm()
 	}
 }
 
+bool XcbGrabber::isAvailable(bool logError)
+{
+	if (getenv("WAYLAND_DISPLAY") != nullptr)
+	{
+		ErrorIf(logError, _log, "Grabber does not work under Wayland!");
+		_isWayland = true;
+	}
+
+	_isAvailable = !_isWayland;
+	return _isAvailable;
+}
+
 bool XcbGrabber::open()
 {
 	bool rc = false;
 
-	if (getenv("WAYLAND_DISPLAY") != nullptr)
-	{
-		_isWayland = true;
-	}
-	else
+	if (_isAvailable)
 	{
 		_connection = xcb_connect(nullptr, &_screen_num);
 
 		int ret = xcb_connection_has_error(_connection);
 		if (ret != 0)
 		{
-			Debug(_logger, "Cannot open display, error %d", ret);
+			Debug(_log, "Cannot open display, error %d", ret);
 		}
 		else
 		{
@@ -215,26 +215,29 @@ bool XcbGrabber::open()
 
 bool XcbGrabber::setupDisplay()
 {
-	bool result = false;
-
-	if ( ! open() )
+	if (_isDeviceInError)
 	{
-		if ( _isWayland  )
+		Error(_log, "Cannot setup display, device is in error state");
+		return false;
+	}
+
+	if (!isAvailable(true))
+	{
+		return false;
+	}
+
+	if (!open())
+	{
+		if (getenv("DISPLAY") != nullptr)
 		{
-			Error(_log, "Grabber does not work under Wayland!");
+			Error(_log, "Unable to open display [%s], screen %d does not exist", getenv("DISPLAY"), _screen_num);
 		}
 		else
 		{
-			if (getenv("DISPLAY") != nullptr)
-			{
-				Error(_log, "Unable to open display [%s], screen %d does not exist", getenv("DISPLAY"), _screen_num);
-			}
-			else
-			{
-				Error(_log, "DISPLAY environment variable not set");
-			}
-			freeResources();
+			Error(_log, "DISPLAY environment variable not set");
 		}
+		freeResources();
+		return false;
 	}
 	else
 	{
@@ -249,11 +252,16 @@ bool XcbGrabber::setupDisplay()
 			 _XcbShmPixmapAvailable  ? "available" : "unavailable"))
 			 );
 
-		result = (updateScreenDimensions(true) >= 0);
-		ErrorIf(!result, _log, "XCB Grabber start failed");
-		setEnabled(result);
+		bool isOK = (updateScreenDimensions(true) >= 0);
+		if (!isOK)
+		{
+			setInError(QString("%1 start failed").arg(_grabberName));
+			return false;
+		}
+
+		setEnabled(true);
 	}
-	return result;
+	return true;
 }
 
 int XcbGrabber::grabFrame(Image<ColorRgb> & image, bool forceUpdate)
@@ -353,15 +361,18 @@ int XcbGrabber::updateScreenDimensions(bool force)
 		_screenHeight == unsigned(geometry->height))
 		return 0;
 
-	if (_screenWidth || _screenHeight)
+	if ((_screenWidth != 0) || (_screenHeight != 0))
+	{
 		freeResources();
+	}
 
 	Info(_log, "Update of screen resolution: [%dx%d]  to [%dx%d]", _screenWidth, _screenHeight, geometry->width, geometry->height);
 
 	_screenWidth  = geometry->width;
 	_screenHeight = geometry->height;
 
-	int width = 0, height = 0;
+	int width = 0;
+	int height = 0;
 
 	// Image scaling is performed by XRender when available, otherwise by ImageResampler
 	if (_XcbRenderAvailable)
@@ -459,7 +470,7 @@ bool XcbGrabber::nativeEventFilter(const QByteArray & eventType, void * message,
 	if (!_XcbRandRAvailable || eventType != "xcb_generic_event_t" || _XcbRandREventBase == -1)
 		return false;
 
-	xcb_generic_event_t *e = static_cast<xcb_generic_event_t*>(message);
+	auto e = static_cast<xcb_generic_event_t*>(message);
 	const uint8_t xEventType = XCB_EVENT_RESPONSE_TYPE(e);
 
 	if (xEventType == _XcbRandREventBase + XCB_RANDR_SCREEN_CHANGE_NOTIFY)
@@ -506,10 +517,8 @@ xcb_render_pictformat_t XcbGrabber::findFormatForVisual(xcb_visualid_t visual) c
 
 QJsonObject XcbGrabber::discover(const QJsonObject& params)
 {
-	DebugIf(verbose, _log, "params: [%s]", QString(QJsonDocument(params).toJson(QJsonDocument::Compact)).toUtf8().constData());
-
 	QJsonObject inputsDiscovered;
-	if ( open() )
+	if ( isAvailable(false) && open() )
 	{
 		inputsDiscovered["device"] = "xcb";
 		inputsDiscovered["device_name"] = "XCB";
@@ -519,8 +528,6 @@ QJsonObject XcbGrabber::discover(const QJsonObject& params)
 
 		if (_connection != nullptr && _screen != nullptr )
 		{
-			QJsonArray fps = { 1, 5, 10, 15, 20, 25, 30, 40, 50, 60 };
-
 			const xcb_setup_t * setup = xcb_get_setup(_connection);
 
 			xcb_screen_iterator_t it = xcb_setup_roots_iterator(setup);
@@ -566,7 +573,7 @@ QJsonObject XcbGrabber::discover(const QJsonObject& params)
 
 					resolution["width"] = geometry->width;
 					resolution["height"] = geometry->height;
-					resolution["fps"] = fps;
+					resolution["fps"] = getFpsSupported();
 
 					resolutionArray.append(resolution);
 
@@ -583,7 +590,9 @@ QJsonObject XcbGrabber::discover(const QJsonObject& params)
 			{
 				inputsDiscovered["video_inputs"] = video_inputs;
 
-				QJsonObject defaults, video_inputs_default, resolution_default;
+				QJsonObject defaults;
+				QJsonObject video_inputs_default;
+				QJsonObject resolution_default;
 				resolution_default["fps"] = _fps;
 				video_inputs_default["resolution"] = resolution_default;
 				video_inputs_default["inputIdx"] = 0;
@@ -592,7 +601,6 @@ QJsonObject XcbGrabber::discover(const QJsonObject& params)
 			}
 		}
 	}
-	DebugIf(verbose, _log, "device: [%s]", QString(QJsonDocument(inputsDiscovered).toJson(QJsonDocument::Compact)).toUtf8().constData());
 
 	return inputsDiscovered;
 }

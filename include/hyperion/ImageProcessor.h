@@ -1,7 +1,9 @@
 #pragma once
 
 #include <QString>
+#include <QVector>
 #include <QSharedPointer>
+#include <QLoggingCategory>
 
 // Utils includes
 #include <utils/Image.h>
@@ -16,6 +18,8 @@
 
 // Black border includes
 #include <blackborder/BlackBorderProcessor.h>
+
+Q_DECLARE_LOGGING_CATEGORY(imageProcessor_track);
 
 class Hyperion;
 
@@ -35,8 +39,7 @@ public:
 	///	@param[in] ledString    LedString data
 	/// @param[in] hyperion     Hyperion instance pointer
 	///
-	ImageProcessor(const LedString& ledString, Hyperion* hyperion);
-
+	explicit ImageProcessor(const LedString& ledString, const QSharedPointer<Hyperion>& hyperionInstance);
 	~ImageProcessor() override;
 
 	///
@@ -120,9 +123,10 @@ public:
 	/// @return The color value per LED
 	///
 	template <typename Pixel_T>
-	std::vector<ColorRgb> process(const Image<Pixel_T>& image)
+	QVector<ColorRgb> process(const Image<Pixel_T>& image)
 	{
-		std::vector<ColorRgb> colors;
+		QVector<ColorRgb> colors;
+		qCDebug(image_track) << "Image [" << image.id() << "]";
 
 		if (image.width()>0 && image.height()>0)
 		{
@@ -141,13 +145,19 @@ public:
 				colors = _imageToLedColors->getUniLedColor(image);
 				break;
 			case 2:
-				colors = _imageToLedColors->getMeanLedColorSqrt(image);
+				colors = _imageToLedColors->getMeanSqrtLedColor(image);
 				break;
 			case 3:
 				colors = _imageToLedColors->getDominantLedColor(image);
 				break;
 			case 4:
-				colors = _imageToLedColors->getDominantLedColorAdv(image);
+				colors = _imageToLedColors->getDominantUniLedColor(image);
+				break;
+			case 5:
+				colors = _imageToLedColors->getDominantAdvLedColor(image);
+				break;
+			case 6:
+				colors = _imageToLedColors->getDominantAdvUniLedColor(image);
 				break;
 			default:
 				colors = _imageToLedColors->getMeanLedColor(image);
@@ -169,8 +179,10 @@ public:
 	/// @param[out] ledColors  The color value per LED
 	///
 	template <typename Pixel_T>
-	void process(const Image<Pixel_T>& image, std::vector<ColorRgb>& ledColors)
+	void process(const Image<Pixel_T>& image, QVector<ColorRgb>& ledColors)
 	{
+		qCDebug(image_track).noquote() << "Image  [" << image.id() << "], ledColors";
+
 		if ( image.width()>0 && image.height()>0)
 		{
 			// Ensure that the buffer-image is the proper size
@@ -186,14 +198,21 @@ public:
 				_imageToLedColors->getUniLedColor(image, ledColors);
 				break;
 			case 2:
-				_imageToLedColors->getMeanLedColorSqrt(image, ledColors);
+				_imageToLedColors->getMeanSqrtLedColor(image, ledColors);
 				break;
 			case 3:
 				_imageToLedColors->getDominantLedColor(image, ledColors);
 				break;
 			case 4:
-				_imageToLedColors->getDominantLedColorAdv(image, ledColors);
+				_imageToLedColors->getDominantUniLedColor(image, ledColors);
 				break;
+			case 5:
+				_imageToLedColors->getDominantAdvLedColor(image, ledColors);
+				break;
+			case 6:
+				_imageToLedColors->getDominantAdvUniLedColor(image, ledColors);
+				break;
+
 			default:
 				_imageToLedColors->getMeanLedColor(image, ledColors);
 			}
@@ -233,7 +252,7 @@ private:
 	{
 		if (!_borderProcessor->enabled() && ( _imageToLedColors->horizontalBorder()!=0 || _imageToLedColors->verticalBorder()!=0 ))
 		{
-			Debug(_log, "Reset border");
+			Debug(_log, "Black border disabled; resetting to no border");
 			_borderProcessor->process(image);
 			registerProcessingUnit(image.width(), image.height(), 0, 0);
 		}
@@ -244,11 +263,20 @@ private:
 
 			if (border.unknown)
 			{
+				qCDebug(imageProcessor_track) << "Detected unknown black border setup; resetting to no border";
 				registerProcessingUnit(image.width(), image.height(), 0, 0);
 			}
 			else
 			{
-				registerProcessingUnit(image.width(), image.height(), border.horizontalSize, border.verticalSize);
+				if (border.horizontalSize != _imageToLedColors->horizontalBorder() || border.verticalSize != _imageToLedColors->verticalBorder())
+				{
+					qCDebug(imageProcessor_track) << "Detected change in black border setup - horizontal:" << border.horizontalSize << " vertical:" << border.verticalSize;
+					registerProcessingUnit(image.width(), image.height(), border.horizontalSize, border.verticalSize);
+				}
+				else
+				{
+					qCDebug(imageProcessor_track) << "Border detection setup has not changed - horizontal:" << border.horizontalSize << " vertical:" << border.verticalSize;
+				}
 			}
 		}
 	}
@@ -257,13 +285,14 @@ private slots:
 	void handleSettingsUpdate(settings::type type, const QJsonDocument& config);
 
 private:
+	/// Logger instance
+	QSharedPointer<Logger> _log;
 
-	Logger * _log;
 	/// The Led-string specification
 	LedString _ledString;
 
 	/// The processor for black border detection
-	hyperion::BlackBorderProcessor * _borderProcessor;
+	QScopedPointer <hyperion::BlackBorderProcessor> _borderProcessor;
 
 	/// The mapping of image-pixels to LEDs
 	QSharedPointer<hyperion::ImageToLedsMap> _imageToLedColors;
@@ -275,9 +304,9 @@ private:
 	/// Type of last requested hard type
 	int _hardMappingType;
 
-	int _accuraryLevel;
+	int _accuracyLevel;
 	int _reducedPixelSetFactorFactor;
 
 	/// Hyperion instance pointer
-	Hyperion* _hyperion;
+	QWeakPointer<Hyperion> _hyperionWeak;
 };

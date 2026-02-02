@@ -25,7 +25,9 @@ public:
 	/// @param socket The Socket object for this connection
 	///
 	JsonClientConnection(QTcpSocket * socket, bool localConnection);
-	QHostAddress getClientAddress();
+	~JsonClientConnection() override;
+
+	QHostAddress getClientAddress() const;
 
 signals:
 	void connectionClosed();
@@ -41,6 +43,8 @@ private slots:
 
 	void disconnected();
 
+	void onForbidden();
+
 private:
 	QTcpSocket* _socket;
 	/// new instance of JsonAPI
@@ -50,5 +54,5 @@ private:
 	QByteArray _receiveBuffer;
 
 	/// The logger instance
-	Logger * _log;
+	QSharedPointer<Logger> _log;
 };

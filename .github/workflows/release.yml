@@ -1,16 +1,19 @@
-name: Release Actions
+name: 🚀 Release Actions
+run-name: 🚀 Let HyperBian create
+
 on:
   release:
     types: [published]
 
 jobs:
+
   hyperbian:
-    name: Let HyperBian create
+    name: 🚀 Let HyperBian create
     runs-on: ubuntu-latest
     steps:
       # Dispatch event to build new HyperBian image
-      - name: Dispatch HyperBian build
-        uses: peter-evans/repository-dispatch@v2.1.1
+      - name: 📲 Dispatch HyperBian build
+        uses: peter-evans/repository-dispatch@v4.0.1
         if: ${{ github.repository_owner == 'hyperion-project'}}
         with:
           repository: hyperion-project/HyperBian

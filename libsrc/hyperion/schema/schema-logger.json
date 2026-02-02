@@ -1,18 +1,27 @@
 {
-	"type" : "object",
-	"title" : "edt_conf_log_heading_title",
-	"properties" :
-	{
+	"type": "object",
+	"title": "edt_conf_log_heading_title",
+	"properties": {
 		"level": {
 			"type": "string",
-			"enum": [ "silent", "warn", "verbose", "debug" ],
+			"required": true,
+			"enum": [
+				"silent",
+				"warn",
+				"verbose",
+				"debug"
+			],
 			"title": "edt_conf_log_level_title",
 			"options": {
-				"enum_titles": [ "edt_conf_enum_logsilent", "edt_conf_enum_logwarn", "edt_conf_enum_logverbose", "edt_conf_enum_logdebug" ]
+				"enum_titles": [
+					"edt_conf_enum_logsilent",
+					"edt_conf_enum_logwarn",
+					"edt_conf_enum_logverbose",
+					"edt_conf_enum_logdebug"
+				]
 			},
-			"default": "warn",
-			"required": true
+			"default": "warn"
 		}
 	},
-	"additionalProperties" : false
+	"additionalProperties": false
 }

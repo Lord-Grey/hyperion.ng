@@ -1,4 +1,7 @@
-#pragma once
+#ifndef BLACK_BORDER_PROCESSOR_H
+#define BLACK_BORDER_PROCESSOR_H
+
+#include <memory>
 
 // QT includes
 #include <QJsonObject>
@@ -23,8 +26,9 @@ namespace hyperion
 	{
 		Q_OBJECT
 	public:
-		BlackBorderProcessor(Hyperion* hyperion, QObject* parent);
+		BlackBorderProcessor(const QSharedPointer<Hyperion>& hyperionInstance, QObject* parent = nullptr);
 		~BlackBorderProcessor() override;
+
 		///
 		/// Return the current (detected) border
 		/// @return The current border
@@ -62,6 +66,8 @@ namespace hyperion
 		template <typename Pixel_T>
 		bool process(const Image<Pixel_T> & image)
 		{
+			qCDebug(image_track) << "Image [" << image.id() << "]";
+
 			// get the border for the single image
 			BlackBorder imageBorder;
 			imageBorder.horizontalSize = 0;
@@ -111,7 +117,10 @@ namespace hyperion
 
 	private:
 		/// Hyperion instance
-		Hyperion* _hyperion;
+		QWeakPointer<Hyperion> _hyperionWeak;
+		
+		/// Logger instance
+		QSharedPointer<Logger> _log;
 
 		///
 		/// Updates the current border based on the newly detected border. Returns true if the
@@ -141,7 +150,7 @@ namespace hyperion
 		QString _detectionMode;
 
 		/// The black-border detector
-		BlackBorderDetector* _detector;
+		std::unique_ptr<BlackBorderDetector> _detector;
 
 		/// The current detected border
 		BlackBorder _currentBorder;
@@ -162,3 +171,5 @@ namespace hyperion
 
 	};
 } // end namespace hyperion
+
+#endif // BLACK_BORDER_PROCESSOR_H

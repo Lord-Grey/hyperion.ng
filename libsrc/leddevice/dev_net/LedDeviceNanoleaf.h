@@ -14,6 +14,9 @@
 // Qt includes
 #include <QString>
 #include <QNetworkAccessManager>
+#include <QJsonObject>
+#include <QScopedPointer>
+#include <QVector>
 
 ///
 /// Implementation of the LedDevice interface for sending to
@@ -38,11 +41,6 @@ public:
 	/// @param deviceConfig Device's configuration as JSON-Object
 	///
 	explicit LedDeviceNanoleaf(const QJsonObject& deviceConfig);
-
-	///
-	/// @brief Destructor of the LED-device
-	///
-	~LedDeviceNanoleaf() override;
 
 	///
 	/// @brief Constructs the LED-device
@@ -92,6 +90,20 @@ public:
 	///
 	void identify(const QJsonObject& params) override;
 
+	/// @brief Add an API-token to the Nanoleaf device
+	///
+	/// Following parameters are required
+	/// @code
+	/// {
+	///     "host"  : "hostname or IP",
+	/// }
+	///@endcode
+	///
+	/// @param[in] params Parameters to query device
+	/// @return A JSON structure holding the authorization keys
+	///
+	QJsonObject addAuthorization(const QJsonObject& params) override;
+
 protected:
 
 	///
@@ -115,7 +127,7 @@ protected:
 	/// @param[in] ledValues The RGB-color per LED
 	/// @return Zero on success, else negative
 	//////
-	int write(const std::vector<ColorRgb>& ledValues) override;
+	int write(const QVector<ColorRgb>& ledValues) override;
 
 	///
 	/// @brief Power-/turn on the Nanoleaf device.
@@ -152,6 +164,38 @@ protected:
 
 private:
 
+	// Nanoleaf Panel Shapetypes
+	enum class SHAPETYPES {
+		TRIANGLE = 0,
+		RHYTM = 1,
+		SQUARE = 2,
+		CONTROL_SQUARE_PRIMARY = 3,
+		CONTROL_SQUARE_PASSIVE = 4,
+		POWER_SUPPLY = 5,
+		HEXAGON_SHAPES = 7,
+		TRIANGE_SHAPES = 8,
+		MINI_TRIANGE_SHAPES = 9,
+		SHAPES_CONTROLLER = 12,
+		ELEMENTS_HEXAGONS = 14,
+		ELEMENTS_HEXAGONS_CORNER = 15,
+		LINES_CONECTOR = 16,
+		LIGHT_LINES = 17,
+		LIGHT_LINES_SINGLZONE = 18,
+		CONTROLLER_CAP = 19,
+        POWER_CONNECTOR = 20,
+        NL_4D_LIGHTSTRIP =	29,
+        SKYLIGHT_PANEL = 30,
+        SKYLIGHT_CONTROLLER_PRIMARY = 31,
+        SKYLIGHT_CONTROLLER_PASSIV = 32
+	};
+
+	// Nanoleaf external control versions
+	enum class EXTCONTROLVERSIONS
+	{
+		V1 = 1,
+		V2
+	};
+
 	///
 	/// @brief Initialise the access to the REST-API wrapper
 	///
@@ -187,20 +231,32 @@ private:
 	///
 	QJsonArray discover();
 
+	///
+	/// @brief Get number of panels that can be used as LEds.
+	///
+	/// @return Number of usable LED panels
+	///
+	int getHwLedCount(const QJsonObject& jsonLayout) const;
+
+	///
+	/// @brief Check, if panelshape type has LEDs
+	///
+	/// @return True, if panel shape type has LEDs
+	///
+	bool hasLEDs(const SHAPETYPES& panelshapeType) const;
+
 	///REST-API wrapper
-	ProviderRestApi* _restApi;
+	QScopedPointer<ProviderRestApi> _restApi;
 	int	_apiPort;
 	QString _authToken;
 
 	bool _topDown;
 	bool _leftRight;
-	int _startPos;
-	int _endPos;
 
 	//Nanoleaf device details
 	QString _deviceModel;
 	QString _deviceFirmwareVersion;
-	ushort _extControlVersion;
+	EXTCONTROLVERSIONS _extControlVersion;
 
 	/// The number of panels with LEDs
 	int _panelLedCount;

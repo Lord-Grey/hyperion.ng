@@ -1,7 +1,11 @@
 #pragma once
 
-#include <QObject>
 #include <cstdint>
+
+#include <QObject>
+#include <QSize>
+#include <QJsonArray>
+#include <QLoggingCategory>
 
 #include <utils/ColorRgb.h>
 #include <utils/Image.h>
@@ -10,6 +14,28 @@
 #include <utils/ImageResampler.h>
 #include <utils/Logger.h>
 #include <utils/Components.h>
+#include <utils/JsonUtils.h>
+
+#include <events/EventEnum.h>
+
+Q_DECLARE_LOGGING_CATEGORY(grabber_screen_capture);
+Q_DECLARE_LOGGING_CATEGORY(grabber_screen_capture_failed);
+Q_DECLARE_LOGGING_CATEGORY(grabber_screen_flow);
+Q_DECLARE_LOGGING_CATEGORY(grabber_screen_properties);
+Q_DECLARE_LOGGING_CATEGORY(grabber_screen_benchmark);
+
+Q_DECLARE_LOGGING_CATEGORY(grabber_video_capture);
+Q_DECLARE_LOGGING_CATEGORY(grabber_video_capture_failed);
+Q_DECLARE_LOGGING_CATEGORY(grabber_video_capture_failed);
+Q_DECLARE_LOGGING_CATEGORY(grabber_video_flow);
+Q_DECLARE_LOGGING_CATEGORY(grabber_video_properties);
+Q_DECLARE_LOGGING_CATEGORY(grabber_video_benchmark);
+
+Q_DECLARE_LOGGING_CATEGORY(grabber_audio_capture);
+Q_DECLARE_LOGGING_CATEGORY(grabber_audio_capture_failed);
+Q_DECLARE_LOGGING_CATEGORY(grabber_audio_flow);
+Q_DECLARE_LOGGING_CATEGORY(grabber_audio_properties);
+Q_DECLARE_LOGGING_CATEGORY(grabber_audio_benchmark);
 
 ///
 /// @brief The Grabber class is responsible to apply image resizes (with or without ImageResampler)
@@ -17,11 +43,12 @@
 class Grabber : public QObject
 {
 	Q_OBJECT
+public:
+	static const QJsonArray DEFAULT_SUPPORTED_FPS_LIST;
 
 public:
-
-	Grabber(const QString& grabberName = "", int cropLeft=0, int cropRight=0, int cropTop=0, int cropBottom=0);
-
+	explicit Grabber(const QString &grabberName = "", int cropLeft = 0, int cropRight = 0, int cropTop = 0, int cropBottom = 0);
+	virtual ~Grabber();
 	///
 	/// Set the video mode (2D/3D)
 	/// @param[in] mode The new video mode
@@ -83,6 +110,8 @@ public:
 	///
 	virtual void setEnabled(bool enable);
 
+	bool isEnabled() const { return _isEnabled; }
+
 	///
 	/// @brief get current resulting height of image (after crop)
 	///
@@ -102,7 +131,7 @@ public:
 	///
 	/// @brief Get capture interval in ms
 	///
-	int getUpdateInterval() const { return 1000/_fps; }
+	int getUpdateInterval() const { return 1000 / _fps; }
 
 	///
 	/// @brief  Get pixelDecimation
@@ -111,20 +140,40 @@ public:
 
 	QString getGrabberName() const { return _grabberName; }
 
+	///
+	/// @brief Determine if the grabber is available.
+	///
+	/// @return true, on success (i.e. library is present), else false
+	///
+	virtual bool isAvailable(bool logError = false) { return _isAvailable; }
+
+	virtual int grabFrame(Image<ColorRgb> &) { return 0; }
+	virtual bool setupScreen() { return true; }
+	virtual QSize getScreenSize() const { return QSize(); }
+	virtual QJsonArray getInputDeviceDetails() const { return QJsonArray(); }
+
+	QJsonArray getFpsSupported() const { return _fpsSupportedList; }
+	void setFpsSupported(const QJsonArray& fpsSupported) { _fpsSupportedList = fpsSupported; }
+
+public slots:
+
+	virtual void handleEvent(Event event) { /* to be overridden by subclasses */ }
+
+	void resetInError() { _isDeviceInError = false; }
+
 protected slots:
 	///
 	/// @brief Set device in error state
 	///
 	/// @param[in] errorMsg The error message to be logged
 	///
-	virtual void setInError( const QString& errorMsg);
+	virtual void setInError(const QString &errorMsg);
 
 protected:
-
 	QString _grabberName;
 
 	/// logger instance
-	Logger * _log;
+	QSharedPointer<Logger> _log;
 
 	ImageResampler _imageResampler;
 
@@ -154,18 +203,28 @@ protected:
 	/// fps software decimation
 	int _fpsSoftwareDecimation;
 
+	// Supported fps values
+	QJsonArray _fpsSupportedList;
+
 	/// device input
 	int _input;
 
 	/// number of pixels to crop after capturing
-	int _cropLeft, _cropRight, _cropTop, _cropBottom;
+	int _cropLeft;
+	int _cropRight;
+	int _cropTop;
+	int _cropBottom;
 
 	// Device states
+
+	bool _isCropping;
+
+	/// Is the device available?
+	bool _isAvailable;
 
 	/// Is the device enabled?
 	bool _isEnabled;
 
 	/// Is the device in error state and stopped?
 	bool _isDeviceInError;
-
 };

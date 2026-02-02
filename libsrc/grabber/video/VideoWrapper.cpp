@@ -1,6 +1,6 @@
 #include <QMetaType>
 
-#include <grabber/VideoWrapper.h>
+#include <grabber/video/VideoWrapper.h>
 
 // qt includes
 #include <QTimer>
@@ -15,15 +15,18 @@ VideoWrapper::VideoWrapper()
 {
 	// register the image type
 	qRegisterMetaType<Image<ColorRgb>>("Image<ColorRgb>");
+	qRegisterMetaType<Event>("Event");
 
 	// Handle the image in the captured thread (Media Foundation/V4L2) using a direct connection
 	connect(&_grabber, SIGNAL(newFrame(const Image<ColorRgb>&)), this, SLOT(newFrame(const Image<ColorRgb>&)), Qt::DirectConnection);
+	connect(&_grabber, SIGNAL(readError(const char*)), this, SLOT(readError(const char*)), Qt::DirectConnection);
+
 	connect(&_grabber, SIGNAL(readError(const char*)), this, SLOT(readError(const char*)), Qt::DirectConnection);
 }
 
 VideoWrapper::~VideoWrapper()
 {
-	stop();
+	VideoWrapper::stop();
 }
 
 bool VideoWrapper::start()
@@ -37,18 +40,9 @@ void VideoWrapper::stop()
 	GrabberWrapper::stop();
 }
 
-#if defined(ENABLE_CEC) && !defined(ENABLE_MF)
-
-void VideoWrapper::handleCecEvent(CECEvent event)
-{
-	_grabber.handleCecEvent(event);
-}
-
-#endif
-
 void VideoWrapper::handleSettingsUpdate(settings::type type, const QJsonDocument& config)
 {
-	if(type == settings::V4L2 && _grabberName.startsWith("V4L2"))
+	if(type == settings::V4L2 && _grabber.getGrabberName().startsWith("V4L2"))
 	{
 		// extract settings
 		const QJsonObject& obj = config.object();
@@ -100,11 +94,6 @@ void VideoWrapper::handleSettingsUpdate(settings::type type, const QJsonDocument
 				obj["hardware_saturation"].toInt(0),
 				obj["hardware_hue"].toInt(0));
 
-#if defined(ENABLE_CEC) && defined(ENABLE_V4L2)
-			// CEC Standby
-			_grabber.setCecDetectionEnable(obj["cecDetection"].toBool(true));
-#endif
-
 			// Software frame skipping
 			_grabber.setFpsSoftwareDecimation(obj["fpsSoftwareDecimation"].toInt(1));
 
@@ -124,7 +113,7 @@ void VideoWrapper::handleSettingsUpdate(settings::type type, const QJsonDocument
 			// Device framerate
 			_grabber.setFramerate(obj["fps"].toInt(15));
 
-			updateTimer(_ggrabber->getUpdateInterval());
+			updateTimer(getGrabber()->getUpdateInterval());
 
 			// Reload the Grabber if any settings have been changed that require it
 			_grabber.reload(getV4lGrabberState());
@@ -136,7 +125,7 @@ void VideoWrapper::handleSettingsUpdate(settings::type type, const QJsonDocument
 
 void VideoWrapper::newFrame(const Image<ColorRgb> &image)
 {
-	emit systemImage(_grabberName, image);
+	emit systemImage(_grabber.getGrabberName(), image);
 }
 
 void VideoWrapper::readError(const char* err)

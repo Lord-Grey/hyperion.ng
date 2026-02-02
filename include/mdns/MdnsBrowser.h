@@ -2,7 +2,6 @@
 #define MDNS_BROWSER_H
 
 #include <chrono>
-#include <type_traits>
 
 #include <qmdnsengine/server.h>
 #include <qmdnsengine/service.h>
@@ -16,22 +15,26 @@
 // Qt includes
 #include <QObject>
 #include <QByteArray>
+#include <QString>
+#include <QMap>
+#include <QJsonArray>
+#include <QSharedPointer>
+#include <QScopedPointer>
+#include <QLoggingCategory>
 
 // Utility includes
 #include <utils/Logger.h>
-#include <utils/WeakConnect.h>
+
+Q_DECLARE_LOGGING_CATEGORY(mdns_browser)
 
 namespace {
 	constexpr std::chrono::milliseconds DEFAULT_DISCOVER_TIMEOUT{ 500 };
 	constexpr std::chrono::milliseconds DEFAULT_ADDRESS_RESOLVE_TIMEOUT{ 1000 };
-
-} //End of constants
+} // End of constants
 
 class MdnsBrowser : public QObject
 {
 	Q_OBJECT
-
-		// Run MdnsBrowser as singleton
 
 private:
 	///
@@ -39,42 +42,58 @@ private:
 	///        Searching for hyperion http service by default
 	///
 	// Run MdnsBrowser as singleton
-	MdnsBrowser(QObject* parent = nullptr);
-	~MdnsBrowser() override;
-
-public:
-
-	static MdnsBrowser& getInstance()
-	{
-		static MdnsBrowser* instance = new MdnsBrowser();
-		return *instance;
-	}
-
+	explicit MdnsBrowser(QObject* parent = nullptr);
 	MdnsBrowser(const MdnsBrowser&) = delete;
 	MdnsBrowser(MdnsBrowser&&) = delete;
 	MdnsBrowser& operator=(const MdnsBrowser&) = delete;
 	MdnsBrowser& operator=(MdnsBrowser&&) = delete;
 
-	QMdnsEngine::Service getFirstService(const QByteArray& serviceType, const QString& filter = ".*", const std::chrono::milliseconds waitTime = DEFAULT_DISCOVER_TIMEOUT) const;
-	QJsonArray getServicesDiscoveredJson(const QByteArray& serviceType, const QString& filter = ".*", const std::chrono::milliseconds waitTime = std::chrono::milliseconds{ 0 }) const;
+	static QSharedPointer<MdnsBrowser> instance;
 
+public:
+	 static QSharedPointer<MdnsBrowser>& getInstance(QThread* externalThread = nullptr);
+	 static void destroyInstance();
+	~MdnsBrowser() override;
 
-	void printCache(const QByteArray& name = QByteArray(), quint16 type = QMdnsEngine::ANY) const;
+	QMdnsEngine::Service getFirstService(const QByteArray& serviceType, const QString& filter = ".*", std::chrono::milliseconds waitTime = DEFAULT_DISCOVER_TIMEOUT) const;
+	QJsonArray getServicesDiscoveredJson(const QByteArray& serviceType, const QString& filter = ".*", std::chrono::milliseconds waitTime = std::chrono::milliseconds{ 0 }) const;
+
+	///
+	/// @brief Check if the passed name is an MDNS service- or hostname
+	/// @param[in]     mdnsName    The name to be checked
+	/// @return        True on success else false
+	///
+	static inline bool isMdns(const QString &mdnsName)
+	{
+		return mdnsName.endsWith(".local") || mdnsName.endsWith(".local.");
+	}
+
+	///
+	/// @brief Check if the passed name is an MDNS service name
+	/// @param[in]     mdnsServiceName    The name to be checked
+	/// @return        True on success else false
+	///
+	static inline bool isMdnsService(const QString &mdnsServiceName)
+	{
+		return mdnsServiceName.endsWith("._tcp.local") || mdnsServiceName.endsWith("._tcp.local.");
+	}
+
+	void printCache(const QByteArray &name = QByteArray(), quint16 type = QMdnsEngine::ANY) const;
 
 public slots:
+
+	void stop(); // Stop _server and _cache in the right thread
 
 	///
 	/// @brief Browse for a service of type
 	///
 	void browseForServiceType(const QByteArray& serviceType);
 
-	QHostAddress getHostFirstAddress(const QByteArray& hostname);
+	void resolveServiceInstance(const QByteArray& serviceInstance, std::chrono::milliseconds waitTime = DEFAULT_DISCOVER_TIMEOUT) const;
 
-	void onHostNameResolved(const QHostAddress& address);
-
-	QMdnsEngine::Record getServiceInstanceRecord(const QByteArray& serviceInstance, const std::chrono::milliseconds waitTime = DEFAULT_DISCOVER_TIMEOUT) const;
-
-	bool resolveAddress(Logger* log, const QString& hostname, QHostAddress& hostAddress, std::chrono::milliseconds timeout = DEFAULT_ADDRESS_RESOLVE_TIMEOUT);
+	void resolveFirstAddress(QSharedPointer<Logger> log, const QString& hostname, std::chrono::milliseconds timeout = DEFAULT_ADDRESS_RESOLVE_TIMEOUT);
+	void resolveFirstAddress(QSharedPointer<Logger> log, const QString& hostname, QAbstractSocket::NetworkLayerProtocol protocol);
+	void resolveFirstAddress(QSharedPointer<Logger> log, const QString& hostname, QAbstractSocket::NetworkLayerProtocol protocol, std::chrono::milliseconds timeout);
 
 Q_SIGNALS:
 
@@ -95,22 +114,34 @@ Q_SIGNALS:
 	 */
 	void serviceRemoved(const QMdnsEngine::Service& service);
 
-	void addressResolved(const QHostAddress address);
+	void isAddressResolved(QString hostname, QHostAddress address);
+	void isFirstAddressResolved(QString hostname, QHostAddress address);
+
+	void isServiceRecordResolved(QByteArray serviceInstance, QMdnsEngine::Record serviceRecord) const;
+
+	///
+	/// @emits when the mDNS browser has completed its stop/cleanup
+	///
+	void isStopped();
 
 private slots:
 
+	void initMdns();
+
 	void onServiceAdded(const QMdnsEngine::Service& service);
-	void onServiceUpdated(const QMdnsEngine::Service& service);
+	void onServiceUpdated(const QMdnsEngine::Service& service) const;
 	void onServiceRemoved(const QMdnsEngine::Service& service);
+
+	void onHostNameResolved(QString hostname, QHostAddress address) const;
 
 private:
 	/// The logger instance for mDNS-Service
-	Logger* _log;
+	QSharedPointer<Logger> _log;
 
-	QMdnsEngine::Server _server;
-	QMdnsEngine::Cache  _cache;
+	QScopedPointer<QMdnsEngine::Server, QScopedPointerDeleteLater> _server;
+	QScopedPointer<QMdnsEngine::Cache, QScopedPointerDeleteLater> _cache;
 
-	QMap<QByteArray, QMdnsEngine::Browser*> _browsedServiceTypes;
+	QMap<QByteArray, QSharedPointer<QMdnsEngine::Browser>> _browsedServiceTypes;
 };
 
 #endif // MDNSBROWSER_H

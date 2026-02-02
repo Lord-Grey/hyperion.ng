@@ -8,9 +8,9 @@
 
 using namespace hyperion;
 
-BlackBorderProcessor::BlackBorderProcessor(Hyperion* hyperion, QObject* parent)
+BlackBorderProcessor::BlackBorderProcessor(const QSharedPointer<Hyperion>& hyperionInstance, QObject* parent)
 	: QObject(parent)
-	, _hyperion(hyperion)
+	, _hyperionWeak(hyperionInstance)
 	, _enabled(false)
 	, _unknownSwitchCnt(600)
 	, _borderSwitchCnt(50)
@@ -18,36 +18,51 @@ BlackBorderProcessor::BlackBorderProcessor(Hyperion* hyperion, QObject* parent)
 	, _blurRemoveCnt(1)
 	, _detectionMode("default")
 	, _detector(nullptr)
-	, _currentBorder({true, -1, -1})
-	, _previousDetectedBorder({true, -1, -1})
+	, _currentBorder({ true, -1, -1 })
+	, _previousDetectedBorder({ true, -1, -1 })
 	, _consistentCnt(0)
 	, _inconsistentCnt(10)
 	, _oldThreshold(-0.1)
 	, _hardDisabled(false)
 	, _userEnabled(false)
 {
-	// init
-	handleSettingsUpdate(settings::BLACKBORDER, _hyperion->getSetting(settings::BLACKBORDER));
+	QString subComponent{ "__" };
 
-	// listen for settings updates
-	connect(_hyperion, &Hyperion::settingsChanged, this, &BlackBorderProcessor::handleSettingsUpdate);
+	QSharedPointer<Hyperion> hyperion = _hyperionWeak.toStrongRef();
+	if (hyperion)
+	{
+		subComponent = hyperion->property("instance").toString();
+		_log = Logger::getInstance("BLACKBORDER", subComponent);
+	}
+	TRACK_SCOPE_SUBCOMPONENT();
 
-	// listen for component state changes
-	connect(_hyperion, &Hyperion::compStateChangeRequest, this, &BlackBorderProcessor::handleCompStateChangeRequest);
+	if (hyperion)
+	{
 
-	_detector = new BlackBorderDetector(_oldThreshold);
+		// init
+		handleSettingsUpdate(settings::BLACKBORDER, _hyperionWeak.toStrongRef()->getSetting(settings::BLACKBORDER));
+
+		// listen for settings updates
+		connect(hyperion.get(), &Hyperion::settingsChanged, this, &BlackBorderProcessor::handleSettingsUpdate);
+
+		// listen for component state changes
+		connect(hyperion.get(), &Hyperion::compStateChangeRequest, this, &BlackBorderProcessor::handleCompStateChangeRequest);
+	}
+
+	_detector = std::make_unique<BlackBorderDetector>(_oldThreshold);
 }
 
 BlackBorderProcessor::~BlackBorderProcessor()
 {
-	delete _detector;
+ 	TRACK_SCOPE_SUBCOMPONENT();
 }
 
 void BlackBorderProcessor::handleSettingsUpdate(settings::type type, const QJsonDocument& config)
 {
 	if(type == settings::BLACKBORDER)
 	{
-		if (_hyperion->isComponentEnabled(COMP_BLACKBORDER) == -1)
+		QSharedPointer<Hyperion> hyperion = _hyperionWeak.toStrongRef();
+		if (!hyperion.isNull() && hyperion->isComponentEnabled(COMP_BLACKBORDER) == -1)
 		{
 			//Disable, if service is not available
 			_enabled = false;
@@ -66,13 +81,10 @@ void BlackBorderProcessor::handleSettingsUpdate(settings::type type, const QJson
 			if (fabs(_oldThreshold - newThreshold) > std::numeric_limits<double>::epsilon())
 			{
 				_oldThreshold = newThreshold;
-
-				delete _detector;
-
-				_detector = new BlackBorderDetector(newThreshold);
+				_detector = std::make_unique<BlackBorderDetector>(_oldThreshold);
 			}
 
-			Debug(Logger::getInstance("BLACKBORDER", "I"+QString::number(_hyperion->getInstanceIndex())), "Set mode to: %s", QSTRING_CSTR(_detectionMode));
+			Debug(_log, "Set mode to: %s", QSTRING_CSTR(_detectionMode));
 
 			// eval the comp state
 			handleCompStateChangeRequest(hyperion::COMP_BLACKBORDER, obj["enable"].toBool(true));
@@ -96,7 +108,11 @@ void BlackBorderProcessor::handleCompStateChangeRequest(hyperion::Components com
 			_enabled = enable;
 		}
 
-		_hyperion->setNewComponentState(hyperion::COMP_BLACKBORDER, enable);
+		QSharedPointer<Hyperion> hyperion = _hyperionWeak.toStrongRef();
+		if (hyperion)
+		{
+			hyperion->setNewComponentState(hyperion::COMP_BLACKBORDER, enable);
+		}
 	}
 }
 

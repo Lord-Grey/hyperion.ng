@@ -29,7 +29,7 @@ public:
 	/// @param socket The Socket object for this connection
 	/// @param hyperion The Hyperion server
 	///
-	BoblightClientConnection(Hyperion* hyperion, QTcpSocket * socket, int priority);
+	explicit BoblightClientConnection(const QSharedPointer<Hyperion>& hyperionInstance, QTcpSocket * socket, int priority);
 
 	///
 	/// Destructor
@@ -41,7 +41,7 @@ public:
 	///
 	/// @returns IP-address as QString
 	///
-	QString getClientAddress() { return _clientAddress; }
+	QString getClientAddress() const { return _clientAddress; }
 
 signals:
 	///
@@ -125,10 +125,10 @@ private:
 	QTcpSocket * _socket;
 
 	/// The processor for translating images to led-values
-	ImageProcessor * _imageProcessor;
+	QWeakPointer<ImageProcessor> _imageProcessorWeak;
 
 	/// Link to Hyperion for writing led-values to a priority channel
-	Hyperion * _hyperion;
+	QWeakPointer<Hyperion> _hyperionWeak;
 
 	/// The buffer used for reading data from the socket
 	QByteArray _receiveBuffer;
@@ -137,10 +137,10 @@ private:
 	int _priority;
 
 	/// The latest led color data
-	std::vector<ColorRgb> _ledColors;
+	QVector<ColorRgb> _ledColors;
 
 	/// logger instance
-	Logger * _log;
+	QSharedPointer<Logger> _log;
 
 	/// address of client
 	QString _clientAddress;
