@@ -45,6 +45,12 @@ public:
 	///
 	bool setWidthHeight(int width, int height) override;
 
+	///
+	/// @brief Apply new framerate
+	/// @param fps framesPerSecond
+	///
+	bool setFramerate(int fps) override;	
+
 private:
 	bool isGbmSupported() const;
 
@@ -69,4 +75,6 @@ private:
 
 	int _lastError;
 	int _grabbingModeNotification;
+
+	QScopedPointer<Grabber>	_screenGrabber;	
 };
