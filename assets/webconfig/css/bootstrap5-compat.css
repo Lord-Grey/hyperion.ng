@@ -1,0 +1,333 @@
+/* Bootstrap 5 Compatibility Overrides for Hyperion */
+
+/* Navbar Toggle Icon Styles */
+.navbar-toggler.collapsed .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Dropdown Menu Styles */
+.dropdown-menu {
+  min-width: 200px;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+}
+
+.dropdown-divider {
+  margin: 0.5rem 0;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  padding: 85px 0 0;
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  overflow-y: auto;
+}
+
+.sidebar .nav-link {
+  font-weight: 500;
+  color: #333;
+  padding: 0.5rem 1rem;
+}
+
+.sidebar .nav-link:hover {
+  color: #007bff;
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.sidebar .nav-link.active {
+  color: #007bff;
+}
+
+.sidebar .nav-link i {
+  margin-right: 0.5rem;
+}
+
+/* Maintain compatibility with old 'inactive' class */
+.sidebar .nav-link.inactive {
+  /* Keep existing styling */
+}
+
+/* Panel to Card Migration Helpers */
+.panel {
+  margin-bottom: 1.5rem;
+  background-color: #fff;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+}
+
+.panel-default {
+  border-color: #ddd;
+}
+
+.panel-default > .panel-heading {
+  color: #333;
+  background-color: #f5f5f5;
+  border-color: #ddd;
+}
+
+.panel-heading {
+  padding: 10px 15px;
+  border-bottom: 1px solid transparent;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.panel-body {
+  padding: 15px;
+}
+
+.panel-footer {
+  padding: 10px 15px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #ddd;
+  border-bottom-right-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+/* Well component (removed in BS5) */
+.well {
+  min-height: 20px;
+  padding: 19px;
+  margin-bottom: 20px;
+  background-color: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .05);
+}
+
+.well-sm {
+  padding: 9px;
+  border-radius: 3px;
+}
+
+/* Modal Centering */
+.modal-dialog-centered {
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 1rem);
+}
+
+/* Text Alignment Compatibility */
+.text-left {
+  text-align: left !important;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+/* Button Styles */
+.btn-default {
+  color: #333;
+  background-color: #fff;
+  border-color: #ccc;
+}
+
+.btn-default:hover {
+  color: #333;
+  background-color: #e6e6e6;
+  border-color: #adadad;
+}
+
+/* Close Button Compatibility */
+.close {
+  padding: 0;
+  background-color: transparent;
+  border: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  float: right;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #000;
+  text-shadow: 0 1px 0 #fff;
+  opacity: .5;
+}
+
+.close:hover {
+  color: #000;
+  text-decoration: none;
+  opacity: .75;
+}
+
+/* Form Control Select */
+.form-control.select,
+select.form-control {
+  /* Bootstrap 5 uses form-select, but maintain backward compatibility */
+}
+
+/* Navbar Compatibility */
+.navbar-default {
+  background-color: #f8f9fa;
+  border-color: #e7e7e7;
+}
+
+.navbar-static-top {
+  z-index: 1000;
+  border-width: 0 0 1px;
+}
+
+.navbar-brand {
+  float: left;
+  height: 85px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 85px;
+}
+
+.navbar-top-links {
+  margin-right: 0;
+}
+
+.navbar-top-links li {
+  display: inline-block;
+}
+
+.navbar-top-links li:last-child {
+  margin-right: 15px;
+}
+
+.navbar-top-links li a {
+  padding: 15px;
+  min-height: 50px;
+}
+
+.navbar-top-links .dropdown-menu li {
+  display: block;
+}
+
+.navbar-top-links .dropdown-menu li:last-child {
+  margin-right: 0;
+}
+
+.navbar-top-links .dropdown-menu li a {
+  padding: 3px 20px;
+  min-height: 0;
+}
+
+.navbar-top-links .dropdown-menu li a div {
+  white-space: normal;
+}
+
+/* SR-Only (Screen Reader Only) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Collapsible Compatibility */
+.in {
+  /* Bootstrap 5 uses 'show' instead of 'in' */
+}
+
+.collapse.in {
+  display: block;
+}
+
+.collapsing {
+  position: relative;
+  height: 0;
+  overflow: hidden;
+  transition: height .35s ease;
+}
+
+/* Arrow for collapsible menus */
+.fa.arrow:before {
+  content: "\f104";
+  margin-left: 5px;
+}
+
+.active > a > .fa.arrow:before {
+  content: "\f107";
+}
+
+/* Responsive utilities */
+@media (max-width: 767.98px) {
+  .sidebar {
+    position: relative;
+    padding: 0;
+  }
+  
+  .navbar-brand {
+    height: 50px;
+    line-height: 50px;
+  }
+}
+
+/* Table Borderless */
+.table.borderless td,
+.table.borderless th {
+  border: 0;
+}
+
+/* Ensure proper spacing for main content */
+main {
+  padding-top: 1rem;
+}
+
+/* Fix for Bootstrap 5 grid offset */
+.col-lg-offset-1 {
+  margin-left: 8.333333%;
+}
+
+.col-lg-offset-2 {
+  margin-left: 16.666667%;
+}
+
+.col-lg-offset-3 {
+  margin-left: 25%;
+}
+
+/* Helper classes */
+.bg-w {
+  background-color: #fff;
+}
+
+.justify-content-center {
+  justify-content: center !important;
+}
+
+/* Fix modal footer alignment */
+.modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0.75rem;
+  border-top: 1px solid #dee2e6;
+  border-bottom-right-radius: calc(0.3rem - 1px);
+  border-bottom-left-radius: calc(0.3rem - 1px);
+}
+
+.modal-footer.justify-content-center {
+  justify-content: center;
+}
+
+/* Dropdown alerts styling */
+.dropdown-alerts {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+

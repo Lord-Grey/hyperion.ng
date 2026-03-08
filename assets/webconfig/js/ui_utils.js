@@ -307,30 +307,30 @@ function showInfoDialog(type, header = "", message = "", details = []) {
     $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-check modal-icon-check">');
     if (header == "")
       $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_success_title') + '</h4>');
-    $('#id_footer').html('<button type="button" class="btn btn-success" data-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    $('#id_footer').html('<button type="button" class="btn btn-success" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
   }
   else if (type == "warning") {
     $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-warning">');
     if (header == "")
       $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_warning_title') + '</h4>');
-    $('#id_footer').html('<button type="button" class="btn btn-warning" data-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    $('#id_footer').html('<button type="button" class="btn btn-warning" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
   }
   else if (type == "error") {
     $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-error"></i>');
     if (header == "") {
       $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_error_title') + '</h4>');
     }
-    $('#id_footer').html('<button type="button" class="btn btn-danger" data-dismiss-modal="#modal_dialog">' + $.i18n('general_btn_ok') + '</button>');
+    $('#id_footer').html('<button type="button" class="btn btn-danger" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
   }
   else if (type == "select") {
     $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-dismiss="modal"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_saveandreload') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    $('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-bs-dismiss="modal"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_saveandreload') + '</button>');
+    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
   }
   else if (type == "iswitch") {
     $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-dismiss="modal"><i class="fa fa-fw fa-exchange"></i>' + $.i18n('general_btn_iswitch') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    $('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-bs-dismiss="modal"><i class="fa fa-fw fa-exchange"></i>' + $.i18n('general_btn_iswitch') + '</button>');
+    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
   }
   else if (type == "uilock") {
     $('#id_body').html('<img id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
@@ -339,19 +339,19 @@ function showInfoDialog(type, header = "", message = "", details = []) {
   else if (type == "import") {
     $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-warning"></i>');
     $('#id_footer').html('<button type="button" id="id_btn_import" class="btn btn-warning"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_saverestart') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-dismiss-modal="#modal_dialog"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
   }
   else if (type == "delInst") {
     $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-remove modal-icon-warning">');
-    $('#id_footer').html('<button type="button" id="id_btn_yes" class="btn btn-warning" data-dismiss="modal"><i class="fa fa-fw fa-trash"></i>' + $.i18n('general_btn_yes') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    $('#id_footer').html('<button type="button" id="id_btn_yes" class="btn btn-warning" data-bs-dismiss="modal"><i class="fa fa-fw fa-trash"></i>' + $.i18n('general_btn_yes') + '</button>');
+    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
   }
   else if (type == "renInst") {
     $('#id_body_rename').html('<i style="margin-bottom:20px" class="fa fa-pencil modal-icon-edit"><br>');
     $('#id_body_rename').append('<h4>' + header + '</h4>');
     $('#id_body_rename').append('<input class="form-control" id="renInst_name" type="text" value="' + message + '">');
-    $('#id_footer_rename').html('<button type="button" id="id_btn_ok" class="btn btn-success" data-dismiss-modal="#modal_dialog_rename" disabled><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_ok') + '</button>');
-    $('#id_footer_rename').append('<button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    $('#id_footer_rename').html('<button type="button" id="id_btn_ok" class="btn btn-success" data-bs-dismiss="modal" disabled><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_ok') + '</button>');
+    $('#id_footer_rename').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
   }
   else if (type == "changePassword") {
     $('#id_body_rename').html('<i style="margin-bottom:20px" class="fa fa-key modal-icon-edit"><br>');
@@ -361,19 +361,19 @@ function showInfoDialog(type, header = "", message = "", details = []) {
     $('#id_body_rename').append('<form id="changePasswordForm"; return false;">');
     $('#changePasswordForm').append(
       '<div class="row">' +
-      '<div class="col-md-4"><p class="text-left">' + $.i18n('infoDialog_username_text') + '</p></div>' +
+      '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_username_text') + '</p></div>' +
       '<div class="col-md-8"><input class="form-control" id="username" type="text" value="Hyperion" disabled autocomplete="username"></div>' +
       '</div><br>'
     );
     $('#changePasswordForm').append(
       '<div class="row">' +
-      '<div class="col-md-4"><p class="text-left">' + $.i18n('infoDialog_password_current_text') + '</p></div>' +
+      '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_password_current_text') + '</p></div>' +
       '<div class="col-md-8"><input class="form-control" id="current-password" placeholder="Old" type="password" autocomplete="current-password"></div>' +
       '</div><br>'
     );
     $('#changePasswordForm').append(
       '<div class="row">' +
-      '<div class="col-md-4"><p class="text-left">' + $.i18n('infoDialog_password_new_text') + '</p></div>' +
+      '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_password_new_text') + '</p></div>' +
       '<div class="col-md-8"><input class="form-control" id="new-password" placeholder="New" type="password" autocomplete="new-password"></div>' +
       '</div>'
     );
@@ -384,11 +384,11 @@ function showInfoDialog(type, header = "", message = "", details = []) {
 
     // Footer buttons
     $('#id_footer_rename').html(
-      '<button type="submit" form="changePasswordForm" id="id_btn_ok" class="btn btn-success" data-dismiss-modal="#modal_dialog_rename" disabled>' +
+      '<button type="submit" form="changePasswordForm" id="id_btn_ok" class="btn btn-success" data-bs-dismiss="modal" disabled>' +
       '<i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_ok') + '</button>'
     );
     $('#id_footer_rename').append(
-      '<button type="button" class="btn btn-danger" data-dismiss="modal">' +
+      '<button type="button" class="btn btn-danger" data-bs-dismiss="modal">' +
       '<i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>'
     );
   }
@@ -397,25 +397,25 @@ function showInfoDialog(type, header = "", message = "", details = []) {
     $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
     $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_checklist_title') + '</h4>');
     $('#id_body').append(header);
-    $('#id_footer').html('<button type="button" class="btn btn-primary" data-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
   }
   else if (type == "newToken") {
     $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<button type="button" class="btn btn-primary" data-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
   }
   else if (type == "grantToken") {
     $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<button type="button" class="btn btn-primary" data-dismiss="modal" id="tok_grant_acc">' + $.i18n('general_btn_grantAccess') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-dismiss="modal" id="tok_deny_acc">' + $.i18n('general_btn_denyAccess') + '</button>');
+    $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="tok_grant_acc">' + $.i18n('general_btn_grantAccess') + '</button>');
+    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal" id="tok_deny_acc">' + $.i18n('general_btn_denyAccess') + '</button>');
   }
 
-  if (type != "renInst") {
+  if (type != "renInst" && type != "changePassword") {
     $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + header + '</h4>');
     $('#id_body').append(message);
   }
 
   if (type == "select" || type == "iswitch")
-    $('#id_body').append('<select id="id_select" class="form-control" style="margin-top:10px;width:auto;"></select>');
+    $('#id_body').append('<select id="id_select" class="form-select" style="margin-top:10px;width:auto;"></select>');
 
   // Append details if available
   if (Array.isArray(details) && details.length > 0) {
@@ -438,16 +438,16 @@ function showInfoDialog(type, header = "", message = "", details = []) {
   if (getStorage("darkMode") == "on")
     $('#id_logo').attr("src", 'img/hyperion/logo_negativ.png');
 
-  $(type == "renInst" || type == "changePassword" ? "#modal_dialog_rename" : "#modal_dialog").modal({
-    backdrop: "static",
-    keyboard: false,
-    show: true
-  });
-
-  $(document).on('click', '[data-dismiss-modal]', function () {
-    const target = $(this).data('dismiss-modal');
-    $($.find(target)).modal('hide');
-  });
+  const modalSelector = type == "renInst" || type == "changePassword" ? "#modal_dialog_rename" : "#modal_dialog";
+  const modalElement = document.querySelector(modalSelector);
+  
+  if (modalElement) {
+    const modal = new bootstrap.Modal(modalElement, {
+      backdrop: "static",
+      keyboard: false
+    });
+    modal.show();
+  }
 }
 
 function createHintH(type, text, container) {
@@ -655,9 +655,8 @@ function createJsonEditor(container, schema, setconfig, usePanel, arrayre) {
     });
 
   if (usePanel) {
-    $('#' + container + ' .well').first().removeClass('well well-sm');
+    $('#' + container + ' .card').first().removeClass('card');
     $('#' + container + ' h4').first().remove();
-    $('#' + container + ' .well').first().removeClass('well well-sm');
   }
 
   if (setconfig) {
@@ -998,7 +997,7 @@ function showNotification(type, message, title = "", addhtml = "") {
     },
     mouse_over: 'pause',
     template: '<div data-notify="container" class="bg-w col-md-6 bs-callout bs-callout-{0}" role="alert">' +
-      '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
+      '<button type="button" aria-hidden="true" class="btn-close" data-notify="dismiss"></button>' +
       '<span data-notify="icon"></span> ' +
       '<h4 data-notify="title">{1}</h4> ' +
       '<span data-notify="message">{2}</span>' +
@@ -1064,7 +1063,7 @@ function createTable(hid, bid, cont, bless, tclass) {
 
   // If 'bless' is true, add the borderless class
   if (bless) {
-    table.classList.add("borderless");
+    table.classList.add("table-borderless");
   }
 
   // If 'tclass' is provided, add it as a class
@@ -1204,7 +1203,7 @@ function createHelpTable(list, phead, panelId) {
   // Update the heading with an icon and the translation
   phead = '<i class="fa fa-fw fa-info-circle"></i>' + phead + ' ' + $.i18n("conf_helptable_expl");
 
-  table.className = 'table table-hover borderless';
+  table.className = 'table table-hover table-borderless';
 
   // Create the table header
   thead.appendChild(createTableRow([$.i18n('conf_helptable_option'), $.i18n('conf_helptable_expl')], true, false));
@@ -1249,48 +1248,56 @@ function createHelpTable(list, phead, panelId) {
   return createPanel(phead, table, undefined, undefined, undefined, panelId, undefined);
 }
 
-function createPanel(head, body, footer, bodyid, css, panelId, type = 'panel-default') {
+function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-default') {
   const cont = document.createElement('div');
-  const p = document.createElement('div');
-  const phead = document.createElement('div');
-  const pbody = document.createElement('div');
-  const pfooter = document.createElement('div');
+  const card = document.createElement('div');
+  const cardHeader = document.createElement('div');
+  const cardBody = document.createElement('div');
+  const cardFooter = document.createElement('div');
 
   cont.className = "col-lg-6";
 
-  p.className = `panel ${type}`;
+  card.className = `card ${type}`;
   if (panelId) {
-    p.setAttribute("id", panelId);
+    card.setAttribute("id", panelId);
   }
 
-  phead.className = `panel-heading ${css}`;
-  pbody.className = 'panel-body';
-  pfooter.className = 'panel-footer';
+  cardHeader.className = `card-header ${css || ''}`;
+  cardBody.className = 'card-body';
+  cardFooter.className = 'card-footer';
 
-  phead.innerHTML = head;
+  cardHeader.innerHTML = head;
 
   if (bodyid) {
-    pfooter.style.textAlign = 'right';
-    pbody.setAttribute("id", bodyid);
+    cardFooter.style.textAlign = 'right';
+    cardBody.setAttribute("id", bodyid);
   }
 
   if (body) {
-    pbody.appendChild(body);
+    if (typeof body === 'string') {
+      cardBody.innerHTML = body;
+    } else {
+      cardBody.appendChild(body);
+    }
   }
 
   if (footer) {
-    pfooter.appendChild(footer);
+    if (typeof footer === 'string') {
+      cardFooter.innerHTML = footer;
+    } else {
+      cardFooter.appendChild(footer);
+    }
   }
 
-  p.appendChild(phead);
-  p.appendChild(pbody);
+  card.appendChild(cardHeader);
+  card.appendChild(cardBody);
 
   if (footer) {
-    pfooter.style.textAlign = "right";
-    p.appendChild(pfooter);
+    cardFooter.style.textAlign = "right";
+    card.appendChild(cardFooter);
   }
 
-  cont.appendChild(p);
+  cont.appendChild(card);
 
   return cont;
 }
