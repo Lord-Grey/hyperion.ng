@@ -870,7 +870,9 @@ $(document).ready(function () {
   blacklist_editor = createJsonEditor('editor_container_blacklist_conf', {
     ledBlacklist: blacklistOptions,
   });
-  blacklist_editor.getEditor("root.ledBlacklist").setValue(ledBlacklist);
+  blacklist_editor.on('ready', function () {
+    blacklist_editor.getEditor("root.ledBlacklist").setValue(ledBlacklist);
+  });
 
   // v4 of json schema with diff required assignment - remove when hyperion schema moved to v4
   var ledschema = { "items": { "additionalProperties": false, "required": ["hmin", "hmax", "vmin", "vmax"], "properties": { "name": { "type": "string" }, "colorOrder": { "enum": ["rgb", "bgr", "rbg", "brg", "gbr", "grb"], "type": "string" }, "hmin": { "maximum": 1, "minimum": 0, "type": "number" }, "hmax": { "maximum": 1, "minimum": 0, "type": "number" }, "vmin": { "maximum": 1, "minimum": 0, "type": "number" }, "vmax": { "maximum": 1, "minimum": 0, "type": "number" } }, "type": "object" }, "type": "array" };
@@ -1009,7 +1011,7 @@ $(document).ready(function () {
   });
 
   // nav
-  $('#leds_cfg_nav a[data-toggle="tab"]').off().on('shown.bs.tab', function (e) {
+  $('#leds_cfg_nav a[data-bs-toggle="tab"]').off().on('shown.bs.tab', function (e) {
     var target = $(e.target).attr("href") // activated tab
     if (target == "#menu_gencfg") {
       onLedLayoutTab = true;
@@ -1085,25 +1087,25 @@ $(document).ready(function () {
     for (const key in window.serverConfig.device) {
       if (key != "type" && key in generalOptions.properties) values_general[key] = window.serverConfig.device[key];
     };
-    conf_editor.getEditor("root.generalOptions").setValue(values_general);
-
-    if (isCurrentDevice) {
-      const specificOptions_val = conf_editor.getEditor("root.specificOptions").getValue();
-      for (const key in specificOptions_val) {
-        values_specific[key] = (key in window.serverConfig.device) ? window.serverConfig.device[key] : specificOptions_val[key];
-      };
-      conf_editor.getEditor("root.specificOptions").setValue(values_specific);
-    };
-
     $("#info_container_text").html(infoTextDefault);
-
-    // change save button state based on validation result
-    conf_editor.validate().length || window.readOnlyMode ? $('#btn_submit_controller').prop('disabled', true) : $('#btn_submit_controller').prop('disabled', false);
 
     // LED controller specific wizards
     createLedDeviceWizards(ledType);
 
     conf_editor.on('ready', function () {
+      // change save button state based on validation result
+      conf_editor.validate().length || window.readOnlyMode ? $('#btn_submit_controller').prop('disabled', true) : $('#btn_submit_controller').prop('disabled', false);
+
+      conf_editor.getEditor("root.generalOptions").setValue(values_general);
+
+      if (isCurrentDevice) {
+        const specificOptions_val = conf_editor.getEditor("root.specificOptions").getValue();
+        for (const key in specificOptions_val) {
+          values_specific[key] = (key in window.serverConfig.device) ? window.serverConfig.device[key] : specificOptions_val[key];
+        };
+        conf_editor.getEditor("root.specificOptions").setValue(values_specific);
+      };
+
       let hwLedCountDefault = 1;
       let colorOrderDefault = "rgb";
       let filter = {};
@@ -1169,27 +1171,26 @@ $(document).ready(function () {
         case "philipshue": {
           disableAutoResolvedGeneralOptions();
 
-          const lights = conf_editor.getEditor("root.specificOptions.lightIds").getValue();
-          hwLedCountDefault = lights.length;
+          const lightsEditor = conf_editor.getEditor("root.specificOptions.lightIds");
+          if (lightsEditor) hwLedCountDefault = lightsEditor.getValue().length;
         }
           break;
 
         case "yeelight": {
           disableAutoResolvedGeneralOptions();
 
-          const lights = conf_editor.getEditor("root.specificOptions.lights").getValue();
-          hwLedCountDefault = lights.length;
+          const lightsEditor = conf_editor.getEditor("root.specificOptions.lights");
+          if (lightsEditor) hwLedCountDefault = lightsEditor.getValue().length;
         }
           break;
 
         case "atmoorb": {
           disableAutoResolvedGeneralOptions();
 
-          const configruedOrbIds = conf_editor.getEditor("root.specificOptions.orbIds").getValue().trim();
-          if (configruedOrbIds.length !== 0) {
-            hwLedCountDefault = configruedOrbIds.split(",").map(Number).length;
-          } else {
-            hwLedCountDefault = 0;
+          const orbIdsEditor = conf_editor.getEditor("root.specificOptions.orbIds");
+          if (orbIdsEditor) {
+            const configruedOrbIds = orbIdsEditor.getValue().trim();
+            hwLedCountDefault = configruedOrbIds.length !== 0 ? configruedOrbIds.split(",").map(Number).length : 0;
           }
         }
           break;
@@ -1198,9 +1199,12 @@ $(document).ready(function () {
           disableAutoResolvedGeneralOptions();
           colorOrderDefault = "bgr";
 
-          const subType = conf_editor.getEditor("root.specificOptions.subType").getValue();
-          const params = { subType };
-          getProperties_device(ledType, subType, params);
+          const subTypeEditor = conf_editor.getEditor("root.specificOptions.subType");
+          if (subTypeEditor) {
+            const subType = subTypeEditor.getValue();
+            const params = { subType };
+            getProperties_device(ledType, subType, params);
+          }
         }
           break;
 
@@ -1349,6 +1353,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.hostList', () => {
+      if (!conf_editor.ready) return;
       var specOptPath = 'root.specificOptions.';
 
       //Disable General Options, as LED count will be resolved from device itself
@@ -1398,6 +1403,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.host', () => {
+      if (!conf_editor.ready) return;
       var host = conf_editor.getEditor("root.specificOptions.host").getValue();
 
       if (host === "") {
@@ -1464,6 +1470,7 @@ $(document).ready(function () {
 
 
     conf_editor.watch('root.specificOptions.output', () => {
+      if (!conf_editor.ready) return;
       const output = conf_editor.getEditor("root.specificOptions.output").getValue();
       if (output === "NONE" || output === "SELECT" || output === "") {
 
@@ -1523,6 +1530,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.subType', () => {
+      if (!conf_editor.ready) return;
       var subType = conf_editor.getEditor("root.specificOptions.subType").getValue();
       let params = {};
 
@@ -1536,6 +1544,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.streamProtocol', () => {
+      if (!conf_editor.ready) return;
       var streamProtocol = conf_editor.getEditor("root.specificOptions.streamProtocol").getValue();
 
       switch (ledType) {
@@ -1566,6 +1575,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.rateList', () => {
+      if (!conf_editor.ready) return;
       const specOptPath = 'root.specificOptions.';
       const rateList = conf_editor.getEditor("root.specificOptions.rateList");
       let rate = conf_editor.getEditor("root.specificOptions.rate");
@@ -1595,6 +1605,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.token', () => {
+      if (!conf_editor.ready) return;
       var token = conf_editor.getEditor("root.specificOptions.token").getValue();
 
       if (token !== "") {
@@ -1631,6 +1642,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.port', () => {
+      if (!conf_editor.ready) return;
 
       const port = conf_editor.getEditor("root.specificOptions.port").getValue();
       if (port !== "") {
@@ -1651,6 +1663,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.useSsl', () => {
+      if (!conf_editor.ready) return;
 
       let params = {};
       if (ledType === "homeassistant") {
@@ -1670,6 +1683,7 @@ $(document).ready(function () {
 
     //Yeelight
     conf_editor.watch('root.specificOptions.lights', () => {
+      if (!conf_editor.ready) return;
       //Disable General Options, as LED count will be resolved from number of lights configured
       disableAutoResolvedGeneralOptions();
 
@@ -1682,6 +1696,7 @@ $(document).ready(function () {
 
     //Philips Hue
     conf_editor.watch('root.specificOptions.lightIds', () => {
+      if (!conf_editor.ready) return;
       //Disable General Options, as LED count will be resolved from number of lights configured
       disableAutoResolvedGeneralOptions();
 
@@ -1694,6 +1709,7 @@ $(document).ready(function () {
 
     //Atmo Orb
     conf_editor.watch('root.specificOptions.orbIds', () => {
+      if (!conf_editor.ready) return;
       //Disable General Options, as LED count will be resolved from number of lights configured
       disableAutoResolvedGeneralOptions();
 
@@ -1710,6 +1726,7 @@ $(document).ready(function () {
 
     //WLED
     conf_editor.watch('root.specificOptions.segments.segmentList', () => {
+      if (!conf_editor.ready) return;
 
       //Update hidden streamSegmentId element
       var selectedSegment = conf_editor.getEditor("root.specificOptions.segments.segmentList").getValue();
@@ -1741,6 +1758,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.whiteAlgorithm', () => {
+      if (!conf_editor.ready) return;
       const hardwareLedCount = conf_editor.getEditor("root.generalOptions.hardwareLedCount").getValue();
       switch (ledType) {
         case "wled":
@@ -1755,12 +1773,14 @@ $(document).ready(function () {
 
     //Handle Hardware Led Count constraint list
     conf_editor.watch('root.generalOptions.hardwareLedCountList', () => {
+      if (!conf_editor.ready) return;
       var hwLedCountSelected = conf_editor.getEditor("root.generalOptions.hardwareLedCountList").getValue();
       conf_editor.getEditor("root.generalOptions.hardwareLedCount").setValue(Number(hwLedCountSelected));
     });
 
     //Handle Hardware Led update and constraints
     conf_editor.watch('root.generalOptions.hardwareLedCount', () => {
+      if (!conf_editor.ready) return;
       const hardwareLedCount = conf_editor.getEditor("root.generalOptions.hardwareLedCount").getValue();
       switch (ledType) {
         case "wled":
@@ -1774,6 +1794,7 @@ $(document).ready(function () {
     });
 
     conf_editor.watch('root.specificOptions.entityIds', () => {
+      if (!conf_editor.ready) return;
       var entityIds = conf_editor.getEditor("root.specificOptions.entityIds").getValue();
       if (entityIds.length > 0) {
         $('#btn_test_controller').prop('disabled', false);
@@ -1923,9 +1944,9 @@ $(document).ready(function () {
         $('#id_body').append($.i18n('conf_leds_error_hwled_gt_layout', hardwareLedCount, layoutLedCount, hardwareLedCount - layoutLedCount));
         $('#id_body').append('<hr>');
         $('#id_body').append($.i18n('conf_leds_note_layout_overwrite', hardwareLedCount));
-        $('#id_footer').html('<button type="button" class="btn btn-secondary" id="btn_back" data-dismiss="modal"><i class="fa fa-fw fa-chevron-left"></i>' + $.i18n('general_btn_back') + '</button>');
-        $('#id_footer').append('<button type="button" class="btn btn-danger" id="btn_overwrite" data-dismiss="modal"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_overwrite') + '</button>');
-        $('#id_footer').append('<button type="button" class="btn btn-primary" id="btn_continue" data-dismiss="modal">' + $.i18n('general_btn_continue') + '<i style="margin-left:4px;"class="fa fa-fw fa-chevron-right"></i> </button>');
+        $('#id_footer').html('<button type="button" class="btn btn-secondary" id="btn_back" data-bs-dismiss="modal"><i class="fa fa-fw fa-chevron-left"></i>' + $.i18n('general_btn_back') + '</button>');
+        $('#id_footer').append('<button type="button" class="btn btn-danger" id="btn_overwrite" data-bs-dismiss="modal"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_overwrite') + '</button>');
+        $('#id_footer').append('<button type="button" class="btn btn-primary" id="btn_continue" data-bs-dismiss="modal">' + $.i18n('general_btn_continue') + '<i style="margin-left:4px;"class="fa fa-fw fa-chevron-right"></i> </button>');
       }
       else {
         // Less Hardware LEDs than on layout
@@ -1934,8 +1955,8 @@ $(document).ready(function () {
         $('#id_body').append($.i18n('conf_leds_error_hwled_lt_layout', hardwareLedCount, layoutLedCount));
         $('#id_body').append('<hr>');
         $('#id_body').append($.i18n('conf_leds_note_layout_overwrite', hardwareLedCount));
-        $('#id_footer').html('<button type="button" class="btn btn-primary" id="btn_back" data-dismiss="modal"><i class="fa fa-fw fa-chevron-left"></i>' + $.i18n('general_btn_back') + '</button>');
-        $('#id_footer').append('<button type="button" class="btn btn-danger" id="btn_overwrite" data-dismiss="modal"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_overwrite') + '</button>');
+        $('#id_footer').html('<button type="button" class="btn btn-primary" id="btn_back" data-bs-dismiss="modal"><i class="fa fa-fw fa-chevron-left"></i>' + $.i18n('general_btn_back') + '</button>');
+        $('#id_footer').append('<button type="button" class="btn btn-danger" id="btn_overwrite" data-bs-dismiss="modal"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_overwrite') + '</button>');
       }
 
       $("#modal_dialog").modal({

@@ -311,7 +311,7 @@ async function handlePasswordRequirement(event) {
 function handleLogin(event, isLoggedIn = false) {
   if (isLoggedIn && window.defaultPasswordIsSet && getStorage("suppressDefaultPwWarning") !== "true") {
     const msg = `
-      <div class="text-right">
+      <div class="text-end">
         ${$.i18n('dashboard_message_do_not_show_again')}
         <input id="chk_suppressDefaultPw" type="checkbox" onChange="suppressDefaultPwWarning()">
       </div>`;

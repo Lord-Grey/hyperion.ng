@@ -3,14 +3,14 @@
     <div class="col-lg-12">
       <h3 class="page-header"><i class="fa fa-cogs fa-fw"></i><span data-i18n="main_menu_effectsconfigurator_token">Effects Configurator</span></h3>
 
-      <div class="panel panel-default" style="border:0px;">
-        <div class="panel-heading panel-instance" style="border-radius:3px; border-bottom:0px;">
+      <div class="card card-default" style="border:0;">
+        <div class="card-header card-instance">
           <div class="dropdown">
-            <a id="active_instance_dropdown" class="dropdown-toggle" data-toggle="dropdown" href="#" style="text-decoration:none;display:flex;align-items:center;">
+            <a id="active_instance_dropdown" class="dropdown-toggle" data-bs-toggle="dropdown" href="#" style="text-decoration:none;display:flex;align-items:center;">
+              <span class="mdi mdi-lightbulb-group" style="margin-right:5px;"></span>
               <div id="active_instance_friendly_name"></div>
-              <div id="btn_hypinstanceswitch" style="white-space:nowrap;"><span class="mdi mdi-lightbulb-group mdi-24px" style="margin-right:0; margin-left:5px;"></span><span class="mdi mdi-menu-down mdi-24px"></span></div>
             </a>
-            <ul id="hyp_inst_listing" class="dropdown-menu dropdown-alerts" style="cursor:pointer;"></ul>
+            <ul id="hyp_inst_listing" class="dropdown-menu" style="cursor:pointer;"></ul>
           </div>
         </div>
       </div>
@@ -19,12 +19,12 @@
       </div>
       <div class="row" id="effect_table">
         <div class="col-lg-6">
-          <div class="panel panel-default">
-            <div class="panel-heading">
+          <div class="card card-default">
+            <div class="card-header">
               <label for="effectslist" data-i18n="effectsconfigurator_label_chooseeff">Choose Base-Effect:</label>
               <select id="effectslist" class="form-control" style="color:black;width:auto;margin-left:10px;display:inline-block"></select>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
               <div id="eff_desc"></div>
               <table style="margin-bottom:8px" id="effc_nametable">
                 <tbody>
@@ -36,7 +36,7 @@
               </table>
               <div id="editor_container"></div>
             </div>
-            <div class="panel-footer" id="eff_footer">
+            <div class="card-footer" id="eff_footer">
               <button class="btn btn-warning" id='btn_start_test' data-i18n="effectsconfigurator_button_starttest">Start Effecttest</button>
               <button class="btn btn-warning" id='btn_stop_test' data-i18n="effectsconfigurator_button_stoptest">Stop Effecttest</button>
               <button class="btn btn-danger" id='btn_cont_test' data-i18n="effectsconfigurator_button_conttest">Toggle continuous testing</button>
@@ -45,12 +45,12 @@
           </div>
         </div>
         <div class="col-lg-6" id="effect_delload">
-          <div class="panel panel-default">
-            <div class="panel-heading">
+          <div class="card card-default">
+            <div class="card-header">
               <label for="effectsdellist" data-i18n="effectsconfigurator_editdeleff"></label>
               <select id="effectsdellist" class="form-control" style="color:black;width:auto;margin-left:10px;display:inline-block"></select>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
               <button class="btn btn-primary" id='btn_delete' data-i18n="effectsconfigurator_button_deleffect">Delete Effect</button>
               <button class="btn btn-primary" id='btn_load' data-i18n="effectsconfigurator_button_loadeffect"></button>
             </div>

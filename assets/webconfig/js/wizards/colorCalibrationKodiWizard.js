@@ -450,7 +450,7 @@ const colorCalibrationKodiWizard = (() => {
         '<span id="kodi_status"></span><span id="multi_cali"></span>'
       );
       $('#wizp1_footer').html('<button type="button" class="btn btn-primary" id="btn_wiz_cont" disabled="disabled">' + '<i class="fa fa-fw fa-check"></i>' + $.i18n('general_btn_continue') + '</button>' +
-        '<button type="button" class="btn btn-danger" id="btn_wiz_cancel" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>'
+        '<button type="button" class="btn btn-danger" id="btn_wiz_cancel" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>'
       );
       $('#wizp2_body').html('<div id="wiz_cc_desc" style="font-weight:bold"></div><div id="editor_container_wiz"></div>'
       );

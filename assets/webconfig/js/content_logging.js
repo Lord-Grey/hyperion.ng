@@ -115,13 +115,12 @@ $(document).ready(function () {
     const isScrollEnableStyle = (isScroll ? "checked" : "");
 
     $('#log_content').html('<pre><div id="logmessages" style="overflow:scroll;max-height:400px"></div></pre>');
-    $('#log_footer').append('<label class="checkbox-inline">'
-      + '<input id = "btn_scroll"' + isScrollEnableStyle + ' type = "checkbox"'
-      + 'data-toggle="toggle" data-onstyle="success" data-on="' + $.i18n('general_btn_on') + '" data-off="' + $.i18n('general_btn_off') + '">'
-      + $.i18n('conf_logging_btn_autoscroll') + '</label>'
+    $('#log_footer').append(
+      '<div class="form-check form-switch d-inline-flex align-items-center gap-2" style="margin:3px">'
+      + '<input class="form-check-input" role="switch" id="btn_scroll" ' + isScrollEnableStyle + ' type="checkbox">'
+      + '<label class="form-check-label" for="btn_scroll">' + $.i18n('conf_logging_btn_autoscroll') + '</label>'
+      + '</div>'
     );
-
-    $(`#btn_scroll`).bootstrapToggle();
     $(`#btn_scroll`).on("change", e => {
       if (e.currentTarget.checked) {
         //Scroll to end of log
@@ -134,7 +133,7 @@ $(document).ready(function () {
       }
     });
 
-    $('#log_footer').append('<button class="btn btn-primary pull-right" id="btn_clipboard"><i class="fa fa-fw fa-clipboard"></i>' + $.i18n("conf_logging_btn_clipboard") + '</button>');
+    $('#log_footer').append('<button class="btn btn-primary float-end" id="btn_clipboard"><i class="fa fa-fw fa-clipboard"></i>' + $.i18n("conf_logging_btn_clipboard") + '</button>');
 
     $('#btn_clipboard').off().on('click', function () {
       const temp = document.createElement('textarea');

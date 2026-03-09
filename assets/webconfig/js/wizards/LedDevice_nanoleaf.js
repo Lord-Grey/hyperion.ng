@@ -65,7 +65,7 @@ const nanoleafWizard = (() => {
         `<h4 style="font-weight:bold;text-transform:uppercase;">${$.i18n(nanoleaf_user_auth_title)}</h4><p>${$.i18n(nanoleaf_user_auth_intro)}</p>`
       );
       $('#wizp1_footer').html(
-        `<button type="button" class="btn btn-primary" id="btn_wiz_cont"><i class="fa fa-fw fa-check"></i>${$.i18n('general_btn_continue')}</button><button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-fw fa-close"></i>${$.i18n('general_btn_cancel')}</button>`
+        `<button type="button" class="btn btn-primary" id="btn_wiz_cont"><i class="fa fa-fw fa-check"></i>${$.i18n('general_btn_continue')}</button><button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>${$.i18n('general_btn_cancel')}</button>`
       );
       $('#wizp3_body').html(
         `<span>${$.i18n('wiz_nanoleaf_press_onoff_button')}</span> <br /><br /><center><span id="connectionTime"></span><br /><i class="fa fa-cog fa-spin" style="font-size:100px"></i></center>`

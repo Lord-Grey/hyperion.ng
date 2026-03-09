@@ -13,9 +13,9 @@ body{
     overflow-y: scroll;
 }
 
-table.jsoneditor-tree > tbody > tr.jsoneditor-expandable:first-child {
+/* table.jsoneditor-tree > tbody > tr.jsoneditor-expandable:first-child {
       display: none ;
-    }
+    } */
     
 /* fixed brand icon */
 @media (min-width: 768px){
@@ -130,9 +130,19 @@ table.first_cell_borderless td:first-child{width: 25px !important;}
 }
 
 /*Cards (Bootstrap 5)*/
+
 .card-header{font-size:18px;}
 .headcollapse{cursor:pointer;}
 .headcollapse a:hover{text-decoration:none;}
+
+/*Form switches (Bootstrap 5) - success color when checked*/
+.form-switch .form-check-input:checked {background-color:#198754;border-color:#198754;}
+.form-switch .form-check-input:focus {box-shadow:0 0 0 0.25rem rgba(25,135,84,0.25);}
+.form-switch .form-check-input:disabled {opacity:0.5;pointer-events:none;}
+
+/*Custom alert variant for wizard hints*/
+.alert-wizard {background-color:#f9eeff;border-color:#993399;color:#6a0080;}
+.alert-wizard h4 {color:#6a0080;}
 
 .card-default > .card-system,
 .card-danger > .card-system {
@@ -141,25 +151,29 @@ table.first_cell_borderless td:first-child{width: 25px !important;}
     color: #fff;
 }
 
-.card-default > .card-instance{
+.card-default > .card-instance {
     background-color:#E18300 !important;
     border-color:#ddd !important;
     color: #fff;
 }
+.card-default > .card-instance a.dropdown-toggle {color:#fff !important;}
+.card-default > .card-instance a.dropdown-toggle:hover {color:rgba(255,255,255,0.85) !important;}
+.card-default > .card-instance .mdi {line-height:0; font-size:1.4em; vertical-align:middle;}
 
+/* 
 /*remote page*/
 @media (max-width: 500px) {.ssthead th:nth-child(1), .sstbody td:nth-child(1){display:none}}
 
 /*Dashboard*/
-.component-on{color: #67FF01;}
+/* .component-on{color: #67FF01;}
 .component-off{color: grey;}
-#dash_news hr{margin: 10px 0}
+#dash_news hr{margin: 10px 0} */
 
 /*Colorpicker 2x*/
-.colorpicker-2x {z-index:99999}
+/* .colorpicker-2x {z-index:99999}
 .colorpicker-2x .colorpicker-saturation {width: 200px;height: 200px;}
 .colorpicker-2x .colorpicker-hue,.colorpicker-2x .colorpicker-alpha {width: 30px;height: 200px;}
-.colorpicker-2x .colorpicker-color,.colorpicker-2x .colorpicker-color div {height: 30px;}
+.colorpicker-2x .colorpicker-color,.colorpicker-2x .colorpicker-color div {height: 30px;} */
 
 /*Hint*/
 .info-hint{
@@ -860,4 +874,4 @@ input[type="radio"] .styled:checked + label::before {
 input[type="checkbox"] .styled:checked + label::after,
 input[type="radio"] .styled:checked + label::after {
   color: #fff;
-}
+} */

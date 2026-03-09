@@ -3,27 +3,21 @@ $(document).ready(function () {
 
   function updateInstanceComponents() {
 
-    let instanceRunningStatus = isInstanceRunning(window.currentHyperionInstance);
+    let instanceRunningStatus = isInstanceRunning(globalThis.currentHyperionInstance);
     let isInstanceEnabled = false;
-    const components = window.comps;
+    const components = globalThis.comps;
 
     if (instanceRunningStatus) {
       isInstanceEnabled = components.some(obj => obj.name === "ALL" && obj.enabled);
     }
 
-    // Generate instance status button
+    // Generate instance status button (Bootstrap 5 form-switch)
     let instBtn = `
-  <span style="display:block; margin:3px">
-    <input id="instanceButton" 
-      type="checkbox" 
-      data-toggle="toggle" 
-      data-size="small" 
-      data-onstyle="success" 
-      data-on="${$.i18n('general_btn_on')}" 
-      data-off="${$.i18n('general_btn_off')}" 
+  <div class="form-check form-switch" style="margin:3px">
+    <input class="form-check-input" type="checkbox" role="switch" id="instanceButton"
       ${isInstanceEnabled ? "checked" : ""}
       ${instanceRunningStatus ? "" : "disabled"}>
-  </span>
+  </div>
 `;
 
     // Remove existing instance elements
@@ -32,27 +26,26 @@ $(document).ready(function () {
     // Start constructing the HTML for instances
     let instances_html = `
   <div class="col-md-6 col-xxl-4 currentInstance-">
-    <div class="panel panel-default">
-      <div class="panel-heading panel-instance">
+    <div class="card card-default">
+      <div class="card-header card-instance">
         <div class="dropdown">
-          <a id="active_instance_dropdown" 
-             class="dropdown-toggle" 
-             data-toggle="dropdown" 
-             href="#" 
+          <a id="active_instance_dropdown"
+             class="dropdown-toggle"
+             data-bs-toggle="dropdown"
+             href="#"
              style="text-decoration:none; display:flex; align-items:center;">
-            <div id="active_instance_friendly_name"></div>
             <div id="btn_hypinstanceswitch" style="white-space:nowrap;">
-              <span class="mdi mdi-lightbulb-group mdi-24px" style="margin-right:0; margin-left:5px;"></span>
-              <span class="mdi mdi-menu-down mdi-24px"></span>
+              <span class="mdi mdi-lightbulb-group" style="margin-right:5px;"></span>
             </div>
+            <div id="active_instance_friendly_name"></div>
           </a>
-          <ul id="hyp_inst_listing" 
-              class="dropdown-menu dropdown-alerts" 
+          <ul id="hyp_inst_listing"
+              class="dropdown-menu"
               style="cursor:pointer;">
           </ul>
         </div>
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <table class="table borderless">
           <thead>
             <tr>
@@ -83,7 +76,7 @@ $(document).ready(function () {
         <td></td>
         <td>${$.i18n('conf_leds_contr_label_contrtype')}</td>
         <td style="text-align:right; padding-right:0">
-          <span>${window.serverConfig.device.type}</span>
+          <span>${globalThis.serverConfig.device.type}</span>
           <a class="fa fa-cog fa-fw" 
              onclick="SwitchToMenuItem('MenuItemInstLeds')" 
              style="text-decoration:none; cursor:pointer">
@@ -116,10 +109,10 @@ $(document).ready(function () {
 
         // Skip unwanted components
         if (componentName === "ALL" ||
-          (componentName === "FORWARDER" && window.currentHyperionInstance !== window.serverConfig.forwarder.instance) ||
-          (componentName === "GRABBER" && !window.serverConfig.framegrabber.enable) ||
-          (componentName === "V4L" && !window.serverConfig.grabberV4L2.enable) ||
-          (componentName === "AUDIO" && !window.serverConfig.grabberAudio.enable)) {
+          (componentName === "FORWARDER" && globalThis.currentHyperionInstance !== globalThis.serverConfig.forwarder.instance) ||
+          (componentName === "GRABBER" && !globalThis.serverConfig.framegrabber.enable) ||
+          (componentName === "V4L" && !globalThis.serverConfig.grabberV4L2.enable) ||
+          (componentName === "AUDIO" && !globalThis.serverConfig.grabberAudio.enable)) {
           continue;
         }
 
@@ -127,17 +120,12 @@ $(document).ready(function () {
         const comp_enabled = element.enabled ? "checked" : "";
         const general_comp = `general_comp_${componentName}`;
 
-        // Create the toggle button for the component
+        // Create the toggle switch for the component (Bootstrap 5 form-switch)
         const componentBtn = `
-      <input 
-        id="${general_comp}" 
-        type="checkbox" 
-        data-toggle="toggle" 
-        data-size="mini" 
-        data-onstyle="success" 
-        data-on="${$.i18n('general_btn_on')}" 
-        data-off="${$.i18n('general_btn_off')}" 
-        ${comp_enabled}>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch"
+          id="${general_comp}" ${comp_enabled}>
+      </div>
     `;
 
         // Add row for the component
@@ -167,21 +155,18 @@ $(document).ready(function () {
     // Prepend the instances HTML to the DOM
     $('.instances').prepend(instances_html);
 
-    //Replace buttons by Bootstrap ones
-    $('#instanceButton').bootstrapToggle();
+    // Wire up instance toggle
+    $('#instanceButton').on('change', function () {
+      requestSetComponentState('ALL', $(this).prop('checked'));
+    });
+
     if (instanceRunningStatus) {
-
-      $('#instanceButton').change(function () {
-        requestSetComponentState('ALL', $(this).prop('checked'))
-      });
-
       for (const element of components) {
         const componentName = element.name;
         if (componentName !== "ALL") {
-          $("#general_comp_" + componentName).bootstrapToggle();
-          $("#general_comp_" + componentName).bootstrapToggle(isInstanceEnabled ? "enable" : "disable");
+          $("#general_comp_" + componentName).prop("disabled", !isInstanceEnabled);
 
-          $("#general_comp_" + componentName).change(function () {
+          $("#general_comp_" + componentName).on('change', function () {
             const isChecked = $(this).prop('checked');
             requestSetComponentState(componentName, isChecked);
           });
@@ -190,34 +175,34 @@ $(document).ready(function () {
     }
 
     updateHyperionInstanceListing();
-    updateUiOnInstance(window.currentHyperionInstance);
+    updateUiOnInstance(globalThis.currentHyperionInstance);
   }
 
   function updateGlobalComponents() {
 
     // add more info
-    const screenGrabberAvailable = (window.serverInfo.grabbers.screen.available.length !== 0);
-    const videoGrabberAvailable = (window.serverInfo.grabbers.video.available.length !== 0);
-    const audioGrabberAvailable = (window.serverInfo.grabbers.audio.available.length !== 0);
+    const screenGrabberAvailable = (globalThis.serverInfo.grabbers.screen.available.length !== 0);
+    const videoGrabberAvailable = (globalThis.serverInfo.grabbers.video.available.length !== 0);
+    const audioGrabberAvailable = (globalThis.serverInfo.grabbers.audio.available.length !== 0);
 
     if (screenGrabberAvailable || videoGrabberAvailable || audioGrabberAvailable) {
 
       if (screenGrabberAvailable) {
-        const screenGrabber = window.serverConfig.framegrabber.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
+        const screenGrabber = globalThis.serverConfig.framegrabber.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
         $('#dash_screen_grabber').html(screenGrabber);
       } else {
         $("#dash_screen_grabber_row").hide();
       }
 
       if (videoGrabberAvailable) {
-        const videoGrabber = window.serverConfig.grabberV4L2.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
+        const videoGrabber = globalThis.serverConfig.grabberV4L2.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
         $('#dash_video_grabber').html(videoGrabber);
       } else {
         $("#dash_video_grabber_row").hide();
       }
 
       if (audioGrabberAvailable) {
-        const audioGrabber = window.serverConfig.grabberAudio.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
+        const audioGrabber = globalThis.serverConfig.grabberAudio.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
         $('#dash_audio_grabber').html(audioGrabber);
       } else {
         $("#dash_audio_grabber_row").hide();
@@ -226,51 +211,51 @@ $(document).ready(function () {
       $("#dash_capture_hw").hide();
     }
 
-    if (jQuery.inArray("flatbuffer", window.serverInfo.services) !== -1) {
-      const fbPort = window.serverConfig.flatbufServer.enable ? window.serverConfig.flatbufServer.port : $.i18n('general_disabled');
+    if (jQuery.inArray("flatbuffer", globalThis.serverInfo.services) !== -1) {
+      const fbPort = globalThis.serverConfig.flatbufServer.enable ? globalThis.serverConfig.flatbufServer.port : $.i18n('general_disabled');
       $('#dash_fbPort').html(fbPort);
     } else {
       $("#dash_ports_flat_row").hide();
     }
 
-    if (jQuery.inArray("protobuffer", window.serverInfo.services) !== -1) {
-      const pbPort = window.serverConfig.protoServer.enable ? window.serverConfig.protoServer.port : $.i18n('general_disabled');
+    if (jQuery.inArray("protobuffer", globalThis.serverInfo.services) !== -1) {
+      const pbPort = globalThis.serverConfig.protoServer.enable ? globalThis.serverConfig.protoServer.port : $.i18n('general_disabled');
       $('#dash_pbPort').html(pbPort);
     } else {
       $("#dash_ports_proto_row").hide();
     }
 
-    if (jQuery.inArray("boblight", window.serverInfo.services) !== -1 && window.serverConfig.boblightServer) {
-      const boblightPort = window.serverConfig.boblightServer.enable ? window.serverConfig.boblightServer.port : $.i18n('general_disabled');
+    if (jQuery.inArray("boblight", globalThis.serverInfo.services) !== -1 && globalThis.serverConfig.boblightServer) {
+      const boblightPort = globalThis.serverConfig.boblightServer.enable ? globalThis.serverConfig.boblightServer.port : $.i18n('general_disabled');
       $('#dash_boblightPort').html(boblightPort);
     } else {
       $("#dash_ports_boblight_row").hide();
     }
 
-    const jsonPort = window.serverConfig.jsonServer.port;
+    const jsonPort = globalThis.serverConfig.jsonServer.port;
     $('#dash_jsonPort').html(jsonPort);
-    const wsPorts = window.serverConfig.webConfig.port + ' | ' + window.serverConfig.webConfig.sslPort;
+    const wsPorts = globalThis.serverConfig.webConfig.port + ' | ' + globalThis.serverConfig.webConfig.sslPort;
     $('#dash_wsPorts').html(wsPorts);
 
 
-    $('#dash_currv').html(window.currentVersion);
-    $('#dash_watchedversionbranch').html(window.serverConfig.general.watchedVersionBranch);
+    $('#dash_currv').html(globalThis.currentVersion);
+    $('#dash_watchedversionbranch').html(globalThis.serverConfig.general.watchedVersionBranch);
 
     getReleases(function (callback) {
       if (callback) {
-        $('#dash_latev').html(window.latestVersion.tag_name);
+        $('#dash_latev').html(globalThis.latestVersion.tag_name);
 
-        if (semverLite.gt(window.latestVersion.tag_name, window.currentVersion)) {
+        if (semverLite.gt(globalThis.latestVersion.tag_name, globalThis.currentVersion)) {
           $('#versioninforesult').html(
-            `<div class="bs-callout bs-callout-warning" style="margin:0px">
-           <a target="_blank" href="${window.latestVersion.html_url}">
-             ${$.i18n('dashboard_infobox_message_updatewarning', window.latestVersion.tag_name)}
+            `<div class="alert alert-warning" role="alert" style="margin:0px">
+           <a target="_blank" href="${globalThis.latestVersion.html_url}" class="alert-link">
+             ${$.i18n('dashboard_infobox_message_updatewarning', globalThis.latestVersion.tag_name)}
            </a>
          </div>`
           );
         } else {
           $('#versioninforesult').html(
-            `<div class="bs-callout bs-callout-info" style="margin:0px">
+            `<div class="alert alert-info" role="alert" style="margin:0px">
            ${$.i18n('dashboard_infobox_message_updatesuccess')}
          </div>`
           );
@@ -281,7 +266,7 @@ $(document).ready(function () {
   function updateDashboard() {
 
     //Only show an instance, if minimum one configured
-    if (window.serverInfo.instance.length !== 0) {
+    if (globalThis.serverInfo.instance.length !== 0) {
       updateInstanceComponents();
     }
     updateGlobalComponents();
@@ -289,9 +274,9 @@ $(document).ready(function () {
 
   updateDashboard();
 
-  $(window.hyperion).on("components-updated", updateDashboard);
+  $(globalThis.hyperion).on("components-updated", updateDashboard);
 
-  if (window.showOptHelp) {
+  if (globalThis.showOptHelp) {
     createHintH("intro", $.i18n('dashboard_label_intro'), "dash_intro");
   }
 

@@ -7,27 +7,27 @@ $(document).ready(function () {
   let conf_editor = null;
 
   // Initialize the configuration panel
-  $('#conf_cont').append(createOptPanel('fa-wrench', $.i18n("edt_conf_gen_heading_title"), 'editor_container', 'btn_submit', 'panel-system'));
+  $('#conf_cont').append(createOptPanel('fa-wrench', $.i18n("edt_conf_gen_heading_title"), 'editor_container', 'btn_submit', 'card-system'));
 
   // Show help if needed
-  if (window.showOptHelp) {
-    $('#conf_cont').append(createHelpTable(window.schema.general.properties, $.i18n("edt_conf_gen_heading_title")));
+  if (globalThis.showOptHelp) {
+    $('#conf_cont').append(createHelpTable(globalThis.schema.general.properties, $.i18n("edt_conf_gen_heading_title")));
   } else {
     $('#conf_imp').appendTo('#conf_cont');
   }
 
   // Create JSON editor
-  conf_editor = createJsonEditor('editor_container', { general: window.schema.general }, true, true);
+  conf_editor = createJsonEditor('editor_container', { general: globalThis.schema.general }, true, true);
 
   // Handle editor change
   conf_editor.on('change', function () {
-    const isValid = !conf_editor.validate().length && !window.readOnlyMode;
+    const isValid = !conf_editor.validate().length && !globalThis.readOnlyMode;
     $('#btn_submit').prop('disabled', !isValid);
   });
 
   // Submit button click handler
   $('#btn_submit').off().on('click', function () {
-    window.showOptHelp = conf_editor.getEditor("root.general.showOptHelp").getValue();
+    globalThis.showOptHelp = conf_editor.getEditor("root.general.showOptHelp").getValue();
     requestWriteConfig(conf_editor.getValue());
   });
 
@@ -74,7 +74,7 @@ $(document).ready(function () {
       return;
     }
 
-    const data = window.serverInfo.instance;
+    const data = globalThis.serverInfo.instance;
     if (data) {
       const instances = Object.values(data);
 
@@ -96,11 +96,7 @@ $(document).ready(function () {
         const delBtn = `<button id="instdel_${instanceID}" type="button" class="btn btn-danger">
                             <i class="mdi mdi-delete-forever"></i>
                         </button>`;
-        const startBtn = `<input id="inst_${instanceID}" ${enableStyle} type="checkbox" 
-                             class="toggle-instance" 
-                             data-toggle="toggle" data-onstyle="success font-weight-bold" 
-                             data-on="${$.i18n('general_btn_on')}" data-offstyle="default font-weight-bold" 
-                             data-off="${$.i18n('general_btn_off')}">`;
+        const startBtn = `<div class="form-check form-switch" style="margin:3px"><input id="inst_${instanceID}" ${enableStyle} type="checkbox" role="switch" class="form-check-input toggle-instance"></div>`;
 
         const $row = createTableRow(
           [instance.friendly_name, startBtn, renameBtn, delBtn],
@@ -116,7 +112,7 @@ $(document).ready(function () {
       // Apply Bootstrap toggles and event handlers
       for (const instance of instances) {
         const instanceID = instance.instance;
-        const readOnly = window.readOnlyMode;
+        const readOnly = globalThis.readOnlyMode;
 
         $('#instren_' + instanceID).prop('disabled', readOnly).off().on('click', function () {
           handleInstanceRename(instanceID);
@@ -128,7 +124,6 @@ $(document).ready(function () {
 
         const $toggle = $('#inst_' + instanceID);
         $toggle.prop('disabled', readOnly);
-        $toggle.bootstrapToggle(); // Reapply toggle
         $toggle.off('change').on('change', function () {
           const isChecked = $(this).prop('checked');
           requestInstanceStartStop(instanceID, isChecked);
@@ -139,7 +134,7 @@ $(document).ready(function () {
 
   // Instance name input validation
   $('#inst_name').off().on('input', function (e) {
-    const isValid = e.currentTarget.value.length >= 5 && !window.readOnlyMode;
+    const isValid = e.currentTarget.value.length >= 5 && !globalThis.readOnlyMode;
     $('#btn_create_inst').prop('disabled', !isValid);
 
     const charsNeeded = 5 - e.currentTarget.value.length;
@@ -160,7 +155,7 @@ $(document).ready(function () {
 
   // Import handling functions
   function dis_imp_btn(state) {
-    $('#btn_import_conf').prop('disabled', state || window.readOnlyMode);
+    $('#btn_import_conf').prop('disabled', state || globalThis.readOnlyMode);
   }
 
   function readFile(evt) {
@@ -202,7 +197,7 @@ $(document).ready(function () {
 
   // Import file selection change handler
   $('#select_import_conf').off().on('change', function (e) {
-    if (window.File && window.FileReader && window.FileList && window.Blob) {
+    if (globalThis.File && globalThis.FileReader && globalThis.FileList && globalThis.Blob) {
       readFile(e);
     } else {
       showInfoDialog('error', "", $.i18n('infoDialog_import_comperror_text'));
@@ -218,12 +213,12 @@ $(document).ready(function () {
 
     const configBackup = await requestServerConfig.async();
     if (configBackup.success) {
-      download(JSON.stringify(configBackup.info, null, "\t"), `HyperionBackup-${timestamp}_v${window.currentVersion}.json`, "application/json");
+      download(JSON.stringify(configBackup.info, null, "\t"), `HyperionBackup-${timestamp}_v${globalThis.currentVersion}.json`, "application/json");
     }
   });
 
   // Create introduction hints if help is shown
-  if (window.showOptHelp) {
+  if (globalThis.showOptHelp) {
     createHint("intro", $.i18n('conf_general_intro'), "editor_container");
     createHint("intro", $.i18n('conf_general_tok_desc'), "tok_desc_cont");
     createHint("intro", $.i18n('conf_general_inst_desc'), "inst_desc_cont");
@@ -233,7 +228,7 @@ $(document).ready(function () {
 });
 
 // Command for restoring config
-$(window.hyperion).on("cmd-config-restoreconfig", function () {
+$(globalThis.hyperion).on("cmd-config-restoreconfig", function () {
   setTimeout(initRestart, 100);
 });
 

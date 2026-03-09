@@ -5,9 +5,12 @@
 			<div class="row" id="conf_cont"></div>
 			<div class="row">
 				<div class="col-lg-6" id="inst_desc">
-					<div class="panel panel-default">
-						<div class="panel-heading panel-instance"><i class="mdi mdi-lightbulb-group mdi-24px"></i><span data-i18n="conf_general_inst_title"></span></div>
-						<div class="panel-body">
+					<div class="card card-default">
+						<div class="card-header card-instance" style="display:flex; align-items:center;">
+						<span class="mdi mdi-lightbulb-group" style="margin-right:5px;"></span>
+						<span data-i18n="conf_general_inst_title"></span>
+					</div>
+						<div class="card-body">
 							<div id="inst_desc_cont"></div>
 							<div id="itable"></div>
 							<div style="margin: 30px 0; border-top:1px solid #d0d0d0"></div>
@@ -23,7 +26,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="panel-footer" style="text-align: right;">
+						<div class="card-footer" style="text-align: right;">
 							<button class="btn btn-primary" id="btn_create_inst" data-i18n="conf_general_createInst_btn" disabled>Create New Instance</button>
 						</div>
 					</div>
@@ -31,14 +34,14 @@
 		        <!-- Instance(s) -->
                 <div class="row instances">
 					<div class="col-lg-6" id="conf_imp">
-						<div class="panel panel-default">
-							<div class="panel-heading"><i class="fa fa-wrench fa-fw"></i><span data-i18n="conf_general_impexp_title"></span></div>
-							<div class="panel-body">
+						<div class="card card-default">
+							<div class="card-header"><i class="fa fa-wrench fa-fw"></i><span data-i18n="conf_general_impexp_title"></span></div>
+							<div class="card-body">
 								<p data-i18n="conf_general_impexp_l1" style="font-weight:bold"></p>
 								<p data-i18n="conf_general_impexp_l2" style="font-weight:bold"></p>
 								<input type="file" id="select_import_conf" accept=".json">
 							</div>
-							<div class="panel-footer" style="text-align:right">
+							<div class="card-footer" style="text-align:right">
 								<button type="file" class="btn btn-primary" id="btn_import_conf" data-i18n="conf_general_impexp_impbtn" disabled>Import</button>
 								<button class="btn btn-primary" id="btn_export_conf" data-i18n="conf_general_impexp_expbtn">Export</button>
 							</div>

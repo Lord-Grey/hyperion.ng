@@ -6,38 +6,38 @@
 <div class="container-fluid">
   <h3 class="page-header"><i class="mdi mdi-lightbulb-on fa-fw"></i><span data-i18n="main_menu_leds_conf_token">LED Hardware</span></h3>
 
-  <div class="panel panel-default" style="border:0px;">
-    <div class="panel-heading panel-instance" style="border-radius:3px; border-bottom:0px;">
+  <div class="card card-default" style="border:0;">
+    <div class="card-header card-instance">
       <div class="dropdown">
-        <a id="active_instance_dropdown" class="dropdown-toggle" data-toggle="dropdown" href="#" style="text-decoration:none;display:flex;align-items:center;">
+        <a id="active_instance_dropdown" class="dropdown-toggle" data-bs-toggle="dropdown" href="#" style="text-decoration:none;display:flex;align-items:center;">
+          <span class="mdi mdi-lightbulb-group" style="margin-right:5px;"></span>
           <div id="active_instance_friendly_name"></div>
-          <div id="btn_hypinstanceswitch" style="white-space:nowrap;"><span class="mdi mdi-lightbulb-group mdi-24px" style="margin-right:0; margin-left:5px;"></span><span class="mdi mdi-menu-down mdi-24px"></span></div>
         </a>
-        <ul id="hyp_inst_listing" class="dropdown-menu dropdown-alerts" style="cursor:pointer;"></ul>
+        <ul id="hyp_inst_listing" class="dropdown-menu" style="cursor:pointer;"></ul>
       </div>
     </div>
   </div>
 
   <ul id="leds_cfg_nav" class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#menu_controller" data-i18n="conf_leds_nav_label_ledcontroller">LED Controller</a></li>
-    <li><a data-toggle="tab" href="#menu_gencfg" data-i18n="conf_leds_nav_label_ledlayout">LED Layout</a></li>
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#menu_controller" data-i18n="conf_leds_nav_label_ledcontroller">LED Controller</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#menu_gencfg" data-i18n="conf_leds_nav_label_ledlayout">LED Layout</a></li>
   </ul>
 
   <div class="tab-content">
-    <div id="menu_controller" class="tab-pane fade in active" style="padding-top:10px">
+    <div id="menu_controller" class="tab-pane fade show active" style="padding-top:10px">
       <div class="row">
         <div class="col-lg-12" id="leddevice_intro"></div>
         <div class="col-lg-6">
-          <div class="panel panel-default">
-            <div class="panel-heading form-group">
-              <label for="leddevices" class="panel-title" data-i18n="conf_leds_contr_label_contrtype">Controller type:</label>
+          <div class="card card-default">
+            <div class="card-header form-group">
+              <label for="leddevices" class="card-title" data-i18n="conf_leds_contr_label_contrtype">Controller type:</label>
               <select id="leddevices" class="form-control" style="color:black;width:auto;margin-left:10px;display:inline-block"></select>
             </div>
 
-            <div class="panel-body">
+            <div class="card-body">
               <div id="btn_wiz_holder"></div>
               <div id='editor_container_leddevice'></div>
-              <div id='info_container' class="bs-callout bs-callout-info" style="margin-top:0px">
+              <div id='info_container' class="alert alert-info" style="margin-top:0px">
                 <h4 data-i18n="dashboard_infobox_label_title">Information</h4>
                 <div id='info_container_text'>
                   <span data-i18n="conf_leds_device_info_log"> In case your LEDs do not work, check here for errors: </span>
@@ -45,14 +45,14 @@
                 </div>
               </div>
             </div>
-            <div class="panel-footer" style="text-align:right">
-              <button id='btn_layout_controller' class="btn btn-primary" disabled data-toggle="tooltip" data-placement="top" title="Generate a layout for the configured device">
+            <div class="card-footer" style="text-align:right">
+              <button id='btn_layout_controller' class="btn btn-primary" disabled data-bs-toggle="tooltip" data-placement="top" title="Generate a layout for the configured device">
                 <i class="fa fa-fw fa-save"></i><span data-i18n="wiz_layout">Generate Layout</span>
               </button>
-              <button id='btn_test_controller' class="btn btn-primary" disabled data-toggle="tooltip" data-placement="top" title="Identify configured device by lighting it up">
+              <button id='btn_test_controller' class="btn btn-primary" disabled data-bs-toggle="tooltip" data-placement="top" title="Identify configured device by lighting it up">
                 <i class="fa fa-fw fa-save"></i><span data-i18n="wiz_identify">Identify/Test</span>
               </button>
-              <button id='btn_submit_controller' class="btn btn-primary" data-toggle="tooltip" data-placement="top" title="Save the device's connectivity configuration">
+              <button id='btn_submit_controller' class="btn btn-primary" data-bs-toggle="tooltip" data-placement="top" title="Save the device's connectivity configuration">
                 <i class="fa fa-fw fa-save"></i><span data-i18n="general_button_savesettings">Save Settings</span>
               </button>
             </div>
@@ -66,16 +66,16 @@
       <div class="row">
         <div class="col-lg-12" id="layout_intro"></div>
         <div class="col-lg-6 col-md-12" id="layout_type">
-          <div class="panel-group" id="accordion">
-            <div class="panel panel-primary">
-              <div class="panel-heading headcollapse" id="classic_panel" data-toggle="collapse" data-parent="#accordion" data-target="#collapse1">
-                <h4 class="panel-title">
-                  <a><i class="fa fa-television fa-fw"></i><span data-i18n="conf_leds_layout_frame">Classic Layout (LED Frame)</span></a>
-                </h4>
-              </div>
-              <div id="collapse1" class="panel-collapse collapse">
-                <div class="panel-body">
-                  <table class="table borderless">
+          <div class="accordion" id="accordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="heading1">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" data-bs-parent="#accordion" aria-expanded="false" aria-controls="collapse1">
+                  <i class="fa fa-television fa-fw"></i><span data-i18n="conf_leds_layout_frame">Classic Layout (LED Frame)</span>
+                </button>
+              </h2>
+              <div id="collapse1" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                  <table class="table table-borderless borderless">
                     <tbody>
                       <tr>
                         <td class="ltd">
@@ -151,19 +151,19 @@
                       </tr>
                     </tbody>
                   </table>
-                  <div class="panel panel-default">
-                    <div class="panel-heading headcollapse" data-toggle="collapse" data-target="#collapse3" id="advanced_settings">
-                      <h4 class="panel-title">
+                  <div class="card card-default">
+                    <div class="card-header headcollapse" data-bs-toggle="collapse" data-bs-target="#collapse3" id="advanced_settings">
+                      <h4 class="card-title">
                         <a>
                           <i class="fa fa-fw fa-cogs"></i>
                           <span data-i18n="conf_leds_layout_advanced">Advanced settings</span>
-                          <i class="fa fa-angle-down pull-right" id="advanced_settings_right_icon"></i>
+                          <i class="fa fa-angle-down float-end" id="advanced_settings_right_icon"></i>
                         </a>
                       </h4>
                     </div>
-                    <div id="collapse3" class="panel-collapse collapse">
-                      <div class="panel-body ">
-                        <table class="tableform borderless">
+                    <div id="collapse3" class="collapse">
+                      <div class="card-body ">
+                        <table class="table table-borderless borderless">
                           <tbody>
                             <tr>
                               <td class="ltd">
@@ -281,19 +281,19 @@
                     </div>
                   </div>
                 </div>
-                <div class="panel-footer" style="text-align:right;">
+                <div class="card-footer" style="text-align:right;">
                   <button id="btn_cl_save" class="btn btn-primary"><i class="fa fa-fw fa-save"></i><span data-i18n="conf_leds_layout_button_savelay">Save layout</span></button>
                 </div>
               </div>
             </div>
-            <div class="panel panel-primary">
-              <div class="panel-heading headcollapse" id="matrix_panel" data-toggle="collapse" data-parent="#accordion" data-target="#collapse2">
-                <h4 class="panel-title">
-                  <a><i class="fa fa-th fa-fw"></i><span data-i18n="conf_leds_layout_matrix">Matrix Configuration (LED wall)</span></a>
-                </h4>
-              </div>
-              <div id="collapse2" class="panel-collapse collapse">
-                <div class="panel-body">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="heading2">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" data-bs-parent="#accordion" aria-expanded="false" aria-controls="collapse2">
+                  <i class="fa fa-th fa-fw"></i><span data-i18n="conf_leds_layout_matrix">Matrix Configuration (LED wall)</span>
+                </button>
+              </h2>
+              <div id="collapse2" class="accordion-collapse collapse">
+                <div class="accordion-body">
                   <table>
                     <tbody>
                       <tr>
@@ -352,19 +352,19 @@
                     </tbody>
                   </table>
                 </div>
-                  <div class="panel panel-default">
-                    <div class="panel-heading headcollapse" data-toggle="collapse" data-target="#collapse-maadv" id="ma_advanced_settings">
-                      <h4 class="panel-title">
+                  <div class="card card-default">
+                    <div class="card-header headcollapse" data-bs-toggle="collapse" data-bs-target="#collapse-maadv" id="ma_advanced_settings">
+                      <h4 class="card-title">
                         <a>
                           <i class="fa fa-fw fa-cogs"></i>
                           <span data-i18n="conf_leds_layout_advanced">Advanced settings</span>
-                          <i class="fa fa-angle-down pull-right" id="ma_advanced_settings_right_icon"></i>
+                          <i class="fa fa-angle-down float-end" id="ma_advanced_settings_right_icon"></i>
                         </a>
                       </h4>
                     </div>
-                    <div id="collapse-maadv" class="panel-collapse collapse">
-                      <div class="panel-body ">
-                        <table class="tableform borderless">
+                    <div id="collapse-maadv" class="collapse">
+                      <div class="card-body ">
+                        <table class="table table-borderless borderless">
                           <tbody>
                             <tr>
                               <td class="ltd">
@@ -407,57 +407,57 @@
                       </div>
                     </div>
                   </div>
-                <div class="panel-footer" style="text-align:right;">
+                <div class="card-footer" style="text-align:right;">
                   <button id="btn_ma_save" class="btn btn-primary"><i class="fa fa-fw fa-save"></i><span data-i18n="conf_leds_layout_button_savelay">Save layout</span></button>
                 </div>
               </div>
             </div>
-            <div id="blacklist_panel" class="panel panel-primary">
-              <div class="panel-heading headcollapse" id="blacklist_config_panel" data-toggle="collapse" data-parent="#accordion" data-target="#collapse4">
-                <h4 class="panel-title">
-                  <a><i class="fa fa-ban fa-fw"></i><span data-i18n="conf_leds_layout_blacklistleds_title">Blacklist LEDs</span></a>
-                </h4>
-              </div>
-              <div id="collapse4" class="panel-collapse collapse">
-                <div class="panel-body">
+            <div id="blacklist_panel" class="accordion-item">
+              <h2 class="accordion-header" id="heading4">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" data-bs-parent="#accordion" aria-expanded="false" aria-controls="collapse4">
+                  <i class="fa fa-ban fa-fw"></i><span data-i18n="conf_leds_layout_blacklistleds_title">Blacklist LEDs</span>
+                </button>
+              </h2>
+              <div id="collapse4" class="accordion-collapse collapse">
+                <div class="accordion-body">
                   <div id="editor_container_blacklist_conf"></div>
                 </div>
-                <div class="panel-footer" style="text-align:right;">
+                <div class="card-footer" style="text-align:right;">
                   <button id="btn_bl_save" class="btn btn-primary"><i class="fa fa-fw fa-save"></i><span data-i18n="conf_leds_layout_button_savelay">Save layout</span></button>
                 </div>
               </div>
             </div>
-            <div id="texfield_panel" class="panel panel-primary">
-              <div class="panel-heading headcollapse" id="current_config_panel" data-toggle="collapse" data-parent="#accordion" data-target="#collapse5">
-                <h4 class="panel-title">
-                  <a><i class="fa fa-wrench fa-fw"></i><span data-i18n="conf_leds_layout_generatedconf">Generated/Actual LED Configuration</span></a>
-                </h4>
-              </div>
-              <div id="collapse5" class="panel-collapse collapse in">
-                <div class="panel-body">
+            <div id="texfield_panel" class="accordion-item">
+              <h2 class="accordion-header" id="heading5">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" data-bs-parent="#accordion" aria-expanded="true" aria-controls="collapse5">
+                  <i class="fa fa-wrench fa-fw"></i><span data-i18n="conf_leds_layout_generatedconf">Generated/Actual LED Configuration</span>
+                </button>
+              </h2>
+              <div id="collapse5" class="accordion-collapse collapse show">
+                <div class="accordion-body">
                   <p id="leds_wl" data-i18n="conf_leds_layout_textf1">This textfield shows by default your current loaded layout and will be overwritten if you generate a new one above. Optional you could perform further edits.</p>
                   <div id="aceedit" style="width:100%;height:500px"></div>
                 </div>
-                <div class="panel-footer">
+                <div class="card-footer">
                   <button type="button" class="btn btn-warning" id="leds_custom_updsim"><i class="fa fa-search fa-fw"></i><span data-i18n="conf_leds_layout_button_updsim">Update preview</span></button>
-                  <button type="button" class="btn btn-primary pull-right" id="leds_custom_save"><i class="fa fa-fw fa-save"></i><span data-i18n="conf_leds_layout_button_savelay">Save layout</span></button>
+                  <button type="button" class="btn btn-primary float-end" id="leds_custom_save"><i class="fa fa-fw fa-save"></i><span data-i18n="conf_leds_layout_button_savelay">Save layout</span></button>
                 </div>
               </div>
             </div>
           </div>
         </div> <!-- accordion -->
         <div class="col-lg-6 col-md-12" id="layout_preview">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h4 class="panel-title">
+          <div class="card card-default">
+            <div class="card-header headcollapse">
+              <h4 class="card-title">
                 <i class="fa fa-search fa-fw"></i>
                 <span data-i18n="conf_leds_layout_peview">LED Layout preview</span>
                 <a href="#" class='fullscreen-btn' role="button" title="Toggle fullscreen">
-                  <i class="fa fa-expand fa-fw pull-right"></i>
+                  <i class="fa fa-expand fa-fw float-end"></i>
                 </a>
               </h4>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
               <p id="previewcreator" style="font-weight:bold"></p>
               <p id="previewledcount" style="font-weight:bold"></p>
               <p id="previewledpower" style="font-weight:bold"></p>
@@ -468,11 +468,11 @@
                 <div id="leds_preview"></div>
               </div>
             </div>
-            <div class="panel-footer">
+            <div class="card-footer">
               <button type="button" class="btn btn-danger" id="leds_prev_toggle_num"><i class="fa fa-info fa-fw"></i><span data-i18n="main_ledsim_btn_togglelednumber">toggle led numbers</span></button>
               <button type="button" class="btn btn-danger" id="leds_prev_toggle_live_video"><i class="fa fa-fw fa-television"></i><span data-i18n="main_ledsim_btn_togglelivevideo">toggle live video</span></button>
               <button type="button" class="btn btn-danger" id="leds_prev_toggle_keystone_correction_area" style="display:none;"><i class="mdi mdi-vector-square" style="margin-right:5px;"></i><span data-i18n="conf_leds_layout_btn_keystone">toggle keystone correction</span></button>
-              <button type="button" class="btn btn-primary pull-right" id="leds_prev_checklist"><i class="fa fa-info-circle fa-fw"></i><span data-i18n="conf_leds_layout_btn_checklist">show checklist</span></button>
+              <button type="button" class="btn btn-primary float-end" id="leds_prev_checklist"><i class="fa fa-info-circle fa-fw"></i><span data-i18n="conf_leds_layout_btn_checklist">show checklist</span></button>
             </div>
           </div>
         </div>

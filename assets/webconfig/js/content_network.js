@@ -441,7 +441,7 @@ function createSection(id, titleKey, schemaProps, helpPanelId = null) {
   const containerId = `conf_cont_${id}`;
   $('#conf_cont').append(createRow(containerId));
   $(`#${containerId}`)
-    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), `editor_container_${id}`, `btn_submit_${id}`, 'panel-system'))
+    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), `editor_container_${id}`, `btn_submit_${id}`, 'card-system'))
     .append(createHelpTable(schemaProps, $.i18n(titleKey), helpPanelId));
 }
 
@@ -455,7 +455,7 @@ function appendPanel(id, titleKey) {
   $('#conf_cont').append($newContainer);
 
   // Append the option panel inside the newly created container
-  $newContainer.append(createOptPanel('fa-sitemap', $.i18n(titleKey), `editor_container_${id}`, `btn_submit_${id}`, 'panel-system'));
+  $newContainer.append(createOptPanel('fa-sitemap', $.i18n(titleKey), `editor_container_${id}`, `btn_submit_${id}`, 'card-system'));
 }
 
 function toggleHelpPanel(editor, key, panelId) {

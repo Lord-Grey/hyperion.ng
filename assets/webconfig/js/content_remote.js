@@ -281,24 +281,17 @@ $(document).ready(function () {
       const compBtnId = `comp_btn_${comp.name}`;
       const checkedStatus = comp.enabled ? "checked" : "";
       const componentHtml = `
-      <span style="display:block;margin:3px">
-        <label class="checkbox-inline">
-          <input id="${compBtnId}" ${checkedStatus} type="checkbox"
-                 data-toggle="toggle"
-                 data-onstyle="success"
-                 data-name="${comp.name}"
-                 data-on="${$.i18n('general_btn_on')}"
-                 data-off="${$.i18n('general_btn_off')}">
-          ${$.i18n('general_comp_' + comp.name)}
-        </label>
-      </span>
+      <div class="form-check form-switch" style="margin:3px">
+        <input class="form-check-input" role="switch" id="${compBtnId}" ${checkedStatus} type="checkbox"
+               data-name="${comp.name}">
+        <label class="form-check-label" for="${compBtnId}">${$.i18n('general_comp_' + comp.name)}</label>
+      </div>
     `;
 
       // Append component toggle button if not already created
       if (!$(`#${compBtnId}`).length) {
         $('#componentsbutton').append(componentHtml);
-        $(`#${compBtnId}`).bootstrapToggle();
-        $(`#${compBtnId}`).bootstrapToggle(hyperionEnabled ? "enable" : "disable");
+        $(`#${compBtnId}`).prop('disabled', !hyperionEnabled);
         $(`#${compBtnId}`).on("change", e => {
           const compName = $(e.currentTarget).data("name");
           requestSetComponentState(compName, e.currentTarget.checked);
@@ -333,13 +326,11 @@ $(document).ready(function () {
       if (comp.name === "ALL") return;
 
       const compBtnId = `comp_btn_${comp.name}`;
-      const toggle = $(`#${compBtnId}`).bootstrapToggle();
 
       if (!enabled) {
-        toggle.bootstrapToggle("off");
-        toggle.bootstrapToggle("disable");
+        $(`#${compBtnId}`).prop('checked', false).prop('disabled', true);
       } else {
-        toggle.bootstrapToggle("enable");
+        $(`#${compBtnId}`).prop('disabled', false);
         updateSingleComponent(comp);
       }
     });
@@ -347,10 +338,9 @@ $(document).ready(function () {
 
   function updateSingleComponent(component) {
     const compBtnId = `comp_btn_${component.name}`;
-    const toggle = $(`#${compBtnId}`).bootstrapToggle();
 
     if (component.enabled !== $(`#${compBtnId}`).prop("checked")) {
-      toggle.bootstrapToggle(component.enabled ? "on" : "off");
+      $(`#${compBtnId}`).prop('checked', component.enabled);
     }
   }
 

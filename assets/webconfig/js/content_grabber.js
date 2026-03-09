@@ -17,7 +17,7 @@ $(document).ready(function () {
   // Screen-Grabber
   if (screenGrabberAvailable) {
     $('#conf_cont').append(createRow('conf_cont_screen'));
-    $('#conf_cont_screen').append(createOptPanel('fa-camera', $.i18n("edt_conf_fg_heading_title"), 'editor_container_screengrabber', 'btn_submit_screengrabber', 'panel-system', 'screengrabberPanelId'));
+    $('#conf_cont_screen').append(createOptPanel('fa-camera', $.i18n("edt_conf_fg_heading_title"), 'editor_container_screengrabber', 'btn_submit_screengrabber', 'card-system', 'screengrabberPanelId'));
     if (globalThis.showOptHelp) {
       $('#conf_cont_screen').append(createHelpTable(globalThis.schema.framegrabber.properties, $.i18n("edt_conf_fg_heading_title"), "screengrabberHelpPanelId"));
     }
@@ -26,11 +26,11 @@ $(document).ready(function () {
   // Video-Grabber
   if (videoGrabberAvailable) {
     $('#conf_cont').append(createRow('conf_cont_video'));
-    $('#conf_cont_video').append(createOptPanel('fa-camera', $.i18n("edt_conf_v4l2_heading_title"), 'editor_container_videograbber', 'btn_submit_videograbber', 'panel-system', 'videograbberPanelId'));
+    $('#conf_cont_video').append(createOptPanel('fa-camera', $.i18n("edt_conf_v4l2_heading_title"), 'editor_container_videograbber', 'btn_submit_videograbber', 'card-system', 'videograbberPanelId'));
 
     if (storedAccess === 'expert') {
       const conf_cont_video_footer = document.getElementById("editor_container_videograbber").nextElementSibling;
-      $(conf_cont_video_footer).prepend('<button class="btn btn-primary mdi-24px" id="btn_videograbber_set_defaults" disabled data-toggle="tooltip" data-placement="top" title="' + $.i18n("edt_conf_v4l2_hardware_set_defaults_tip") + '">'
+      $(conf_cont_video_footer).prepend('<button class="btn btn-primary mdi-24px" id="btn_videograbber_set_defaults" disabled data-bs-toggle="tooltip" data-placement="top" title="' + $.i18n("edt_conf_v4l2_hardware_set_defaults_tip") + '">'
         + '<i class= "fa fa-fw fa-undo" ></i >' + $.i18n("edt_conf_v4l2_hardware_set_defaults") + '</button > ');
     }
 
@@ -42,11 +42,11 @@ $(document).ready(function () {
   // Audio-Grabber
   if (audioGrabberAvailable) {
     $('#conf_cont').append(createRow('conf_cont_audio'));
-    $('#conf_cont_audio').append(createOptPanel('fa-volume', $.i18n("edt_conf_audio_heading_title"), 'editor_container_audiograbber', 'btn_submit_audiograbber', 'panel-system', 'audiograbberPanelId'));
+    $('#conf_cont_audio').append(createOptPanel('fa-volume', $.i18n("edt_conf_audio_heading_title"), 'editor_container_audiograbber', 'btn_submit_audiograbber', 'card-system', 'audiograbberPanelId'));
 
     if (storedAccess === 'expert') {
       const conf_cont_audio_footer = document.getElementById("editor_container_audiograbber").nextElementSibling;
-      $(conf_cont_audio_footer).prepend('<button class="btn btn-primary mdi-24px" id="btn_audiograbber_set_effect_defaults" disabled data-toggle="tooltip" data-placement="top" title="' + $.i18n("edt_conf_audio_hardware_set_defaults_tip") + '">'
+      $(conf_cont_audio_footer).prepend('<button class="btn btn-primary mdi-24px" id="btn_audiograbber_set_effect_defaults" disabled data-bs-toggle="tooltip" data-placement="top" title="' + $.i18n("edt_conf_audio_hardware_set_defaults_tip") + '">'
         + '<i class= "fa fa-fw fa-undo" ></i >' + $.i18n("edt_conf_audio_effect_set_defaults") + '</button > ');
     }
 
@@ -58,11 +58,11 @@ $(document).ready(function () {
   // Audio-Grabber
   if (audioGrabberAvailable) {
     $('#conf_cont').append(createRow('conf_cont_audio'));
-    $('#conf_cont_audio').append(createOptPanel('fa-volume', $.i18n("edt_conf_audio_heading_title"), 'editor_container_audiograbber', 'btn_submit_audiograbber', 'panel-system', 'audiograbberPanelId'));
+    $('#conf_cont_audio').append(createOptPanel('fa-volume', $.i18n("edt_conf_audio_heading_title"), 'editor_container_audiograbber', 'btn_submit_audiograbber', 'card-system', 'audiograbberPanelId'));
 
     if (storedAccess === 'expert') {
       const conf_cont_audio_footer = document.getElementById("editor_container_audiograbber").nextElementSibling;
-      $(conf_cont_audio_footer).prepend('<button class="btn btn-primary mdi-24px" id="btn_audiograbber_set_effect_defaults" disabled data-toggle="tooltip" data-placement="top" title="' + $.i18n("edt_conf_audio_hardware_set_defaults_tip") + '">'
+      $(conf_cont_audio_footer).prepend('<button class="btn btn-primary mdi-24px" id="btn_audiograbber_set_effect_defaults" disabled data-bs-toggle="tooltip" data-placement="top" title="' + $.i18n("edt_conf_audio_hardware_set_defaults_tip") + '">'
         + '<i class= "fa fa-fw fa-undo" ></i >' + $.i18n("edt_conf_audio_effect_set_defaults") + '</button > ');
     }
 

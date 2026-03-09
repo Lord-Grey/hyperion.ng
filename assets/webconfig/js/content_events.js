@@ -11,19 +11,19 @@ $(document).ready(function () {
   if (window.showOptHelp) {
     //Operating System Events
     $('#conf_cont').append(createRow('conf_cont_os_events'));
-    $('#conf_cont_os_events').append(createOptPanel('fa-laptop', $.i18n("conf_os_events_heading_title"), 'editor_container_os_events', 'btn_submit_os_events', 'panel-system'));
+    $('#conf_cont_os_events').append(createOptPanel('fa-laptop', $.i18n("conf_os_events_heading_title"), 'editor_container_os_events', 'btn_submit_os_events', 'card-system'));
     $('#conf_cont_os_events').append(createHelpTable(window.schema.osEvents.properties, $.i18n("conf_os_events_heading_title")));
 
     //Scheduled Events
     $('#conf_cont').append(createRow('conf_cont_sched_events'));
-    $('#conf_cont_sched_events').append(createOptPanel('fa-laptop', $.i18n("conf_sched_events_heading_title"), 'editor_container_sched_events', 'btn_submit_sched_events', 'panel-system'));
+    $('#conf_cont_sched_events').append(createOptPanel('fa-laptop', $.i18n("conf_sched_events_heading_title"), 'editor_container_sched_events', 'btn_submit_sched_events', 'card-system'));
     $('#conf_cont_sched_events').append(createHelpTable(window.schema.schedEvents.properties, $.i18n("conf_sched_events_heading_title")));
 
 
     //CEC Events
     if (CEC_ENABLED) {
       $('#conf_cont').append(createRow('conf_cont_event_cec'));
-      $('#conf_cont_event_cec').append(createOptPanel('fa-tv', $.i18n("conf_cec_events_heading_title"), 'editor_container_cec_events', 'btn_submit_cec_events', 'panel-system'));
+      $('#conf_cont_event_cec').append(createOptPanel('fa-tv', $.i18n("conf_cec_events_heading_title"), 'editor_container_cec_events', 'btn_submit_cec_events', 'card-system'));
       $('#conf_cont_event_cec').append(createHelpTable(window.schema.cecEvents.properties, $.i18n("conf_cec_events_heading_title"), "cecEventsHelpPanelId"));
     }
   }

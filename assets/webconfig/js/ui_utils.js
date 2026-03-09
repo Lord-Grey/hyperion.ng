@@ -34,7 +34,7 @@ function removeStorage(item) {
 }
 
 function debugMessage(msg) {
-  if (window.debugMessagesActive) {
+  if (globalThis.debugMessagesActive) {
     console.log(msg);
   }
 }
@@ -69,18 +69,18 @@ function getHashtag() {
 }
 
 function isInstanceRunning(instanceId) {
-  return window.serverInfo?.instance?.some(
+  return globalThis.serverInfo?.instance?.some(
     (instance) => instance.instance === Number(instanceId) && instance.running
   );
 }
 
 function isCurrentInstanceRunning() {
-  return isInstanceRunning(window.currentHyperionInstance);
+  return isInstanceRunning(globalThis.currentHyperionInstance);
 }
 
 function getFirstRunningInstance() {
 
-  const runningInstance = window.serverInfo?.instance?.find(
+  const runningInstance = globalThis.serverInfo?.instance?.find(
     (instance) => instance.running
   );
 
@@ -88,14 +88,14 @@ function getFirstRunningInstance() {
 }
 
 function getFirstConfiguredInstance() {
-  const configuredInstance = window.serverInfo?.instance?.find(
+  const configuredInstance = globalThis.serverInfo?.instance?.find(
     (instance) => instance.instance !== undefined
   );
 
   return configuredInstance ? configuredInstance.instance : null; // Return instance number or null if none exists
 }
 function getConfiguredInstances() {
-  const instances = window.serverInfo?.instance || [];
+  const instances = globalThis.serverInfo?.instance || [];
   const list = Array.isArray(instances) ? instances : Object.values(instances);
   return list
     .filter((inst) => typeof inst.instance !== 'undefined')
@@ -108,13 +108,13 @@ function doesInstanceExist(instanceId) {
     return false; // Return false if instanceId is null or undefined
   }
 
-  return window.serverInfo?.instance?.some(
+  return globalThis.serverInfo?.instance?.some(
     (instance) => instance.instance === Number(instanceId)
   ) || false; // Return false if serverInfo or instance is undefined
 }
 
 function getInstanceName(instanceId) {
-  const instance = window.serverInfo?.instance?.find(
+  const instance = globalThis.serverInfo?.instance?.find(
     (instance) => instance.instance === Number(instanceId)
   );
 
@@ -123,7 +123,7 @@ function getInstanceName(instanceId) {
 
 function getCurrentInstanceName() {
 
-  const instanceId = window.currentHyperionInstance;
+  const instanceId = globalThis.currentHyperionInstance;
   return getInstanceName(instanceId);
 }
 
@@ -153,7 +153,7 @@ function loadContent(event, forceRefresh) {
         $("#page-content").html('<h3>' + encode_utf8(tag) + '<br/>' + $.i18n('info_404') + '</h3>');
         removeOverlay();
       } else {
-        updateUiOnInstance(window.currentHyperionInstance);
+        updateUiOnInstance(globalThis.currentHyperionInstance);
       }
     });
   }
@@ -161,7 +161,7 @@ function loadContent(event, forceRefresh) {
 
 function updateHyperionInstanceListing() {
 
-  const data = window.serverInfo.instance;
+  const data = globalThis.serverInfo.instance;
   if (data) {
     const instances = Object.values(data);
     // Sort instances by friendly_name (case-insensitive)
@@ -231,13 +231,13 @@ function initLanguageSelection() {
 
 function updateUiOnInstance(inst) {
 
-  window.currentHyperionInstance = inst;
+  globalThis.currentHyperionInstance = inst;
   if (inst === null) {
     //No instance defined, hide all instance related menue items
     $("#MenuItemLedInstances").closest("li").hide();
     $("#MenuItemRemoteControl, #MenuItemEffectsConfig, #NavMenuWizards, #btn_open_ledsim, #btn_streamer").hide();
   } else {
-    window.currentHyperionInstanceName = getInstanceName(inst);
+    globalThis.currentHyperionInstanceName = getInstanceName(inst);
 
     $("#active_instance_friendly_name").text(getInstanceName(inst));
     $('#btn_hypinstanceswitch').toggle(true);
@@ -249,11 +249,11 @@ function updateUiOnInstance(inst) {
     $("#MenuItemLedInstances").show().closest("li").show();
 
     // Show menue items according to instance's running state
-    if (isInstanceRunning(window.currentHyperionInstance)) {
+    if (isInstanceRunning(globalThis.currentHyperionInstance)) {
       $("#MenuItemRemoteControl, #NavMenuWizards, #btn_open_ledsim").show();
 
       //Show effectsconfigurator menu entry, only if effectengine is available
-      if (jQuery.inArray("effectengine", window.serverInfo.services) !== -1) {
+      if (jQuery.inArray("effectengine", globalThis.serverInfo.services) !== -1) {
         $("#MenuItemEffectsConfig").show();
       }
 
@@ -271,8 +271,8 @@ function updateUiOnInstance(inst) {
 function instanceSwitch(inst) {
   const instanceID = Number(inst);
   requestInstanceSwitch(instanceID)
-  window.currentHyperionInstance = instanceID;
-  window.currentHyperionInstanceName = getInstanceName(instanceID);
+  globalThis.currentHyperionInstance = instanceID;
+  globalThis.currentHyperionInstanceName = getInstanceName(instanceID);
   setStorage('lastSelectedInstance', instanceID)
 }
 
@@ -378,7 +378,7 @@ function showInfoDialog(type, header = "", message = "", details = []) {
       '</div>'
     );
     $('#changePasswordForm').append(
-      '<div class="bs-callout bs-callout-info"><span>' + $.i18n('infoDialog_password_minimum_length') + '</span></div>'
+      '<div class="alert alert-info"><span>' + $.i18n('infoDialog_password_minimum_length') + '</span></div>'
     );
     $('#changePasswordForm').append('</form>');
 
@@ -519,14 +519,14 @@ function createHint(type, text, container, buttonid) {
   switch (type) {
     case 'intro':
       $('#' + container).prepend(`
-        <div class="bs-callout bs-callout-primary" style="margin-top:0px">
+        <div class="alert alert-primary" style="margin-top:0px">
           <h4>${$.i18n("conf_helptable_expl")}</h4>
           ${text}
         </div>`);
       break;
     case 'wizard':
       $('#' + container).prepend(`
-        <div class="bs-callout bs-callout-wizard" style="margin-top:0px">
+        <div class="alert alert-wizard" style="margin-top:0px">
           <h4>${$.i18n("wiz_wizavail")}</h4>
           ${$.i18n('wiz_guideyou', text)}
           ${buttonHtml}
@@ -541,7 +541,7 @@ function createHint(type, text, container, buttonid) {
 
 function createEffHint(title, text) {
   return `
-    <div class="bs-callout bs-callout-primary" style="margin-top:0px">
+    <div class="alert alert-primary" style="margin-top:0px">
       <h4>${title}</h4>
       ${text}
     </div>
@@ -637,23 +637,23 @@ function createJsonEditor(container, schema, setconfig, usePanel, arrayre = unde
 
   //element = document.getElementById(container);
 
-  JSONEditor.defaults.translate = function (key, variables) {
-    let text;
-    if (key !== null) {
-      text = $.i18n("edt_msg_" + key, variables);
-      //console.log("translate: ", key, variables, "-> ", text);
-    }
-    return text;
-  };
+  // JSONEditor.defaults.translate = function (key, variables) {
+  //   let text;
+  //   if (key !== null) {
+  //     text = $.i18n("edt_msg_" + key, variables);
+  //     //console.log("translate: ", key, variables, "-> ", text);
+  //   }
+  //   return text;
+  // };
 
-  JSONEditor.defaults.translateElement = function (key, variables) {
+  //JSONEditor.defaults.translateElement = function (key, variables) {
   // From 2.5.4 onwards replace translateElement with translateProperty
-  //JSONEditor.defaults.translateProperty = function (key, variables) {
+  JSONEditor.defaults.translateProperty = function (key, variables) {
 
     let text;
     if (key !== null) {
       text = $.i18n(key, variables);
-      //console.log("translateProperty - key[", key, "] var[", variables, "]-> ", text);
+      console.log("translateProperty - key[", key, "] var[", variables, "]-> ", text);
     }
     return text;
   };
@@ -662,6 +662,7 @@ function createJsonEditor(container, schema, setconfig, usePanel, arrayre = unde
     {
       theme: 'bootstrap4',
       iconlib: "fontawesome4",
+      titleHidden: true,
       disable_collapse: 'true',
       form_name_root: 'root',
       disable_edit_json: true,
@@ -684,7 +685,7 @@ function createJsonEditor(container, schema, setconfig, usePanel, arrayre = unde
 
   if (setconfig) {
     for (let key in editor.root.editors) {
-      editor.getEditor("root." + key).setValue({ ...editor.getEditor("root." + key).value, ...window.serverConfig[key] });
+      editor.getEditor("root." + key).setValue({ ...editor.getEditor("root." + key).value, ...globalThis.serverConfig[key] });
     }
   }
 
@@ -953,7 +954,7 @@ function buildWL(link, linkt, cl) {
 
   if (cl) {
     linkt = $.i18n(linkt);
-    return `<div class="bs-callout bs-callout-primary"><h4>${linkt}</h4>${$.i18n('general_wiki_moreto', linkt)}: <a href="${baseLink}${lang}${link}" target="_blank">${linkt}</a></div>`;
+    return `<div class="alert alert-primary"><h4>${linkt}</h4>${$.i18n('general_wiki_moreto', linkt)}: <a href="${baseLink}${lang}${link}" target="_blank">${linkt}</a></div>`;
   } else {
     return `: <a href="${baseLink}${lang}${link}" target="_blank">${linkt}</a>`;
   }
@@ -1019,7 +1020,7 @@ function showNotification(type, message, title = "", addhtml = "") {
       align: 'center'
     },
     mouse_over: 'pause',
-    template: '<div data-notify="container" class="bg-w col-md-6 bs-callout bs-callout-{0}" role="alert">' +
+    template: '<div data-notify="container" class="bg-w col-md-6 alert alert-{0}" role="alert">' +
       '<button type="button" aria-hidden="true" class="btn-close" data-notify="dismiss"></button>' +
       '<span data-notify="icon"></span> ' +
       '<h4 data-notify="title">{1}</h4> ' +
@@ -1365,13 +1366,13 @@ function encode_utf8(s) {
 
 function getReleases(callback) {
   $.ajax({
-    url: window.gitHubReleaseApiUrl,
+    url: globalThis.gitHubReleaseApiUrl,
     method: 'GET',
     error: function () {
       callback(false);
     },
     success: function (releases) {
-      window.gitHubVersionList = releases;
+      globalThis.gitHubVersionList = releases;
 
       // Initialize release categories
       const defaultRelease = { tag_name: '0.0.0' };
@@ -1398,30 +1399,30 @@ function getReleases(callback) {
       });
 
       // Update global variables with the latest releases
-      window.latestStableVersion = highestRelease;
-      window.latestBetaVersion = highestBetaRelease;
-      window.latestAlphaVersion = highestAlphaRelease;
-      window.latestRcVersion = highestRcRelease;
+      globalThis.latestStableVersion = highestRelease;
+      globalThis.latestBetaVersion = highestBetaRelease;
+      globalThis.latestAlphaVersion = highestAlphaRelease;
+      globalThis.latestRcVersion = highestRcRelease;
 
       // Determine the latest version based on the watched branch
-      const { watchedVersionBranch } = window.serverConfig.general;
+      const { watchedVersionBranch } = globalThis.serverConfig.general;
 
       if (watchedVersionBranch === "Beta" && semverLite.gt(highestBetaRelease.tag_name, highestRelease.tag_name)) {
-        window.latestVersion = highestBetaRelease;
+        globalThis.latestVersion = highestBetaRelease;
       } else if (watchedVersionBranch === "Alpha") {
-        window.latestVersion = semverLite.gt(highestAlphaRelease.tag_name, highestBetaRelease.tag_name)
+        globalThis.latestVersion = semverLite.gt(highestAlphaRelease.tag_name, highestBetaRelease.tag_name)
           ? highestAlphaRelease
           : highestBetaRelease;
       } else {
-        window.latestVersion = highestRelease;
+        globalThis.latestVersion = highestRelease;
       }
 
       // Fallback handling if no stable or beta release exists
-      if (window.latestVersion.tag_name === '0.0.0') {
+      if (globalThis.latestVersion.tag_name === '0.0.0') {
         if (highestBetaRelease.tag_name !== '0.0.0') {
-          window.latestVersion = highestBetaRelease;
+          globalThis.latestVersion = highestBetaRelease;
         } else if (highestAlphaRelease.tag_name !== '0.0.0') {
-          window.latestVersion = highestAlphaRelease;
+          globalThis.latestVersion = highestAlphaRelease;
         }
       }
 
@@ -1432,7 +1433,7 @@ function getReleases(callback) {
 }
 
 function getSystemInfo() {
-  const { system: sys, hyperion: shy } = window.sysInfo;
+  const { system: sys, hyperion: shy } = globalThis.sysInfo;
 
   let info = `Hyperion Server:
 - Build:             ${shy.build}
@@ -1442,10 +1443,10 @@ function getSystemInfo() {
 - Version:           ${shy.version}
 - UI Lang:           ${storedLang} (BrowserLang: ${navigator.language})
 - UI Access:         ${storedAccess}
-- Avail Screen Cap.: ${window.serverInfo.grabbers.screen.available}
-- Avail Video  Cap.: ${window.serverInfo.grabbers.video.available}
-- Avail Audio  Cap.: ${window.serverInfo.grabbers.audio.available}
-- Avail Services:    ${window.serverInfo.services}
+- Avail Screen Cap.: ${globalThis.serverInfo.grabbers.screen.available}
+- Avail Video  Cap.: ${globalThis.serverInfo.grabbers.video.available}
+- Avail Audio  Cap.: ${globalThis.serverInfo.grabbers.audio.available}
+- Avail Services:    ${globalThis.serverInfo.services}
 - Config database:   ${shy.configDatabaseFile}
 - Database:          ${shy.readOnlyMode ? "read-only" : "read/write"}
 - Mode:              ${shy.isGuiMode ? "GUI" : "Non-GUI"}
@@ -1463,7 +1464,7 @@ Hyperion Server OS:
 - Root/Admin:        ${sys.isUserAdmin}
 - Qt Version:        ${sys.qtVersion}`;
 
-  if (window.serverInfo.services.includes("effectengine")) {
+  if (globalThis.serverInfo.services.includes("effectengine")) {
     info += `\n- Python Version:    ${sys.pyVersion}`;
   }
 

@@ -4,7 +4,7 @@
 <head>
   <script>
     if (/MSIE/.test(navigator.userAgent) || /Trident/.test(navigator.userAgent)) {
-      window.location.pathname = '/content/ie_not_supported.html';
+      globalThis.location.pathname = '/content/ie_not_supported.html';
     }
   </script>
 
@@ -48,18 +48,19 @@
 
   <!-- JSONEditor -->
   <!-- JSONEditor - OLD -->
-  <!script src="js/lib/jsoneditor.js"></script>
+  <!-- <!script src="js/lib/jsoneditor.js"></script> -->
 
   <!-- JSONEditor - NEW -->
-  <script src="js/lib/jsoneditor-2-5.2.js"></script>
+  <!-- <script src="js/lib/jsoneditor-2-5.2.js"></script> -->
 
   <!-- JSONEditor - Latest
 	replace translateElement by translateProperty in ui_utils.js, check that
 	following issue has been fixed https://github.com/json-editor/json-editor/issues/1085
   -->
-  <!script src="js/lib/jsoneditor-2-5.4.js"></script>
+  <!-- <!script src="js/lib/jsoneditor-2-5.4.js"></script>
   <!script src="js/lib/jsoneditor-2-8.0.js"></script>
-  <!script src="js/lib/jsoneditor-2-9.0-beta.1.js"></script>
+  <!script src="js/lib/jsoneditor-2-9.0-beta.1.js"></script> -->
+  <script src="js/lib/jsoneditor-2-16.0.js"></script>
 
   <!-- PlainDraggable -->
   <script src="js/lib/plain-draggable.min.js"></script>
