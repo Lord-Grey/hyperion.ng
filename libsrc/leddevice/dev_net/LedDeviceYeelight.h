@@ -4,11 +4,6 @@
 // LedDevice includes
 #include <leddevice/LedDevice.h>
 
-// mDNS/bonjour wrapper
-#ifndef __APPLE__
-#include <mdns/mdnsEngineWrapper.h>
-#endif
-
 // Qt includes
 #include <QTcpSocket>
 #include <QHostAddress>
@@ -608,10 +603,6 @@ private:
 	QHostAddress _musicModeServerAddress;
 	int _musicModeServerPort;
 	QScopedPointer<QTcpServer> _tcpMusicModeServer;
-
-#ifndef __APPLE__
-	MdnsEngineWrapper* _mdnsEngine;
-#endif
 
 };
 

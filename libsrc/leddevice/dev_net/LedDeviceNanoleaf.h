@@ -6,11 +6,6 @@
 #include "ProviderRestApi.h"
 #include "ProviderUdp.h"
 
-// mDNS/bonjour wrapper
-#ifndef __APPLE__
-#include <mdns/mdnsEngineWrapper.h>
-#endif
-
 // Qt includes
 #include <QString>
 #include <QNetworkAccessManager>
@@ -264,9 +259,6 @@ private:
 	/// Array of the panel ids.
 	QVector<int> _panelIds;
 
-#ifndef __APPLE__
-	MdnsEngineWrapper* _mdnsEngine;
-#endif
 	QJsonObject _originalStateProperties;
 
 	bool _isBrightnessOverwrite;

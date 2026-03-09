@@ -85,12 +85,6 @@ const char SSDP_FILTER[] = "yeelight(.*)";
 const char SSDP_FILTER_HEADER[] = "Location";
 const quint16 SSDP_PORT = 1982;
 
-// mDNS Hostname resolution
-#ifndef __APPLE__
-const int DEFAULT_HOSTNAME_RESOLUTION_RETRIES = 6;
-constexpr std::chrono::milliseconds DEFAULT_HOSTNAME_RESOLUTION_WAIT_TIME{ 500 };
-#endif
-
 } //End of constants
 
 YeelightLight::YeelightLight( QSharedPointer<Logger> log, const QString &hostName, quint16 port = API_DEFAULT_PORT)
@@ -908,9 +902,6 @@ LedDeviceYeelight::LedDeviceYeelight(const QJsonObject &deviceConfig)
 	  ,_brightnessFactor(1.0)
 	  ,_waitTimeQuota(API_DEFAULT_QUOTA_WAIT_TIME)
 	  ,_musicModeServerPort(-1)
-#ifndef __APPLE__
-	, _mdnsEngine(MdnsEngineWrapper::getInstance())
-#endif
 {
 	NetUtils::discoverMdnsServices(_activeDeviceType);
 }
