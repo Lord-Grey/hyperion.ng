@@ -20,17 +20,14 @@
   <title data-i18n="general_webui_title">Hyperion - Web Configuration</title>
 
   <!-- jQuery - Prod -->
-  <script src="js/lib/jquery/jquery-3.6.0.min.js"></script>
-  <script src="js/lib/jquery/jquery-migrate-3.3.2.min.js"></script>
+  <script src="js/lib/jquery/jquery-4.0.0.min.js"></script>
+  <script src="js/lib/jquery/jquery-migrate-3.6.0.min.js"></script>
 
   <!-- jQuery - Dev -->
   <!--
-  <script src="js/lib/jquery/dev/jquery-3.6.0.js"></script>
-  <script src="js/lib/jquery/dev/jquery-migrate-3.3.2.js"></script>
+  <script src="js/lib/jquery/dev/jquery-4.0.0.js"></script>
+  <script src="js/lib/jquery/dev/jquery-migrate-3.6.0.js"></script>
   -->
-
-
-  <!script src="js/lib/popper.min.js"></script>
 
   <!-- SemVer -->
   <script src='js/lib/semver.js'></script>
@@ -81,9 +78,12 @@
 
   <script src="js/languages.js"></script>
 
-  <!-- Bootstrap 3 Core CSS -->
-  <link href="css/bootstrap.min.css" rel="stylesheet">
-
+  <!-- Bootstrap Core CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  
+  <!-- Bootstrap 5 Compatibility CSS -->
+  <link href="css/bootstrap5-compat.css" rel="stylesheet">
+  
   <link href="css/bootstrap-colorpicker.min.css" rel="stylesheet">
 
   <!-- BSToggle -->
@@ -136,187 +136,191 @@
   <div id="wrapper">
 
     <!-- Navigation -->
-    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; min-height: 85px">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle closed" aria-controls="navbar">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar top-bar"></span>
-          <span class="icon-bar middle-bar"></span>
-          <span class="icon-bar bottom-bar"></span>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top" role="navigation" style="margin-bottom: 0; min-height: 85px">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="https://www.hyperion-project.org" target="_blank">
+          <img id="navbar_brand_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!" height="80">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
         </button>
-        <a class="navbar-brand" href="https://www.hyperion-project.org" target="_blank"><img id="navbar_brand_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!" height="80"></a>
 
-      </div>
-      <!-- /.navbar-header -->
-
-      <ul class="nav navbar-top-links navbar-right" id="top-navbar">
-        <!-- Browser built in capture stream - streamer.js -->
-        <li class="dropdown" id="btn_streamer" style="display:none">
-          <!-- Hidden helpers -->
-          <canvas style="display:none" id="streamcanvas"></canvas>
-          <video style="display:none" id="streamvideo" autoplay></video>
-          <a>
-            <i id="btn_streamer_icon" class="fa fa-video-camera fa-fw"></i>
-          </a>
-        </li>
-        <li class="dropdown" id="btn_open_ledsim">
-          <a>
-            <i class="fa fa-television fa-fw"></i>
-          </a>
-        </li>
-        <!-- /.dropdown -->
-        <li class="dropdown" id="NavMenuWizards">
-          <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-            <i class="fa fa-magic fa-fw"></i>  <i class="fa fa-caret-down"></i>
-          </a>
-          <ul class="dropdown-menu dropdown-alerts">
-            <li id="btn_wizard_byteorder">
-              <a>
-                <div>
-                  <i class="fa fa-magic fa-fw"></i>
-                  <span data-i18n="wiz_rgb_title"></span>
-                </div>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto" id="top-navbar">
+            <!-- Browser built in capture stream - streamer.js -->
+            <li class="nav-item dropdown" id="btn_streamer" style="display:none">
+              <!-- Hidden helpers -->
+              <canvas style="display:none" id="streamcanvas"></canvas>
+              <video style="display:none" id="streamvideo" autoplay></video>
+              <a class="nav-link">
+                <i id="btn_streamer_icon" class="fa fa-video-camera fa-fw"></i>
               </a>
             </li>
-            <li class="divider"></li>
-            <li id="btn_wizard_colorcalibration">
-              <a>
-                <div>
-                  <i class="fa fa-magic fa-fw"></i>
-                  <span data-i18n="wiz_cc_title"></span>
-                </div>
+            <li class="nav-item dropdown" id="btn_open_ledsim">
+              <a class="nav-link">
+                <i class="fa fa-television fa-fw"></i>
               </a>
             </li>
-          </ul>
-        </li>
-        <!-- /.dropdown -->
-        <li class="dropdown">
-          <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-            <i class="fa fa-wrench fa-fw"></i>  <i class="fa fa-caret-down"></i>
-          </a>
-          <ul class="dropdown-menu dropdown-alerts">
-            <!-- /.language selector -->
-            <li id="btn_setlang">
-              <a>
-                <div>
-                  <i class="fa fa-globe fa-fw"></i>
-                  <select id="language-select" class="selectpicker" data-width="fit" data-style="btn-transparent"> </select>
-                </div>
+            <!-- /.dropdown -->
+            <li class="nav-item dropdown" id="NavMenuWizards">
+              <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                <i class="fa fa-magic fa-fw"></i>
               </a>
-            </li>
-            <li class="divider"></li>
-            <li id="btn_setaccess">
-              <a>
-                <div>
-                  <i class="fa fa-wrench fa-fw"></i>
-                  <span data-i18n="InfoDialog_access_title"></span>
-                </div>
-              </a>
-            </li>
-            <li class="divider"></li>
-            <li id="btn_changePassword">
-              <a>
-                <div>
-                  <i class="fa fa-key fa-fw"></i>
-                  <span data-i18n="InfoDialog_changePassword_title"></span>
-                </div>
-              </a>
-            </li>
-          </ul>
-        </li>
-        <li class="dropdown" id="btn_darkmode">
-          <a>
-            <i id="btn_darkmode_icon" class="fa fa-moon-o"></i>
-          </a>
-        </li>
-        <!-- /.dropdown -->
-        <li class="dropdown">
-          <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-            <i class="fa fa-power-off fa-fw"></i>  <i class="fa fa-caret-down"></i>
-          </a>
-          <ul class="dropdown-menu dropdown-alerts">
-            <li id="btn_systemSuspend">
-              <a>
-                <div>
-                  <i class="fa fa-stop fa-fw"></i>
-                  <span data-i18n="InfoDialog_systemSuspend_title"></span>
-                </div>
-              </a>
-            </li>
-            <li id="btn_systemResume">
-              <a>
-                <div>
-                  <i class="fa fa-play fa-fw"></i>
-                  <span data-i18n="InfoDialog_systemResume_title"></span>
-                </div>
-              </a>
-            </li>
-            <li class="divider"></li>
-            <li id="btn_systemRestart">
-              <a>
-                <div>
-                  <i class="fa fa-refresh fa-fw"></i>
-                  <span data-i18n="InfoDialog_systemRestart_title"></span>
-                </div>
-              </a>
-            </li>
-          </ul>
-        </li>
-        <!-- /.lock-ui -->
-        <li class="dropdown" id="btn_lock_ui" style="display:none">
-          <a>
-            <i class="fa fa-lock fa-fw"></i>
-          </a>
-        </li>
-      </ul>
-      <!-- /.navbar-top-left -->
-
-      <div id="main-nav" class="navbar-default sidebar" role="navigation">
-        <div class="sidebar-nav navbar-collapse">
-          <ul class="nav" id="side-menu">
-            <li> <a class="inactive mnava" id="MenuItemDashboard" href="#dashboard"><i class="fa fa-dashboard fa-fw"></i><span data-i18n="main_menu_dashboard_token">Dashboard</span></a> </li>
-            <li> <a class="inactive mnava" id="MenuItemGeneral" href="#conf_general"><i class="fa fa-wrench fa-fw"></i><span data-i18n="main_menu_general_conf_token">General</span></a> </li>
-            <li>
-              <a class="inactive" id="MenuItemLedInstances"><i class="fa fa-cog fa-fw"></i><span data-i18n="main_menu_configuration_token">LED-Instances</span><span class="fa arrow"></span></a>
-              <ul class="nav nav-second-level">
-                <li> <a class="inactive mnava" id="MenuItemInstLeds" href="#conf_leds"><i class="mdi mdi-lightbulb-on fa-fw"></i><span data-i18n="main_menu_leds_conf_token">LED Hardware</span></a> </li>
-                <li> <a class="inactive mnava" id="MenuItemInstCapture" href="#conf_instcapture"><i class="fa fa-camera fa-fw"></i><span data-i18n="main_menu_instcapture_conf_token">Sources</span></a> </li>
-                <li> <a class="inactive mnava" id="MenuItemInstConfEffect" href="#conf_effect"><i class="fa fa-spinner fa-fw"></i><span data-i18n="main_menu_effect_conf_token">Effects</span></a> </li>
-                <li> <a class="inactive mnava" id="MenuItemInstConfColors" href="#conf_colors"><i class="fa fa-photo fa-fw"></i><span data-i18n="main_menu_colors_conf_token">Image Processing</span></a> </li>
+              <ul class="dropdown-menu">
+                <li id="btn_wizard_byteorder">
+                  <a class="dropdown-item">
+                    <div>
+                      <i class="fa fa-magic fa-fw"></i>
+                      <span data-i18n="wiz_rgb_title"></span>
+                    </div>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li id="btn_wizard_colorcalibration">
+                  <a class="dropdown-item">
+                    <div>
+                      <i class="fa fa-magic fa-fw"></i>
+                      <span data-i18n="wiz_cc_title"></span>
+                    </div>
+                  </a>
+                </li>
               </ul>
             </li>
-            <li> <a class="inactive mnava" id="MenuItemGrabber" href="#conf_grabber"><i class="fa fa-camera fa-fw"></i><span data-i18n="main_menu_grabber_conf_token">Capturing Hardware</span></a> </li>
-            <li> <a class="inactive mnava" id="MenuItemNetwork" href="#conf_network"><i class="fa fa-sitemap fa-fw"></i><span data-i18n="main_menu_network_conf_token">Network</span></a> </li>
-            <li> <a class="inactive mnava" id="MenuItemRemoteControl" href="#remote"><i class="fa fa-wifi fa-fw"></i><span data-i18n="main_menu_remotecontrol_token">Remote Control</span></a>	</li>
-            <li> <a class="inactive mnava" id="MenuItemEffectsConfig" href="#effects_configurator"><i class="fa fa-cogs fa-fw"></i><span data-i18n="main_menu_effectsconfigurator_token">Effects Configurator</span></a>	</li>
-            <li> <a class="inactive mnava" href="#support"><i class="fa fa-info fa-fw"></i><span data-i18n="main_menu_support_token">Support</span></a> </li>
-            <li>
-              <a class="inactive" id="MenuItemSystem"><i class="fa fa-industry fa-fw"></i><span data-i18n="main_menu_system_token">System</span><span class="fa arrow"></span></a>
-              <ul class="nav nav-second-level">
-                <li> <a class="inactive mnava" id="MenuItemEventServices" href="#conf_events"><i class="fa fa-server fa-fw"></i><span data-i18n="main_menu_event_services_token">Event Services</span></a> </li>
-                <li> <a class="inactive mnava" id="MenuItemWeb" href="#conf_webconfig" id="load_webconfig"><i class="fa fa-wrench fa-fw"></i><span data-i18n="main_menu_webconfig_token">Webconfiguration</span></a> </li>
-                <li> <a class="inactive mnava" id="MenuItemLogging" href="#conf_logging"><i class="fa fa-reorder fa-fw"></i><span data-i18n="main_menu_logging_token">Log</span></a> </li>
-                <li> <a class="inactive mnava" id="MenuItemUpdate" href="#update"><i class="fa fa-download fa-fw"></i><span data-i18n="main_menu_update_token">Update</span></a> </li>
-                <li> <a class="inactive mnava" id="MenuItemAbout" href="#about"><i class="fa fa-info-circle fa-fw"></i><span data-i18n="main_menu_about_token">About</span></a> </li>
+            <!-- /.dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                <i class="fa fa-wrench fa-fw"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <!-- /.language selector -->
+                <li id="btn_setlang">
+                  <a class="dropdown-item">
+                    <div>
+                      <i class="fa fa-globe fa-fw"></i>
+                      <select id="language-select" class="selectpicker" data-width="fit" data-style="btn-transparent"> </select>
+                    </div>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li id="btn_setaccess">
+                  <a class="dropdown-item">
+                    <div>
+                      <i class="fa fa-wrench fa-fw"></i>
+                      <span data-i18n="InfoDialog_access_title"></span>
+                    </div>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li id="btn_changePassword">
+                  <a class="dropdown-item">
+                    <div>
+                      <i class="fa fa-key fa-fw"></i>
+                      <span data-i18n="InfoDialog_changePassword_title"></span>
+                    </div>
+                  </a>
+                </li>
               </ul>
+            </li>
+            <li class="nav-item dropdown" id="btn_darkmode">
+              <a class="nav-link">
+                <i id="btn_darkmode_icon" class="fa fa-moon-o"></i>
+              </a>
+            </li>
+            <!-- /.dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                <i class="fa fa-power-off fa-fw"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li id="btn_systemSuspend">
+                  <a class="dropdown-item">
+                    <div>
+                      <i class="fa fa-stop fa-fw"></i>
+                      <span data-i18n="InfoDialog_systemSuspend_title"></span>
+                    </div>
+                  </a>
+                </li>
+                <li id="btn_systemResume">
+                  <a class="dropdown-item">
+                    <div>
+                      <i class="fa fa-play fa-fw"></i>
+                      <span data-i18n="InfoDialog_systemResume_title"></span>
+                    </div>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li id="btn_systemRestart">
+                  <a class="dropdown-item">
+                    <div>
+                      <i class="fa fa-refresh fa-fw"></i>
+                      <span data-i18n="InfoDialog_systemRestart_title"></span>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <!-- /.lock-ui -->
+            <li class="nav-item dropdown" id="btn_lock_ui" style="display:none">
+              <a class="nav-link">
+                <i class="fa fa-lock fa-fw"></i>
+              </a>
             </li>
           </ul>
         </div>
-        <!-- /.sidebar-collapse -->
       </div>
-      <!-- /.navbar-static-side -->
     </nav>
 
-    <!-- Page Content -->
-    <div id="page-wrapper" style="padding-top:10px; overflow: hidden;">
-      <div id="hyperion_disabled_notify" style="display:none;padding:0 10px;margin:0">
-        <div class="bs-callout bs-callout-danger">
-          <h4 data-i18n="dashboard_alert_message_disabled_t"></h4>
-          <span data-i18n="dashboard_alert_message_disabled"></span>
-        </div>
-      </div>
+    <div class="container-fluid">
+      <div class="row">
+        <nav id="main-nav" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+          <div class="position-sticky pt-3">
+            <ul class="nav flex-column" id="side-menu">
+              <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemDashboard" href="#dashboard"><i class="fa fa-dashboard fa-fw"></i><span data-i18n="main_menu_dashboard_token">Dashboard</span></a> </li>
+              <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemGeneral" href="#conf_general"><i class="fa fa-wrench fa-fw"></i><span data-i18n="main_menu_general_conf_token">General</span></a> </li>
+              <li class="nav-item">
+                <a class="nav-link inactive" id="MenuItemLedInstances" data-bs-toggle="collapse" href="#ledInstancesSubmenu" role="button" aria-expanded="false"><i class="fa fa-cog fa-fw"></i><span data-i18n="main_menu_configuration_token">LED-Instances</span><span class="fa fa-caret-down"></span></a>
+                <div class="collapse" id="ledInstancesSubmenu">
+                  <ul class="nav flex-column ms-3">
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemInstLeds" href="#conf_leds"><i class="mdi mdi-lightbulb-on fa-fw"></i><span data-i18n="main_menu_leds_conf_token">LED Hardware</span></a> </li>
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemInstCapture" href="#conf_instcapture"><i class="fa fa-camera fa-fw"></i><span data-i18n="main_menu_instcapture_conf_token">Sources</span></a> </li>
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemInstConfEffect" href="#conf_effect"><i class="fa fa-spinner fa-fw"></i><span data-i18n="main_menu_effect_conf_token">Effects</span></a> </li>
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemInstConfColors" href="#conf_colors"><i class="fa fa-photo fa-fw"></i><span data-i18n="main_menu_colors_conf_token">Image Processing</span></a> </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemGrabber" href="#conf_grabber"><i class="fa fa-camera fa-fw"></i><span data-i18n="main_menu_grabber_conf_token">Capturing Hardware</span></a> </li>
+              <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemNetwork" href="#conf_network"><i class="fa fa-sitemap fa-fw"></i><span data-i18n="main_menu_network_conf_token">Network</span></a> </li>
+              <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemRemoteControl" href="#remote"><i class="fa fa-wifi fa-fw"></i><span data-i18n="main_menu_remotecontrol_token">Remote Control</span></a></li>
+              <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemEffectsConfig" href="#effects_configurator"><i class="fa fa-cogs fa-fw"></i><span data-i18n="main_menu_effectsconfigurator_token">Effects Configurator</span></a></li>
+              <li class="nav-item"> <a class="nav-link inactive mnava" href="#support"><i class="fa fa-info fa-fw"></i><span data-i18n="main_menu_support_token">Support</span></a> </li>
+              <li class="nav-item">
+                <a class="nav-link inactive" id="MenuItemSystem" data-bs-toggle="collapse" href="#systemSubmenu" role="button" aria-expanded="false"><i class="fa fa-industry fa-fw"></i><span data-i18n="main_menu_system_token">System</span><span class="fa fa-caret-down"></span></a>
+                <div class="collapse" id="systemSubmenu">
+                  <ul class="nav flex-column ms-3">
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemEventServices" href="#conf_events"><i class="fa fa-server fa-fw"></i><span data-i18n="main_menu_event_services_token">Event Services</span></a> </li>
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemWeb" href="#conf_webconfig"><i class="fa fa-wrench fa-fw"></i><span data-i18n="main_menu_webconfig_token">Webconfiguration</span></a> </li>
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemLogging" href="#conf_logging"><i class="fa fa-reorder fa-fw"></i><span data-i18n="main_menu_logging_token">Log</span></a> </li>
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemUpdate" href="#update"><i class="fa fa-download fa-fw"></i><span data-i18n="main_menu_update_token">Update</span></a> </li>
+                    <li class="nav-item"> <a class="nav-link inactive mnava" id="MenuItemAbout" href="#about"><i class="fa fa-info-circle fa-fw"></i><span data-i18n="main_menu_about_token">About</span></a> </li>
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </nav>
 
-      <div id="page-content"></div>
+        <!-- Page Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+          <div id="hyperion_disabled_notify" style="display:none;padding:0 10px;margin:0">
+            <div class="bs-callout bs-callout-danger">
+              <h4 data-i18n="dashboard_alert_message_disabled_t"></h4>
+              <span data-i18n="dashboard_alert_message_disabled"></span>
+            </div>
+          </div>
+
+          <div id="page-content"></div>
+        </main>
+      </div>
     </div>
 
   </div>
@@ -327,58 +331,50 @@
   <div id="container_restart" style="display:none"></div>
 
   <!-- infoDialog -->
-  <div id="modal_dialog" class="modal fade" role="dialog" style="z-index:9999">
-    <div class="modal-dialog">
-      <center>
-        <div class="modal-content">
-          <div id="id_body" class="modal-body"></div>
-          <div id="id_footer" class="modal-footer" style="text-align:center"></div>
-        </div>
-      </center>
+  <div id="modal_dialog" class="modal fade" tabindex="-1" role="dialog" style="z-index:9999">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div id="id_body" class="modal-body text-center"></div>
+        <div id="id_footer" class="modal-footer justify-content-center"></div>
+      </div>
     </div>
   </div>
 
   <!-- renameDialog -->
-  <div id="modal_dialog_rename" class="modal fade" role="dialog" style="z-index:9999">
-    <div class="modal-dialog">
-      <center>
-        <div class="modal-content">
-          <div id="id_body_rename" class="modal-body"></div>
-          <div id="id_footer_rename" class="modal-footer" style="text-align:center"></div>
-        </div>
-      </center>
+  <div id="modal_dialog_rename" class="modal fade" tabindex="-1" role="dialog" style="z-index:9999">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div id="id_body_rename" class="modal-body text-center"></div>
+        <div id="id_footer_rename" class="modal-footer justify-content-center"></div>
+      </div>
     </div>
   </div>
 
   <!-- wizardDialog -->
-  <div id="wizard_modal" class="modal fade" role="dialog">
-    <div class="modal-dialog">
+  <div id="wizard_modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div id="wiz_header" class="modal-header"></div>
         <div id="wizp1">
-          <div class="modal-body" style="text-align:center">
+          <div class="modal-body text-center">
             <img id="wizard_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!" style="margin-bottom:15px">
             <div id="wizp1_body"></div>
           </div>
-          <div id="wizp1_footer" class="modal-footer" style="text-align:center"></div>
+          <div id="wizp1_footer" class="modal-footer justify-content-center"></div>
         </div>
         <div id="wizp2" style="display:none">
-          <center>
-            <div class="modal-body">
-              <img id="wizard_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!" style="margin-bottom:15px">
-              <div id="wizp2_body"></div>
-            </div>
-          </center>
-          <div id="wizp2_footer" class="modal-footer" style="text-align:center"></div>
+          <div class="modal-body text-center">
+            <img id="wizard_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!" style="margin-bottom:15px">
+            <div id="wizp2_body"></div>
+          </div>
+          <div id="wizp2_footer" class="modal-footer justify-content-center"></div>
         </div>
         <div id="wizp3" style="display:none">
-          <center>
-            <div class="modal-body">
-              <img id="wizard_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!" style="margin-bottom:15px">
-              <div id="wizp3_body"></div>
-            </div>
-          </center>
-          <div id="wizp3_footer" class="modal-footer" style="text-align:center"></div>
+          <div class="modal-body text-center">
+            <img id="wizard_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!" style="margin-bottom:15px">
+            <div id="wizp3_body"></div>
+          </div>
+          <div id="wizp3_footer" class="modal-footer justify-content-center"></div>
         </div>
       </div>
     </div>
@@ -403,7 +399,7 @@
   </div>
 
   <!-- Bootstrap Core JavaScript -->
-  <script src="js/lib/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
   <!-- BSToggle -->
   <script src="js/lib/bootstrap-toggle.min.js"></script>
