@@ -1,30 +1,38 @@
 {
-	"type" : "object",
-	"title" : "edt_conf_gen_heading_title",
-	"properties" :
-	{
-		"name" :
-		{
-			"type" : "string",
-			"title" : "edt_conf_gen_name_title",
-			"default" : "My Hyperion Config",
-			"minLength" : 4,
-			"maxLength" : 20,
-			"required" : true,
-			"propertyOrder" : 1
+	"type": "object",
+	"title": "edt_conf_gen_heading_title",
+	"options": {
+		"titleHidden": true
+	},
+	"properties": {
+		"name": {
+			"type": "string",
+			"title": "edt_conf_gen_name_title",
+			"default": "My Hyperion Config",
+			"minLength": 4,
+			"maxLength": 20,
+			"required": true,
+			"propertyOrder": 1
 		},
-		"watchedVersionBranch" :
-		{
-			"type" : "string",
-			"title" : "edt_conf_gen_watchedVersionBranch_title",
-			"enum" : ["Stable", "Beta", "Alpha"],
-			"required" : true,
-			"access" : "expert",
-			"default" : "Stable",
-			"options" : {
-				"enum_titles" : ["Stable", "Beta", "Alpha"]
+		"watchedVersionBranch": {
+			"type": "string",
+			"title": "edt_conf_gen_watchedVersionBranch_title",
+			"enum": [
+				"Stable",
+				"Beta",
+				"Alpha"
+			],
+			"required": true,
+			"access": "expert",
+			"default": "Stable",
+			"options": {
+				"enum_titles": [
+					"Stable",
+					"Beta",
+					"Alpha"
+				]
 			},
-			"propertyOrder" : 2
+			"propertyOrder": 2
 		},
 		"showOptHelp": {
 			"type": "boolean",
@@ -34,16 +42,15 @@
 			"required": true,
 			"propertyOrder": 3
 		},
-		"configVersion" :
-		{
-			"type" : "string",
-			"title" : "edt_conf_gen_configVersion_title",
-			"options" : {
-				"hidden":true
+		"configVersion": {
+			"type": "string",
+			"title": "edt_conf_gen_configVersion_title",
+			"options": {
+				"hidden": true
 			},
-			"access" : "expert",
-			"propertyOrder" : 4
+			"access": "expert",
+			"propertyOrder": 4
 		}
 	},
-	"additionalProperties" : false
+	"additionalProperties": false
 }

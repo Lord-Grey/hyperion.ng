@@ -1,6 +1,9 @@
 {
 	"type": "object",
 	"title": "edt_conf_log_heading_title",
+	"options": {
+		"titleHidden": true
+	},
 	"properties": {
 		"level": {
 			"type": "string",

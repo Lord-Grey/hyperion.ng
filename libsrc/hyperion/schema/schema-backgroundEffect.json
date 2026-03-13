@@ -1,6 +1,9 @@
 {
   "type": "object",
   "title": "edt_conf_bge_heading_title",
+  "options": {
+    "titleHidden": true
+  },
   "properties": {
     "enable": {
       "type": "boolean",
@@ -15,12 +18,18 @@
     "type": {
       "type": "string",
       "title": "edt_conf_fge_type_title",
-      "enum": [ "color", "effect" ],
+      "enum": [
+        "color",
+        "effect"
+      ],
       "default": "effect",
       "required": true,
       "options": {
         "infoText": "edt_conf_fge_type_expl",
-        "enum_titles": [ "edt_conf_enum_color", "edt_conf_enum_effect" ]
+        "enum_titles": [
+          "edt_conf_enum_color",
+          "edt_conf_enum_effect"
+        ]
       },
       "propertyOrder": 2
     },

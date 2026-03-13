@@ -1,5 +1,9 @@
 {
   "type": "object",
+  "title": "conf_cec_events_heading_title",
+  "options": {
+    "titleHidden": true
+  },
   "properties": {
     "enable": {
       "type": "boolean",
@@ -64,7 +68,7 @@
             "enum": [
               "standby",
               "set stream path",
-			  "F1 (blue)",
+              "F1 (blue)",
               "F2 (red)",
               "F3 (green)",
               "F4 (yellow)"
@@ -91,4 +95,3 @@
   },
   "additionalProperties": false
 }
-

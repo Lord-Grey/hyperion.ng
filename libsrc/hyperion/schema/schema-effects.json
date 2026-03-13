@@ -1,6 +1,9 @@
 {
 	"type": "object",
 	"title": "edt_conf_effp_heading_title",
+	"options": {
+		"titleHidden": true
+	},
 	"properties": {
 		"paths": {
 			"type": "array",

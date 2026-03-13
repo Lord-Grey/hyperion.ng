@@ -1,6 +1,9 @@
 {
 	"type": "object",
 	"title": "edt_conf_network_heading_title",
+	"options": {
+		"titleHidden": true
+	},
 	"properties": {
 		"localApiAuth": {
 			"type": "boolean",

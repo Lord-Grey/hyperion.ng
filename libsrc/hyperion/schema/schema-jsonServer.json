@@ -1,6 +1,9 @@
 {
 	"type": "object",
 	"title": "edt_conf_jsonServer_heading_title",
+	"options": {
+		"titleHidden": true
+	},
 	"properties": {
 		"port": {
 			"type": "integer",

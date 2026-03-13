@@ -1,11 +1,14 @@
 {
-  "type": "object",
-  "required": true,
-  "title": "edt_conf_audio_heading_title",
+    "type": "object",
+    "required": true,
+    "title": "edt_conf_audio_heading_title",
+    "options": {
+        "titleHidden": true
+    },
     "properties": {
         "enable": {
             "type": "boolean",
-			"format": "checkbox",            
+            "format": "checkbox",
             "title": "edt_conf_general_enable_title",
             "required": true,
             "default": false,
@@ -36,10 +39,14 @@
             "type": "string",
             "title": "edt_conf_audio_effects_title",
             "required": true,
-            "enum": [ "vuMeter" ],
+            "enum": [
+                "vuMeter"
+            ],
             "default": "vuMeter",
             "options": {
-                "enum_titles": [ "edt_conf_audio_effect_enum_vumeter" ]
+                "enum_titles": [
+                    "edt_conf_audio_effect_enum_vumeter"
+                ]
             },
             "propertyOrder": 4
         },
@@ -77,7 +84,7 @@
                 },
                 "hotColor": {
                     "type": "string",
-                    "format": "color",                    
+                    "format": "color",
                     "title": "edt_conf_audio_effect_hotcolor_title",
                     "default": "#ff0000",
                     "required": true,
@@ -86,7 +93,7 @@
                 },
                 "warnColor": {
                     "type": "string",
-                    "format": "color",                    
+                    "format": "color",
                     "title": "edt_conf_audio_effect_warncolor_title",
                     "default": "#ffff00",
                     "required": true,
@@ -106,7 +113,7 @@
                 },
                 "safeColor": {
                     "type": "string",
-                    "format": "color",                    
+                    "format": "color",
                     "title": "edt_conf_audio_effect_safecolor_title",
                     "default": "#00ff00",
                     "required": true,
@@ -127,5 +134,5 @@
             }
         }
     },
-  "additionalProperties": true
+    "additionalProperties": true
 }

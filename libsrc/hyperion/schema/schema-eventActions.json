@@ -1,6 +1,9 @@
 {
   "type": "string",
   "title": "edt_conf_action_title",
+  "options": {
+    "titleHidden": true
+  },
   "enum": [
     "Suspend",
     "Resume",
@@ -22,4 +25,3 @@
     ]
   }
 }
-

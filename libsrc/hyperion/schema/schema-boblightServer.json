@@ -1,8 +1,10 @@
 {
-	"type" : "object",
-	"title" : "edt_conf_bobls_heading_title",
-	"properties" :
-	{
+	"type": "object",
+	"title": "edt_conf_bobls_heading_title",
+	"options": {
+		"titleHidden": true
+	},
+	"properties": {
 		"enable": {
 			"type": "boolean",
 			"format": "checkbox",
@@ -10,25 +12,23 @@
 			"default": false,
 			"propertyOrder": 1
 		},
-		"port" :
-		{
-			"type" : "integer",
-			"required" : true,
-			"title" : "edt_conf_general_port_title",
-			"default" : 19333,
-			"minimum" : 1024,
-			"maximum" : 65535,
-			"propertyOrder" : 2
+		"port": {
+			"type": "integer",
+			"required": true,
+			"title": "edt_conf_general_port_title",
+			"default": 19333,
+			"minimum": 1024,
+			"maximum": 65535,
+			"propertyOrder": 2
 		},
-		"priority" :
-		{
-			"type" : "integer",
-			"title" : "edt_conf_general_priority_title",
-			"minimum" : 2,
-			"maximum" : 253,
-			"default" : 128,
-			"propertyOrder" : 3
+		"priority": {
+			"type": "integer",
+			"title": "edt_conf_general_priority_title",
+			"minimum": 2,
+			"maximum": 253,
+			"default": 128,
+			"propertyOrder": 3
 		}
 	},
-	"additionalProperties" : false
+	"additionalProperties": false
 }

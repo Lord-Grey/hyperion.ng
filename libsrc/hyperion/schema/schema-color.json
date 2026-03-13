@@ -1,66 +1,92 @@
 {
-	"type":"object",
-	"title" : "edt_conf_color_heading_title",
-	"properties":
-	{
-		"imageToLedMappingType" :
-		{
-			"type" : "string",
-			"required" : true,
-			"title" : "edt_conf_color_imageToLedMappingType_title",
-			"enum" : ["multicolor_mean","multicolor_mean_squared", "unicolor_mean", "dominant_color", "unicolor_dominant", "dominant_color_advanced", "unicolor_dominant_advanced"],
-			"default" : "multicolor_mean",
-			"options" : {
-				"enum_titles" : ["edt_conf_enum_multicolor_mean","edt_conf_enum_multicolor_mean_squared", "edt_conf_enum_unicolor_mean", "edt_conf_enum_dominant_color", "edt_conf_enum_unicolor_dominant", "edt_conf_enum_dominant_color_advanced", "edt_conf_enum_unicolor_dominant_advanced"]
+	"type": "object",
+	"title": "edt_conf_color_heading_title",
+	"options": {
+		"titleHidden": true
+	},
+	"properties": {
+		"imageToLedMappingType": {
+			"type": "string",
+			"required": true,
+			"title": "edt_conf_color_imageToLedMappingType_title",
+			"enum": [
+				"multicolor_mean",
+				"multicolor_mean_squared",
+				"unicolor_mean",
+				"dominant_color",
+				"unicolor_dominant",
+				"dominant_color_advanced",
+				"unicolor_dominant_advanced"
+			],
+			"default": "multicolor_mean",
+			"options": {
+				"enum_titles": [
+					"edt_conf_enum_multicolor_mean",
+					"edt_conf_enum_multicolor_mean_squared",
+					"edt_conf_enum_unicolor_mean",
+					"edt_conf_enum_dominant_color",
+					"edt_conf_enum_unicolor_dominant",
+					"edt_conf_enum_dominant_color_advanced",
+					"edt_conf_enum_unicolor_dominant_advanced"
+				]
 			},
-			"propertyOrder" : 1
+			"propertyOrder": 1
 		},
-	    "accuracyLevel": {
-		    "type": "integer",
-		    "title": "edt_conf_color_accuracyLevel_title",
-			"required" : true,
-		    "minimum": 1,
-		    "maximum": 4,
-		    "default": 2,
-		    "propertyOrder": 2,
-		    "options": {
-		        "dependencies": {
-					"imageToLedMappingType": ["dominant_color_advanced", "unicolor_dominant_advanced"]
-		        }
-		    }
+		"accuracyLevel": {
+			"type": "integer",
+			"title": "edt_conf_color_accuracyLevel_title",
+			"required": true,
+			"minimum": 1,
+			"maximum": 4,
+			"default": 2,
+			"propertyOrder": 2,
+			"options": {
+				"dependencies": {
+					"imageToLedMappingType": [
+						"dominant_color_advanced",
+						"unicolor_dominant_advanced"
+					]
+				}
+			}
 		},
-	    "reducedPixelSetFactorFactor": {
-		    "type": "string",
-			"required" : true,
-		    "title": "edt_conf_color_reducedPixelSetFactorFactor_title",
-			"enum" : ["0", "1", "2", "3"],
-			"default" : "0",
-			"options" : {
-				"enum_titles" : ["edt_conf_enum_disabled", "edt_conf_enum_low", "edt_conf_enum_medium", "edt_conf_enum_high"]
+		"reducedPixelSetFactorFactor": {
+			"type": "string",
+			"required": true,
+			"title": "edt_conf_color_reducedPixelSetFactorFactor_title",
+			"enum": [
+				"0",
+				"1",
+				"2",
+				"3"
+			],
+			"default": "0",
+			"options": {
+				"enum_titles": [
+					"edt_conf_enum_disabled",
+					"edt_conf_enum_low",
+					"edt_conf_enum_medium",
+					"edt_conf_enum_high"
+				]
 			},
-		    "propertyOrder": 3
+			"propertyOrder": 3
 		},
-		"channelAdjustment" :
-		{
-			"type" : "array",
-			"title" : "edt_conf_color_channelAdjustment_header_title",
+		"channelAdjustment": {
+			"type": "array",
+			"title": "edt_conf_color_channelAdjustment_header_title",
 			"minItems": 1,
-			"required" : true,
-			"propertyOrder" : 4,
-			"items" :
-			{
-				"type" : "object",
-				"required" : true,
-				"title" : "edt_conf_color_channelAdjustment_header_itemtitle",
-				"properties" :
-				{
-					"id" :
-					{
-						"type" : "string",
-						"title" : "edt_conf_color_id_title",
-						"required" : true,
-						"default" : "A userdefined name",
-						"propertyOrder" : 1
+			"required": true,
+			"propertyOrder": 4,
+			"items": {
+				"type": "object",
+				"required": true,
+				"title": "edt_conf_color_channelAdjustment_header_itemtitle",
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "edt_conf_color_id_title",
+						"required": true,
+						"default": "A userdefined name",
+						"propertyOrder": 1
 					},
 					"leds": {
 						"type": "string",
@@ -125,119 +151,109 @@
 						"required": true,
 						"propertyOrder": 8
 					},
-					"saturationGain" :
-					{
-						"type" : "number",
-						"title" : "edt_conf_color_saturationGain_title",
-						"required" : true,
-						"minimum" : 0.0,
+					"saturationGain": {
+						"type": "number",
+						"title": "edt_conf_color_saturationGain_title",
+						"required": true,
+						"minimum": 0.0,
 						"maximum": 10.0,
-						"default" : 1.0,
-						"step" : 0.1,
-						"propertyOrder" : 11
+						"default": 1.0,
+						"step": 0.1,
+						"propertyOrder": 11
 					},
-					"backlightThreshold" :
-					{
-						"type" : "integer",
-						"title" : "edt_conf_color_backlightThreshold_title",
-						"required" : true,
-						"minimum" : 0,
+					"backlightThreshold": {
+						"type": "integer",
+						"title": "edt_conf_color_backlightThreshold_title",
+						"required": true,
+						"minimum": 0,
 						"maximum": 100,
-						"default" : 0,
-						"append" : "edt_append_percent",
-						"propertyOrder" : 12
+						"default": 0,
+						"append": "edt_append_percent",
+						"propertyOrder": 12
 					},
-					"backlightColored" :
-					{
-						"type" : "boolean",
+					"backlightColored": {
+						"type": "boolean",
 						"format": "checkbox",
-						"title" : "edt_conf_color_backlightColored_title",
-						"required" : true,
-						"default" : false,
-						"propertyOrder" : 13
+						"title": "edt_conf_color_backlightColored_title",
+						"required": true,
+						"default": false,
+						"propertyOrder": 13
 					},
-					"brightness" :
-					{
-						"type" : "integer",
-						"title" : "edt_conf_color_brightness_title",
-						"required" : true,
-						"minimum" : 0,
+					"brightness": {
+						"type": "integer",
+						"title": "edt_conf_color_brightness_title",
+						"required": true,
+						"minimum": 0,
 						"maximum": 100,
-						"default" : 100,
-						"append" : "edt_append_percent",
-						"propertyOrder" : 14
+						"default": 100,
+						"append": "edt_append_percent",
+						"propertyOrder": 14
 					},
-					"brightnessCompensation" :
-					{
-						"type" : "integer",
-						"title" : "edt_conf_color_brightnessComp_title",
-						"required" : true,
-						"minimum" : 0,
+					"brightnessCompensation": {
+						"type": "integer",
+						"title": "edt_conf_color_brightnessComp_title",
+						"required": true,
+						"minimum": 0,
 						"maximum": 100,
-						"default" : 0,
-						"append" : "edt_append_percent",
-						"propertyOrder" : 15
+						"default": 0,
+						"append": "edt_append_percent",
+						"propertyOrder": 15
 					},
-					"brightnessGain" :
-					{
-						"type" : "number",
-						"title" : "edt_conf_color_brightnessGain_title",
-						"required" : true,
-						"minimum" : 0.1,
+					"brightnessGain": {
+						"type": "number",
+						"title": "edt_conf_color_brightnessGain_title",
+						"required": true,
+						"minimum": 0.1,
 						"maximum": 10.0,
-						"default" : 1.0,
-						"step" : 0.1,
-						"propertyOrder" : 16
+						"default": 1.0,
+						"step": 0.1,
+						"propertyOrder": 16
 					},
-					"temperature" :
-					{
-						"type" : "integer",
-						"title" : "edt_conf_color_temperature_title",
-						"required" : true,
-						"minimum" : 1000,
+					"temperature": {
+						"type": "integer",
+						"title": "edt_conf_color_temperature_title",
+						"required": true,
+						"minimum": 1000,
 						"maximum": 40000,
-						"default" : 6600,
-						"step" : 100,
-						"append" : "edt_append_kelvin",
-						"propertyOrder" : 17
+						"default": 6600,
+						"step": 100,
+						"append": "edt_append_kelvin",
+						"propertyOrder": 17
 					},
-					"gammaRed" :
-					{
-						"type" : "number",
-						"title" : "edt_conf_color_gammaRed_title",
-						"required" : true,
-						"minimum" : 0.1,
+					"gammaRed": {
+						"type": "number",
+						"title": "edt_conf_color_gammaRed_title",
+						"required": true,
+						"minimum": 0.1,
 						"maximum": 100.0,
-						"default" : 2.2,
-						"step" : 0.1,
-						"propertyOrder" : 18
+						"default": 2.2,
+						"step": 0.1,
+						"propertyOrder": 18
 					},
-					"gammaGreen" :
-					{
-						"type" : "number",
-						"title" : "edt_conf_color_gammaGreen_title",
-						"required" : true,
-						"minimum" : 0.1,
+					"gammaGreen": {
+						"type": "number",
+						"title": "edt_conf_color_gammaGreen_title",
+						"required": true,
+						"minimum": 0.1,
 						"maximum": 100.0,
-						"default" : 2.2,
-						"step" : 0.1,
-						"propertyOrder" : 19
+						"default": 2.2,
+						"step": 0.1,
+						"propertyOrder": 19
 					},
-					"gammaBlue" :
-					{
-						"type" : "number",
-						"title" : "edt_conf_color_gammaBlue_title",
-						"required" : true,
-						"minimum" : 0.1,
+					"gammaBlue": {
+						"type": "number",
+						"title": "edt_conf_color_gammaBlue_title",
+						"required": true,
+						"minimum": 0.1,
 						"maximum": 100.0,
-						"default" : 2.2,
-						"step" : 0.1,
-						"propertyOrder" : 20
+						"default": 2.2,
+						"step": 0.1,
+						"propertyOrder": 20
 					}
 				},
-				"additionalProperties" : false
+				"additionalProperties": false
 			}
 		}
 	},
-	"additionalProperties" : false
+	"additionalProperties": false
 }

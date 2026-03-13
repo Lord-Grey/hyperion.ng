@@ -1,6 +1,9 @@
 {
-	"type" : "object",
-	"title" : "edt_conf_os_events_heading_title",
+	"type": "object",
+	"title": "edt_conf_os_events_heading_title",
+	"options": {
+		"titleHidden": true
+	},
 	"properties": {
 		"suspendEnable": {
 			"type": "boolean",
@@ -21,13 +24,13 @@
 			"required": false,
 			"title": "edt_conf_os_events_suspendOnLockEnable_title",
 			"default": false,
-			  "options": {
+			"options": {
 				"dependencies": {
-				  "lockEnable": true
+					"lockEnable": true
 				}
 			},
 			"propertyOrder": 3
 		}
 	},
-	"additionalProperties" : false
+	"additionalProperties": false
 }

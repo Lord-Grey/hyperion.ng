@@ -1,6 +1,10 @@
 {
 	"type": "object",
+	"title": "edt_conf_instCapture_heading_title",
 	"required": true,
+	"options": {
+		"titleHidden": true
+	},
 	"properties": {
 		"systemEnable": {
 			"type": "boolean",

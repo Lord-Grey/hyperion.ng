@@ -1,6 +1,9 @@
 {
 	"type": "object",
 	"title": "edt_conf_v4l2_heading_title",
+	"options": {
+		"titleHidden": true
+	},
 	"properties": {
 		"enable": {
 			"type": "boolean",

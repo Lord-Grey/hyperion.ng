@@ -1,6 +1,9 @@
 {
   "type": "object",
   "title": " ",
+  "options": {
+    "titleHidden": true
+  },  
   "defaultProperties": [ "hardwareLedCount", "colorOrder" ],
   "properties": {
     "type": {
