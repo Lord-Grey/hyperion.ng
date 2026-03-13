@@ -68,7 +68,7 @@
         <div class="col-lg-6 col-md-12" id="layout_type">
           <div class="accordion" id="accordion">
             <div class="accordion-item">
-              <h2 class="accordion-header" id="heading1">
+              <h2 class="accordion-header" id="classic_panel">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" data-bs-parent="#accordion" aria-expanded="false" aria-controls="collapse1">
                   <i class="fa fa-television fa-fw"></i><span data-i18n="conf_leds_layout_frame">Classic Layout (LED Frame)</span>
                 </button>
@@ -287,7 +287,7 @@
               </div>
             </div>
             <div class="accordion-item">
-              <h2 class="accordion-header" id="heading2">
+              <h2 class="accordion-header" id="matrix_panel">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" data-bs-parent="#accordion" aria-expanded="false" aria-controls="collapse2">
                   <i class="fa fa-th fa-fw"></i><span data-i18n="conf_leds_layout_matrix">Matrix Configuration (LED wall)</span>
                 </button>
@@ -413,7 +413,7 @@
               </div>
             </div>
             <div id="blacklist_panel" class="accordion-item">
-              <h2 class="accordion-header" id="heading4">
+              <h2 class="accordion-header" id="blacklist_config_panel">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" data-bs-parent="#accordion" aria-expanded="false" aria-controls="collapse4">
                   <i class="fa fa-ban fa-fw"></i><span data-i18n="conf_leds_layout_blacklistleds_title">Blacklist LEDs</span>
                 </button>
@@ -428,7 +428,7 @@
               </div>
             </div>
             <div id="texfield_panel" class="accordion-item">
-              <h2 class="accordion-header" id="heading5">
+              <h2 class="accordion-header" id="current_config_panel">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" data-bs-parent="#accordion" aria-expanded="true" aria-controls="collapse5">
                   <i class="fa fa-wrench fa-fw"></i><span data-i18n="conf_leds_layout_generatedconf">Generated/Actual LED Configuration</span>
                 </button>
@@ -481,6 +481,4 @@
   </div>
 </div>
 
-<script src="/js/content_leds.js"></script>
-
-
+<script type="module" src="/js/content_leds.js"></script>
