@@ -1,8 +1,8 @@
 {
   "type": "object",
-  "title": " ",
+  "title": "edt_dev_general_heading_title",
   "options": {
-    "titleHidden": true
+    "titleHidden": false
   },  
   "defaultProperties": [ "hardwareLedCount", "colorOrder" ],
   "properties": {
