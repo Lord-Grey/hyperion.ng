@@ -6,7 +6,7 @@ $(document).ready(function () {
   let confName;
   let conf_editor = null;
 
-  // Initialize the configuration panel
+  // Initialize the configuration card
   $('#conf_cont').append(createOptPanel('fa-wrench', $.i18n("edt_conf_gen_heading_title"), 'editor_container', 'btn_submit', 'card-system'));
 
   // Show help if needed
@@ -90,13 +90,16 @@ $(document).ready(function () {
       for (const instance of instances) {
         const instanceID = instance.instance;
         const enableStyle = instance.running ? "checked" : "";
-        const renameBtn = `<button id="instren_${instanceID}" type="button" class="btn btn-primary">
+
+        const renameBtn = `<button type="button" class="btn btn-outline-primary" id="instren_${instanceID}">
                                <i class="mdi mdi-lead-pencil"></i>
                            </button>`;
-        const delBtn = `<button id="instdel_${instanceID}" type="button" class="btn btn-danger">
+        const delBtn = `<button type="button" class="btn btn-outline-danger" id="instdel_${instanceID}">
                             <i class="mdi mdi-delete-forever"></i>
                         </button>`;
-        const startBtn = `<div class="form-check form-switch" style="margin:3px"><input id="inst_${instanceID}" ${enableStyle} type="checkbox" role="switch" class="form-check-input toggle-instance"></div>`;
+        const startBtn = `<div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="inst_${instanceID}" ${enableStyle} switch"> 
+                        </div>`;
 
         const $row = createTableRow(
           [instance.friendly_name, startBtn, renameBtn, delBtn],
@@ -158,21 +161,18 @@ $(document).ready(function () {
     $('#btn_import_conf').prop('disabled', state || globalThis.readOnlyMode);
   }
 
-  function readFile(evt) {
+  async function readFile(evt) {
     const f = evt.target.files[0];
     if (f) {
-      const r = new FileReader();
-      r.onload = function (e) {
-        let content = e.target.result.replace(/[^:]?\/\/.*/g, ''); // Remove comments
+      try {
+        let content = await f.text();
+        content = content.replaceAll(/[^:]?\/\/.*/g, ''); // Remove comments
 
         // Check if the content is valid JSON
         const check = isJsonString(content);
-        if (check.length !== 0) {
-          showInfoDialog('error', "", $.i18n('infoDialog_import_jsonerror_text', f.name, JSON.stringify(check.message)));
-          dis_imp_btn(true);
-        } else {
+        if (check.length === 0) {
           content = JSON.parse(content);
-          if (typeof content.global === 'undefined' || typeof content.instances === 'undefined') {
+          if (content.global === undefined || content.instances === undefined) {
             showInfoDialog('error', "", $.i18n('infoDialog_import_version_error_text', f.name));
             dis_imp_btn(true);
           } else {
@@ -180,9 +180,15 @@ $(document).ready(function () {
             importedConf = content;
             confName = f.name;
           }
+        } else {
+          showInfoDialog('error', "", $.i18n('infoDialog_import_jsonerror_text', f.name, JSON.stringify(check.message)));
+          dis_imp_btn(true);
         }
-      };
-      r.readAsText(f);
+      } catch (error) {
+        console.error("Error reading file:", error);
+        showInfoDialog('error', "", $.i18n('infoDialog_import_comperror_text'));
+        dis_imp_btn(true);
+      }
     }
   }
 
@@ -222,6 +228,7 @@ $(document).ready(function () {
     createHint("intro", $.i18n('conf_general_intro'), "editor_container");
     createHint("intro", $.i18n('conf_general_tok_desc'), "tok_desc_cont");
     createHint("intro", $.i18n('conf_general_inst_desc'), "inst_desc_cont");
+    createHint("intro", $.i18n('conf_general_impexp_l1') + " " + $.i18n('conf_general_impexp_l2'), "imp_desc_cont");
   }
 
   removeOverlay();
