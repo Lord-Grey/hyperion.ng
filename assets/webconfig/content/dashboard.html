@@ -1,149 +1,172 @@
 <div class="container-fluid">
+  <h3 class="page-header"><i class="fa fa-dashboard fa-fw"></i><span
+      data-i18n="main_menu_dashboard_token">Dashboard</span>
+  </h3>
+  <!-- Infobox -->
   <div class="row">
-    <div class="col-lg-12">
-      <h3 class="page-header"><i class="fa fa-dashboard fa-fw"></i><span data-i18n="main_menu_dashboard_token">Dashboard</span></h3>
-
-      <!-- Infobox -->
-      <div id="dash_intro">
-
-        <!-- Instance(s) -->
-        <div class="row instances">
-
-          <!-- Config status -->
-          <div class="col-md-6 col-xxl-4">
-            <div class="card card-default">
-              <div class="card-header card-system">
-                <span id="dash_config_status">Status</span>
-              </div>
-              <div class="card-body">
-                <table id="dash_capture_hw" class="table table-borderless borderless">
-                  <thead>
-                    <tr>
-                      <th colspan="3">
-                        <i class="mdi mdi-camera"></i>
-                        <span data-i18n="main_menu_grabber_conf_token">Capturing Hardware</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr id="dash_screen_grabber_row">
-                      <td></td>
-                      <td data-i18n="edt_conf_fg_heading_title">Screen-Grabber</td>
-                      <td style="text-align: right; padding-right: 0">
-                        <span id="dash_screen_grabber">disabled</span>
-                        <a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem('MenuItemGrabber', 'editor_container_screengrabber')" style="text-decoration: none; cursor: pointer"></a>
-                      </td>
-                    </tr>
-                    <tr id="dash_video_grabber_row">
-                      <td></td>
-                      <td data-i18n="edt_conf_v4l2_heading_title">Video-Grabber</td>
-                      <td style="text-align: right; padding-right: 0">
-                        <span id="dash_video_grabber">disabled</span>
-                        <a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem('MenuItemGrabber', 'editor_container_videograbber')" style="text-decoration: none; cursor: pointer"></a>
-                      </td>
-                    </tr>
-                    <tr id="dash_audio_grabber_row">
-                      <td></td>
-                      <td data-i18n="edt_conf_audio_heading_title">Audio-Grabber</td>
-                      <td style="text-align: right; padding-right: 0">
-                        <span id="dash_audio_grabber">disabled</span>
-                        <a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem('MenuItemGrabber', 'editor_container_audiograbber')" style="text-decoration: none; cursor: pointer"></a>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <table id="dash_ports" class="table table-borderless borderless">
-                  <thead>
-                    <tr>
-                      <th colspan="3">
-                        <i class="mdi mdi-lan"></i>
-                        <span data-i18n="dashboard_infobox_label_ports">Ports</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr id="dash_ports_flat_row">
-                      <td></td>
-                      <td data-i18n="dashboard_infobox_label_port_flat">flat</td>
-                      <td style="text-align: right; padding-right: 0">
-                        <span id="dash_fbPort">unknown</span>
-                        <a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem('MenuItemNetwork', 'editor_container_fbserver')" style="text-decoration: none; cursor: pointer"></a>
-                      </td>
-                    </tr>
-                    <tr id="dash_ports_proto_row">
-                      <td></td>
-                      <td data-i18n="dashboard_infobox_label_port_proto">proto</td>
-                      <td style="text-align: right; padding-right: 0">
-                        <span id="dash_pbPort">unknown</span>
-                        <a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem('MenuItemNetwork', 'editor_container_protoserver')" style="text-decoration: none; cursor: pointer"></a>
-                      </td>
-                    </tr>
-                    <tr id="dash_ports_boblight_row">
-                      <td></td>
-                      <td data-i18n="dashboard_infobox_label_port_boblight">proto</td>
-                      <td style="text-align: right; padding-right: 0">
-                        <span id="dash_boblightPort">unknown</span>
-                        <a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem('MenuItemInstCapture', 'editor_container_boblightserver')" style="text-decoration: none; cursor: pointer"></a>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td data-i18n="dashboard_infobox_label_port_json">json</td>
-                      <td style="text-align: right; padding-right: 0">
-                        <span id="dash_jsonPort">unknown</span>
-                        <a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem('MenuItemNetwork', 'editor_container_jsonserver')" style="text-decoration: none; cursor: pointer"></a>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td data-i18n="dashboard_infobox_label_ports_websocket">websocket</td>
-                      <td style="text-align: right; padding-right: 0">
-                        <span id="dash_wsPorts">unknown</span>
-                        <a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem('MenuItemWeb')" style="text-decoration: none; cursor: pointer"></a>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <table class="table table-borderless borderless">
-                  <thead>
-                    <tr>
-                      <th colspan="3">
-                        <i class="mdi mdi-numeric"></i>
-                        <span data-i18n="about_version">Version</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td></td>
-                      <td data-i18n="dashboard_infobox_label_currenthyp">Hyperion version:</td>
-                      <td id="dash_currv" style="text-align: right; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">unknown</td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td data-i18n="dashboard_infobox_label_watchedversionbranch">Watched version branch:</td>
-                      <td id="dash_watchedversionbranch" style="text-align: right">unknown</td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td data-i18n="dashboard_infobox_label_latesthyp">Latest version:</td>
-                      <td id="dash_latev" style="text-align: right">unknown</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <hr>
-                <span id="versioninforesult"></span>
-              </div>
-            </div>
+    <div class="row" id="dash_intro"></div>
+  </div>
+  <!-- Instance-/Status row -->
+  <div class="row">
+    <div class="row gy-2">
+      <!-- Instance(s) -->
+      <div class="col-md-8 col-xxl-4" id="dash_instances"></div>
+      <!-- Config status -->
+      <div class="col-md-8 col-xxl-4">
+        <div class="card card-default">
+          <div class="card-header card-system">
+            <span id="dash_config_status">Status</span>
           </div>
-
+          <div class="card-body">
+            <table id="dash_capture_hw" class="table table-borderless borderless">
+              <thead>
+                <tr>
+                  <th colspan="3">
+                    <i class="mdi mdi-camera"></i>
+                    <span data-i18n="main_menu_grabber_conf_token">Capturing Hardware</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="dash_screen_grabber_row">
+                  <td></td>
+                  <td class="p-0" data-i18n="edt_conf_fg_heading_title">Screen-Grabber</td>
+                  <td class="p-0" style="text-align: right;">
+                    <span id="dash_screen_grabber">disabled</span>
+                    <button class="btn btn-link btn-sm p-1" aria-label="Configure Screen-Grabber"
+                      onclick="SwitchToMenuItem('MenuItemGrabber', 'editor_container_screengrabber')">
+                      <i class="fa fa-cog fa-fw"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr id="dash_video_grabber_row">
+                  <td></td>
+                  <td class="p-0" data-i18n="edt_conf_v4l2_heading_title">Video-Grabber</td>
+                  <td class="p-0" style="text-align: right;">
+                    <span id="dash_video_grabber">disabled</span>
+                    <button class="btn btn-link btn-sm p-1" aria-label="Configure Video-Grabber"
+                      onclick="SwitchToMenuItem('MenuItemGrabber', 'editor_container_videograbber')">
+                      <i class="fa fa-cog fa-fw"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr id="dash_audio_grabber_row">
+                  <td></td>
+                  <td class="p-0" data-i18n="edt_conf_audio_heading_title">Audio-Grabber</td>
+                  <td class="p-0" style="text-align: right;">
+                    <span id="dash_audio_grabber">disabled</span>
+                    <button class="btn btn-link btn-sm p-1" aria-label="Configure Audio-Grabber"
+                      onclick="SwitchToMenuItem('MenuItemGrabber', 'editor_container_audiograbber')">
+                      <i class="fa fa-cog fa-fw"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <table id="dash_ports" class="table table-borderless borderless">
+              <thead>
+                <tr>
+                  <th colspan="3">
+                    <i class="mdi mdi-lan"></i>
+                    <span data-i18n="dashboard_infobox_label_ports">Ports</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="dash_ports_flat_row">
+                  <td></td>
+                  <td class="p-0" data-i18n="dashboard_infobox_label_port_flat">flat</td>
+                  <td class="p-0" style="text-align: right;">
+                    <span id="dash_fbPort">unknown</span>
+                    <button class="btn btn-link btn-sm p-1" aria-label="Configure flat buffer server"
+                      onclick="SwitchToMenuItem('MenuItemNetwork', 'editor_container_fbserver')">
+                      <i class="fa fa-cog fa-fw"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr id="dash_ports_proto_row">
+                  <td></td>
+                  <td class="p-0" data-i18n="dashboard_infobox_label_port_proto">proto</td>
+                  <td class="p-0" style="text-align: right;">
+                    <span id="dash_pbPort">unknown</span>
+                    <button class="btn btn-link btn-sm p-1" aria-label="Configure proto server"
+                      onclick="SwitchToMenuItem('MenuItemNetwork', 'editor_container_protoserver')">
+                      <i class="fa fa-cog fa-fw"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr id="dash_ports_boblight_row">
+                  <td></td>
+                  <td class="p-0" data-i18n="dashboard_infobox_label_port_boblight">proto</td>
+                  <td class="p-0" style="text-align: right;">
+                    <span id="dash_boblightPort">unknown</span>
+                    <button class="btn btn-link btn-sm p-1" aria-label="Configure boblight server"
+                      onclick="SwitchToMenuItem('MenuItemInstCapture', 'editor_container_boblightserver')">
+                      <i class="fa fa-cog fa-fw"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td class="p-0" data-i18n="dashboard_infobox_label_port_json">json</td>
+                  <td class="p-0" style="text-align: right;">
+                    <span id="dash_jsonPort">unknown</span>
+                    <button class="btn btn-link btn-sm p-1" aria-label="Configure JSON server"
+                      onclick="SwitchToMenuItem('MenuItemNetwork', 'editor_container_jsonserver')">
+                      <i class="fa fa-cog fa-fw"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td class="p-0" data-i18n="dashboard_infobox_label_ports_websocket">websocket</td>
+                  <td class="p-0" style="text-align: right;">
+                    <span id="dash_wsPorts">unknown</span>
+                    <button class="btn btn-link btn-sm p-1" aria-label="Configure websocket server"
+                      onclick="SwitchToMenuItem('MenuItemWeb')">
+                      <i class="fa fa-cog fa-fw"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <table class="table table-borderless borderless">
+              <thead>
+                <tr>
+                  <th colspan="3">
+                    <i class="mdi mdi-numeric"></i>
+                    <span data-i18n="about_version">Version</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td></td>
+                  <td data-i18n="dashboard_infobox_label_currenthyp">Hyperion version:</td>
+                  <td id="dash_currv"
+                    style="text-align: right; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
+                    unknown</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td data-i18n="dashboard_infobox_label_watchedversionbranch">Watched version branch:</td>
+                  <td id="dash_watchedversionbranch" style="text-align: right">unknown</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td data-i18n="dashboard_infobox_label_latesthyp">Latest version:</td>
+                  <td id="dash_latev" style="text-align: right">unknown</td>
+                </tr>
+              </tbody>
+            </table>
+            <hr>
+            <span id="versioninforesult"></span>
+          </div>
         </div>
       </div>
-      <!-- /.col-lg-12 -->
+
     </div>
-    <!-- /.row -->
   </div>
 </div>
-  <!-- /.container-fluid -->
 
-  <script src="/js/content_dashboard.js"></script>
+<script src="/js/content_dashboard.js"></script>

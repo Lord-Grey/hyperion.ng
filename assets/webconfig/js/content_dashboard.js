@@ -11,21 +11,19 @@ $(document).ready(function () {
       isInstanceEnabled = components.some(obj => obj.name === "ALL" && obj.enabled);
     }
 
-    // Generate instance status button (Bootstrap 5 form-switch)
     let instBtn = `
-  <div class="form-check form-switch" style="margin:3px">
+  <div class="form-check form-switch form-switch-md">
     <input class="form-check-input" type="checkbox" role="switch" id="instanceButton"
       ${isInstanceEnabled ? "checked" : ""}
-      ${instanceRunningStatus ? "" : "disabled"}>
+      ${instanceRunningStatus ? "" : "disabled" } switch>
   </div>
 `;
 
     // Remove existing instance elements
-    $("div[class*='currentInstance']").remove();
+    // $("div[class*='currentInstance']").remove();
 
     // Start constructing the HTML for instances
     let instances_html = `
-  <div class="col-md-6 col-xxl-4 currentInstance-">
     <div class="card card-default">
       <div class="card-header card-instance">
         <div class="dropdown">
@@ -53,7 +51,7 @@ $(document).ready(function () {
                 <i class="mdi mdi-lightbulb-on fa-fw"></i>
                 <span>${$.i18n('dashboard_componentbox_label_status')}</span>
               </th>
-              <th style="width:1px; text-align:right">
+              <th style="width:1px; text-align:right;">
                 ${instBtn}
               </th>
               </tr>
@@ -63,14 +61,14 @@ $(document).ready(function () {
 
     instances_html += `
   <table class="table borderless">
-    <thead>
+    <tbody>
       <tr>
         <th colspan="3">
           <i class="fa fa-info-circle fa-fw"></i>
           <span>${$.i18n('dashboard_infobox_label_title')}</span>
         </th>
       </tr>
-    </thead>
+    </tbody>
     <tbody>
       <tr>
         <td></td>
@@ -86,20 +84,19 @@ $(document).ready(function () {
     </tbody>
   </table>
 `;
-
     // If the current instance is running, add components table
     if (instanceRunningStatus) {
       instances_html += `
-    <table class="table first_cell_borderless">
-      <thead>
-        <tr>
-          <th colspan="3">
-            <i class="fa fa-eye fa-fw"></i>
-            <span>${$.i18n('dashboard_componentbox_label_title')}</span>
-          </th>
-        </tr>
-      </thead>
-  `;
+      <table class="table borderless">
+        <thead>
+          <tr>
+              <th colspan="3">
+              <i class="fa fa-eye fa-fw"></i>
+              <span>${$.i18n('dashboard_componentbox_label_title')}</span>
+            </th>
+          </tr>
+        </thead>
+    `;
 
       // Initialize components table body
       let instance_components = "";
@@ -120,40 +117,39 @@ $(document).ready(function () {
         const comp_enabled = element.enabled ? "checked" : "";
         const general_comp = `general_comp_${componentName}`;
 
-        // Create the toggle switch for the component (Bootstrap 5 form-switch)
+        // Create the toggle switch for the component
         const componentBtn = `
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" role="switch"
-          id="${general_comp}" ${comp_enabled}>
-      </div>
-    `;
+        <div class="form-check form-switch form-switch-md">
+          <input class="form-check-input" type="checkbox" role="switch"
+            id="${general_comp}" ${comp_enabled} switch>
+        </div>
+        `;
 
         // Add row for the component
         instance_components += `
-      <tr>
-        <td></td>
-        <td>${$.i18n('general_comp_' + componentName)}</td>
-        <td style="text-align:right">${componentBtn}</td>
-      </tr>
-    `;
+        <tr>
+          <td></td>
+          <td style="vertical-align:middle">${$.i18n('general_comp_' + componentName)}</td>
+          <td style="width:1px; text-align:right"> ${componentBtn}</td>
+        </tr>`
+        ;
       }
 
       // Close components table
       instances_html += `
-      <tbody>${instance_components}</tbody>
-    </table>
-  `;
+        <tbody>${instance_components}</tbody>
+      </table>
+      `;
     }
 
     // Close the container divs
     instances_html += `
   </div>
 </div>
-</div>
 `;
 
-    // Prepend the instances HTML to the DOM
-    $('.instances').prepend(instances_html);
+    // Update instances HTML to the DOM
+    $('#dash_instances').html(instances_html);
 
     // Wire up instance toggle
     $('#instanceButton').on('change', function () {
