@@ -97,7 +97,7 @@ $(document).ready(function () {
         const delBtn = `<button type="button" class="btn btn-outline-danger" id="instdel_${instanceID}">
                             <i class="mdi mdi-delete-forever"></i>
                         </button>`;
-        const startBtn = `<div class="form-check form-switch">
+        const startBtn = `<div class="form-check form-switch form-switch-md">
                             <input class="form-check-input" type="checkbox" role="switch" id="inst_${instanceID}" ${enableStyle} switch"> 
                         </div>`;
 
