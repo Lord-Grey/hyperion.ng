@@ -40,7 +40,7 @@ function debugMessage(msg) {
 }
 
 function validateDuration(d) {
-  if (typeof d === "undefined" || d <= 0) {
+  if (d === undefined || d <= 0) {
     return DURATION_ENDLESS;
   } else {
     return d * 1000;
@@ -49,22 +49,22 @@ function validateDuration(d) {
 
 function getHashtag() {
   const lastHashtag = getStorage('lasthashtag');
-  if (lastHashtag !== null) {
-    return lastHashtag;
-  } else {
+  if (lastHashtag === null) {
     let tag = document.URL;
     const hashIndex = tag.indexOf("#");
-    if (hashIndex !== -1) {
-      tag = tag.slice(hashIndex + 1);
-    } else {
+    if (hashIndex === -1) {
       tag = ""; // No hashtag found
+    } else {
+      tag = tag.slice(hashIndex + 1);
     }
 
-    if (tag === "" || typeof tag === "undefined" || tag.startsWith("http")) {
+    if (tag === "" || tag === undefined || tag.startsWith("http")) {
       tag = "dashboard";
     }
 
     return tag;
+  } else {
+    return lastHashtag;
   }
 }
 
@@ -98,7 +98,7 @@ function getConfiguredInstances() {
   const instances = globalThis.serverInfo?.instance || [];
   const list = Array.isArray(instances) ? instances : Object.values(instances);
   return list
-    .filter((inst) => typeof inst.instance !== 'undefined')
+    .filter((inst) => inst.instance !== undefined)
     .map((inst) => inst.instance);
 }
 
@@ -131,12 +131,12 @@ function loadContent(event, forceRefresh) {
 
   let tag;
 
-  if (typeof event !== "undefined") {
+  if (event === undefined) {
+    tag = getHashtag();
+  } else {
     tag = event.currentTarget.hash;
     tag = tag.substr(tag.indexOf("#") + 1);
     setStorage('lasthashtag', tag);
-  } else {
-    tag = getHashtag();
   }
 
   // Only load content if the tag is different or forced
@@ -220,13 +220,13 @@ function initLanguageSelection() {
   }
 
   // Update the language select dropdown
-  $select.val(langLocale); 
-  $select.selectpicker({
-    container: 'body',
-    width: 'fit',
-    style: 'btn-transparent'
-  });
-  $select.selectpicker('refresh');
+  // $select.val(langLocale); 
+  // $select.selectpicker({
+  //   container: 'body',
+  //   width: 'fit',
+  //   style: 'btn-transparent'
+  // });
+  // $select.selectpicker('refresh');
 }
 
 function updateUiOnInstance(inst) {
@@ -519,14 +519,14 @@ function createHint(type, text, container, buttonid) {
   switch (type) {
     case 'intro':
       $('#' + container).prepend(`
-        <div class="alert alert-primary" style="margin-top:0px">
+        <div class="alert intro-hint" style="margin-top:0px">
           <h4>${$.i18n("conf_helptable_expl")}</h4>
           ${text}
         </div>`);
       break;
     case 'wizard':
       $('#' + container).prepend(`
-        <div class="alert alert-wizard" style="margin-top:0px">
+        <div class="alert wizard-hint" style="margin-top:0px">
           <h4>${$.i18n("wiz_wizavail")}</h4>
           ${$.i18n('wiz_guideyou', text)}
           ${buttonHtml}
@@ -597,7 +597,7 @@ function isJsonString(str) {
   return "";
 }
 
-const getObjectProperty = (obj, path) => path.split(".").reduce((o, key) => o && typeof o[key] !== 'undefined' ? o[key] : undefined, obj);
+const getObjectProperty = (obj, path) => path.split(".").reduce((o, key) => o?.[key] === undefined ? undefined : o[key], obj);
 
 const setObjectProperty = (object, path, value) => {
   const parts = path.split('.');
@@ -632,48 +632,37 @@ function createJsonEditor(container, schema, setconfig, usePanel, arrayre = unde
   $('#' + container).off();
   $('#' + container).html("");
 
-  if (typeof arrayre === 'undefined')
+  if (arrayre === undefined)
     arrayre = true;
 
-  //element = document.getElementById(container);
-
-  // JSONEditor.defaults.translate = function (key, variables) {
-  //   let text;
-  //   if (key !== null) {
-  //     text = $.i18n("edt_msg_" + key, variables);
-  //     //console.log("translate: ", key, variables, "-> ", text);
-  //   }
-  //   return text;
-  // };
-
-  //JSONEditor.defaults.translateElement = function (key, variables) {
-  // From 2.5.4 onwards replace translateElement with translateProperty
   JSONEditor.defaults.translateProperty = function (key, variables) {
-
     let text;
     if (key !== null) {
       text = $.i18n(key, variables);
-      console.log("translateProperty - key[", key, "] var[", variables, "]-> ", text);
+      //console.log("translateProperty - key[", key, "] var[", variables, "]-> ", text);
     }
     return text;
   };
 
+    let theme = {theme: 'bootstrap5'};
+
+
   let editor = new JSONEditor(document.getElementById(container),
     {
-      theme: 'bootstrap4',
-      iconlib: "fontawesome4",
-      titleHidden: true,
-      disable_collapse: 'true',
+      theme: 'bootstrap5',
+      //iconlib: "fontawesome4",
+      iconlib: "bootstrap",
+      titleHidden: false,
+      disable_collapse: true,
       form_name_root: 'root',
-      disable_edit_json: true,
+      disable_edit_json: false,
       disable_properties: true,
       disable_array_reorder: arrayre,
       no_additional_properties: true,
       disable_array_delete_all_rows: true,
       disable_array_delete_last_row: true,
-      access: storedAccess,
       schema: {
-        title: ' ',
+        options: { titleHidden: true },
         properties: schema
       }
     });
@@ -684,9 +673,16 @@ function createJsonEditor(container, schema, setconfig, usePanel, arrayre = unde
   }
 
   if (setconfig) {
-    for (let key in editor.root.editors) {
-      editor.getEditor("root." + key).setValue({ ...editor.getEditor("root." + key).value, ...globalThis.serverConfig[key] });
-    }
+    editor.on('ready', function () {
+      // Suppress watcher notifications during initial config load to prevent
+      // watchers firing before dependent editors are fully initialised.
+      const origNotifyWatchers = editor.notifyWatchers.bind(editor);
+      editor.notifyWatchers = function () {};
+      for (let key in editor.root.editors) {
+        editor.getEditor("root." + key).setValue({ ...editor.getEditor("root." + key).value, ...globalThis.serverConfig[key] });
+      }
+      editor.notifyWatchers = origNotifyWatchers;
+    });
   }
 
   return editor;
@@ -876,12 +872,12 @@ function updateJsonEditorRange(rootEditor, path, key, minimum, maximum, defaultV
   }
 
   // Set the range values
-  if (typeof minimum !== "undefined") newSchema[key].minimum = minimum;
-  if (typeof maximum !== "undefined") newSchema[key].maximum = maximum;
-  if (typeof defaultValue !== "undefined") {
+  if (minimum !== undefined) newSchema[key].minimum = minimum;
+  if (maximum !== undefined) newSchema[key].maximum = maximum;
+  if (defaultValue !== undefined) {
     newSchema[key].default = defaultValue;
   }
-  if (typeof step !== "undefined") newSchema[key].step = step;
+  if (step !== undefined) newSchema[key].step = step;
 
   // Update the editor schema
   editor.original_schema.properties[key] = originalProperties;
@@ -896,7 +892,7 @@ function updateJsonEditorRange(rootEditor, path, key, minimum, maximum, defaultV
   editor.addObjectProperty(key);
 
   // restore the current value, if no default value given
-  if (typeof defaultValue === "undefined") {
+  if (defaultValue === undefined) {
     rootEditor.getEditor(path + "." + key).setValue(currentValue);
   } else {
     rootEditor.getEditor(path + "." + key).setValue(defaultValue);
@@ -963,7 +959,7 @@ function buildWL(link, linkt, cl) {
 // Convert RGB values to Hex color
 function rgbToHex(rgb) {
   if (rgb.length === 3) {
-    return `#${("0" + parseInt(rgb[0], 10).toString(16)).slice(-2)}${("0" + parseInt(rgb[1], 10).toString(16)).slice(-2)}${("0" + parseInt(rgb[2], 10).toString(16)).slice(-2)}`;
+    return `#${("0" + Number.parseInt(rgb[0], 10).toString(16)).slice(-2)}${("0" + Number.parseInt(rgb[1], 10).toString(16)).slice(-2)}${("0" + Number.parseInt(rgb[2], 10).toString(16)).slice(-2)}`;
   } else {
     debugMessage('rgbToHex: Given rgb is no array or has wrong length');
   }
@@ -973,9 +969,9 @@ function rgbToHex(rgb) {
 function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
+    r: Number.parseInt(result[1], 16),
+    g: Number.parseInt(result[2], 16),
+    b: Number.parseInt(result[3], 16)
   } : { r: 0, g: 0, b: 0 };
 }
 
@@ -1114,8 +1110,6 @@ function createTable(hid, bid, cont, bless, tclass) {
   $(`#${cont}`).append(table);
 }
 
-
-
 // Creates a table row <tr>
 // @param array list :innerHTML content for <td>/<th>
 // @param bool head  :if null or false it's body
@@ -1144,7 +1138,7 @@ function createTableRow(list, head, align) {
 
 function createRow(id) {
   let el = document.createElement('div');
-  el.className = "row";
+  el.className = "row gy-2";
   el.setAttribute('id', id);
   return el;
 }
@@ -1221,7 +1215,7 @@ function createHelpTable(list, phead, panelId) {
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const tbody = document.createElement('tbody');
-
+  
   list = sortProperties(list);
 
   // Update the heading with an icon and the translation
@@ -1361,7 +1355,7 @@ function performTranslation() {
 }
 
 function encode_utf8(s) {
-  return btoa(new TextEncoder().encode(s).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+  return btoa(new TextEncoder().encode(s).reduce((data, byte) => data + String.fromCodePoint(byte), ''));
 }
 
 function getReleases(callback) {
@@ -1430,47 +1424,6 @@ function getReleases(callback) {
       callback(true);
     }
   });
-}
-
-function getSystemInfo() {
-  const { system: sys, hyperion: shy } = globalThis.sysInfo;
-
-  let info = `Hyperion Server:
-- Build:             ${shy.build}
-- Build time:        ${shy.time}
-- Build type:        ${shy.buildType}
-- Git Remote:        ${shy.gitremote}
-- Version:           ${shy.version}
-- UI Lang:           ${storedLang} (BrowserLang: ${navigator.language})
-- UI Access:         ${storedAccess}
-- Avail Screen Cap.: ${globalThis.serverInfo.grabbers.screen.available}
-- Avail Video  Cap.: ${globalThis.serverInfo.grabbers.video.available}
-- Avail Audio  Cap.: ${globalThis.serverInfo.grabbers.audio.available}
-- Avail Services:    ${globalThis.serverInfo.services}
-- Config database:   ${shy.configDatabaseFile}
-- Database:          ${shy.readOnlyMode ? "read-only" : "read/write"}
-- Mode:              ${shy.isGuiMode ? "GUI" : "Non-GUI"}
-
-Hyperion Server OS:
-- Distribution:      ${sys.prettyName}
-- Architecture:      ${sys.architecture}`;
-
-  if (sys.cpuModelName) info += `\n- CPU Model:         ${sys.cpuModelName}`;
-  if (sys.cpuModelType) info += `\n- CPU Type:          ${sys.cpuModelType}`;
-  if (sys.cpuRevision) info += `\n- CPU Revision:      ${sys.cpuRevision}`;
-  if (sys.cpuHardware) info += `\n- CPU Hardware:      ${sys.cpuHardware}`;
-
-  info += `\n- Kernel:            ${sys.kernelType} (${sys.kernelVersion} (WS: ${sys.wordSize}))
-- Root/Admin:        ${sys.isUserAdmin}
-- Qt Version:        ${sys.qtVersion}`;
-
-  if (globalThis.serverInfo.services.includes("effectengine")) {
-    info += `\n- Python Version:    ${sys.pyVersion}`;
-  }
-
-  info += `\n- Browser:           ${navigator.userAgent}`;
-
-  return info;
 }
 
 function handleDarkMode() {
@@ -1557,7 +1510,7 @@ function showInputOptionsForKey(editor, item, showForKeys, state) {
 }
 
 function encodeHTML(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  return s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
 }
 
 function isValidIPv4(value) {
@@ -1566,7 +1519,7 @@ function isValidIPv4(value) {
     return false;
   }
   for (let part of parts) {
-    if (isNaN(part) || part < 0 || part > 255) {
+    if (Number.isNaN(part) || part < 0 || part > 255) {
       return false;
     }
   }
@@ -1613,7 +1566,7 @@ function validateUUIDSchema(schema, value, path) {
 const loadedScripts = [];
 
 function isScriptLoaded(src) {
-  return loadedScripts.indexOf(src) > -1;
+  return loadedScripts.includes(src);
 }
 
 function loadScript(src, callback, ...params) {

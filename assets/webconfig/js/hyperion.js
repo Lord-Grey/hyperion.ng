@@ -720,3 +720,43 @@ function waitForEventWithTimeout(eventName, timeout = 5000) {
   });
 }
 
+function getSystemInfo() {
+  const { system: sys, hyperion: shy } = globalThis.sysInfo;
+
+  let info = `Hyperion Server:
+- Build:             ${shy.build}
+- Build time:        ${shy.time}
+- Build type:        ${shy.buildType}
+- Git Remote:        ${shy.gitremote}
+- Version:           ${shy.version}
+- UI Lang:           ${storedLang} (BrowserLang: ${navigator.language})
+- UI Access:         ${storedAccess}
+- Avail Screen Cap.: ${globalThis.serverInfo.grabbers.screen.available}
+- Avail Video  Cap.: ${globalThis.serverInfo.grabbers.video.available}
+- Avail Audio  Cap.: ${globalThis.serverInfo.grabbers.audio.available}
+- Avail Services:    ${globalThis.serverInfo.services}
+- Config database:   ${shy.configDatabaseFile}
+- Database:          ${shy.readOnlyMode ? "read-only" : "read/write"}
+- Mode:              ${shy.isGuiMode ? "GUI" : "Non-GUI"}
+
+Hyperion Server OS:
+- Distribution:      ${sys.prettyName}
+- Architecture:      ${sys.architecture}`;
+
+  if (sys.cpuModelName) info += `\n- CPU Model:         ${sys.cpuModelName}`;
+  if (sys.cpuModelType) info += `\n- CPU Type:          ${sys.cpuModelType}`;
+  if (sys.cpuRevision) info += `\n- CPU Revision:      ${sys.cpuRevision}`;
+  if (sys.cpuHardware) info += `\n- CPU Hardware:      ${sys.cpuHardware}`;
+
+  info += `\n- Kernel:            ${sys.kernelType} (${sys.kernelVersion} (WS: ${sys.wordSize}))
+- Root/Admin:        ${sys.isUserAdmin}
+- Qt Version:        ${sys.qtVersion}`;
+
+  if (globalThis.serverInfo.services.includes("effectengine")) {
+    info += `\n- Python Version:    ${sys.pyVersion}`;
+  }
+
+  info += `\n- Browser:           ${navigator.userAgent}`;
+
+  return info;
+}
