@@ -37,6 +37,58 @@ $(document).ready(function () {
     }
   }
 
+  function createEditor(container, schemaKey, changeHandler) {
+    editors[container] = createJsonEditor(
+      `editor_container_${container}`,
+      { [schemaKey]: globalThis.schema[schemaKey] },
+      true,
+      true
+    );
+
+    editors[container].on('change', function () {
+      const isValid = editors[container].validate().length === 0 && !globalThis.readOnlyMode;
+      $(`#btn_submit_${container}`).prop('disabled', !isValid);
+    });
+
+    $(`#btn_submit_${container}`).off().on('click', function () {
+      requestWriteConfig(editors[container].getValue());
+    });
+
+    if (changeHandler) changeHandler(editors[container]);
+  }
+
+  function updateConfiguredInstancesList() {
+    const enumVals = [];
+    const enumTitelVals = [];
+    let enumDefaultVal = "";
+    let addSelect = false;
+
+    const configuredInstances = globalThis.serverInfo.instance;
+
+    if (!configuredInstances || Object.keys(configuredInstances).length === 0) {
+      enumVals.push("NONE");
+      enumTitelVals.push($.i18n('edt_conf_forwarder_no_instance_configured_title'));
+    } else {
+      Object.values(configuredInstances).forEach(({ friendly_name, instance }) => {
+        enumTitelVals.push(friendly_name);
+        enumVals.push(instance.toString());
+      });
+
+      const configuredInstance = globalThis.serverConfig.forwarder.instance.toString();
+
+      if (enumVals.includes(configuredInstance)) {
+        enumDefaultVal = configuredInstance;
+      } else {
+        addSelect = true;
+      }
+    }
+
+    if (enumVals.length > 0) {
+      updateJsonEditorSelection(editors["forwarder"], 'root.forwarder',
+        'instanceList', {}, enumVals, enumTitelVals, enumDefaultVal, addSelect, false);
+    }
+  }
+
   function setupEditors() {
     createEditor("network", "network");
     createEditor("jsonServer", "jsonServer");
@@ -55,140 +107,67 @@ $(document).ready(function () {
     editorConfigs.forEach(({ key, schemaKey, enabled = true, handler }) => {
       if (enabled) createEditor(key, schemaKey, handler);
     });
+  }
 
-    function createEditor(container, schemaKey, changeHandler) {
-      editors[container] = createJsonEditor(
-        `editor_container_${container}`,
-        { [schemaKey]: globalThis.schema[schemaKey] },
-        true,
-        true
-      );
+  function handleForwarderChange(editor) {
+    editor.on('ready', () => {
+      updateServiceCacheForwarderConfiguredItems("jsonapi");
+      updateServiceCacheForwarderConfiguredItems("flatbuffer");
 
-      editors[container].on('change', function () {
-        const isValid = editors[container].validate().length === 0 && !globalThis.readOnlyMode;
-        $(`#btn_submit_${container}`).prop('disabled', !isValid);
-      });
-
-      $(`#btn_submit_${container}`).off().on('click', function () {
-        requestWriteConfig(editors[container].getValue());
-      });
-
-      if (changeHandler) changeHandler(editors[container]);
-    }
-
-    function handleFlatbufChange(editor) {
-      editor.on('change', () => toggleHelpPanel(editor, "flatbufServer", "flatbufServerHelpPanelId"));
-
-      editor.watch('root.flatbufServer.enable', () => {
-        if (!editor.ready) return;
-        const enable = editor.getEditor("root.flatbufServer.enable").getValue();
-        showInputOptionsForKey(editor, "flatbufServer", "enable", enable);
-      });
-    }
-
-    function handleProtoBufChange(editor) {
-      editor.on('change', () => toggleHelpPanel(editor, "protoServer", "protoServerHelpPanelId"));
-
-      editor.watch('root.protoServer.enable', () => {
-        if (!editor.ready) return;
-        const enable = editor.getEditor("root.protoServer.enable").getValue();
-        showInputOptionsForKey(editor, "protoServer", "enable", enable);
-      });
-    }
-
-    function updateConfiguredInstancesList() {
-      const enumVals = [];
-      const enumTitelVals = [];
-      let enumDefaultVal = "";
-      let addSelect = false;
-
-      const configuredInstances = globalThis.serverInfo.instance;
-
-      if (!configuredInstances || Object.keys(configuredInstances).length === 0) {
-        enumVals.push("NONE");
-        enumTitelVals.push($.i18n('edt_conf_forwarder_no_instance_configured_title'));
+      if (editor.getEditor("root.forwarder.enable").getValue()) {
+        updateConfiguredInstancesList();
+        discoverRemoteHyperionServices("jsonapi");
+        discoverRemoteHyperionServices("flatbuffer");
       } else {
-        Object.values(configuredInstances).forEach(({ friendly_name, instance }) => {
-          enumTitelVals.push(friendly_name);
-          enumVals.push(instance.toString());
-        });
-
-        const configuredInstance = globalThis.serverConfig.forwarder.instance.toString();
-
-        if (enumVals.includes(configuredInstance)) {
-          enumDefaultVal = configuredInstance;
-        } else {
-          addSelect = true;
-        }
+        showInputOptionsForKey(editor, "forwarder", "enable", false);
       }
+    });
 
-      if (enumVals.length > 0) {
-        updateJsonEditorSelection(editors["forwarder"], 'root.forwarder',
-          'instanceList', {}, enumVals, enumTitelVals, enumDefaultVal, addSelect, false);
-      }
-    }
+    editor.on('change', () => {
+      toggleHelpPanel(editor, "forwarder", "forwarderHelpPanelId");
+    });
 
-    function handleForwarderChange(editor) {
-      editor.on('ready', () => {
-        updateServiceCacheForwarderConfiguredItems("jsonapi");
-        updateServiceCacheForwarderConfiguredItems("flatbuffer");
-
-        if (editor.getEditor("root.forwarder.enable").getValue()) {
-          updateConfiguredInstancesList();
-          discoverRemoteHyperionServices("jsonapi");
-          discoverRemoteHyperionServices("flatbuffer");
-        } else {
-          showInputOptionsForKey(editor, "forwarder", "enable", false);
-        }
-      });
-
-      editor.on('change', () => {
-        toggleHelpPanel(editor, "forwarder", "forwarderHelpPanelId");
-      });
-
-      ["jsonapi", "flatbuffer"].forEach(function (type) {
-        editor.watch(`root.forwarder.${type}select`, () => {
-          if (!editor.ready) return;
-          updateForwarderServiceSections(type);
-        });
-        editor.watch(`root.forwarder.${type}`, () => {
-          if (!editor.ready) return;
-          onChangeForwarderServiceSections(type);
-        });
-      });
-
-      editor.watch('root.forwarder.enable', () => {
+    ["jsonapi", "flatbuffer"].forEach(function (type) {
+      editor.watch(`root.forwarder.${type}select`, () => {
         if (!editor.ready) return;
-        const isEnabled = editor.getEditor("root.forwarder.enable").getValue();
-        if (isEnabled) {
-
-          updateConfiguredInstancesList();
-
-          const instanceId = editor.getEditor("root.forwarder.instanceList").getValue();
-          if (["NONE", "SELECT", "", undefined].includes(instanceId)) {
-            editor.getEditor("root.forwarder.instance").setValue(-1);
-          }
-
-          discoverRemoteHyperionServices("jsonapi");
-          discoverRemoteHyperionServices("flatbuffer");
-        } else {
-          const instance = editor.getEditor("root.forwarder.instance").getValue();
-          if (instance === -1) {
-            editor.getEditor("root.forwarder.instance").setValue(255);
-          }
-        }
-        showInputOptionsForKey(editor, "forwarder", "enable", isEnabled);
+        updateForwarderServiceSections(type);
       });
-
-      editor.watch('root.forwarder.instanceList', () => {
+      editor.watch(`root.forwarder.${type}`, () => {
         if (!editor.ready) return;
+        onChangeForwarderServiceSections(type);
+      });
+    });
+
+    editor.watch('root.forwarder.enable', () => {
+      if (!editor.ready) return;
+      const isEnabled = editor.getEditor("root.forwarder.enable").getValue();
+      if (isEnabled) {
+
+        updateConfiguredInstancesList();
+
         const instanceId = editor.getEditor("root.forwarder.instanceList").getValue();
-        if (!["NONE", "SELECT", "", undefined].includes(instanceId)) {
-          editor.getEditor("root.forwarder.instance").setValue(Number.parseInt(instanceId, 10));
+        if (["NONE", "SELECT", "", undefined].includes(instanceId)) {
+          editor.getEditor("root.forwarder.instance").setValue(-1);
         }
-      });
-    }
 
+        discoverRemoteHyperionServices("jsonapi");
+        discoverRemoteHyperionServices("flatbuffer");
+      } else {
+        const instance = editor.getEditor("root.forwarder.instance").getValue();
+        if (instance === -1) {
+          editor.getEditor("root.forwarder.instance").setValue(255);
+        }
+      }
+      showInputOptionsForKey(editor, "forwarder", "enable", isEnabled);
+    });
+
+    editor.watch('root.forwarder.instanceList', () => {
+      if (!editor.ready) return;
+      const instanceId = editor.getEditor("root.forwarder.instanceList").getValue();
+      if (!["NONE", "SELECT", "", undefined].includes(instanceId)) {
+        editor.getEditor("root.forwarder.instance").setValue(Number.parseInt(instanceId, 10));
+      }
+    });
   }
 
   // Validate for conflicting ports
@@ -236,67 +215,6 @@ $(document).ready(function () {
     return errors;
   });
 
-  function setupTokenManagement() {
-    createTable('tkthead', 'tktbody', 'tktable');
-    $('.tkthead').html(createTableRow([$.i18n('conf_network_tok_idhead'), $.i18n('conf_network_tok_cidhead'), $.i18n('conf_network_tok_lastuse'), $.i18n('general_btn_delete')], true, true));
-
-    buildTokenList();
-
-    // Initial state check based on server config
-    checkApiTokenState(globalThis.serverConfig.network.localApiAuth || storedAccess === 'expert');
-
-    // Listen for changes on the local API Auth toggle
-    $('#root_network_localApiAuth').on("change", function () {
-      checkApiTokenState($(this).is(":checked"));
-    });
-
-    $('#btn_create_tok').off().on('click', function () {
-      requestToken(encodeHTML($('#tok_comment').val()));
-      $('#tok_comment').val("").prop('disabled', true);
-    });
-
-    $('#tok_comment').off().on('input', function (e) {
-      const charsNeeded = 10 - e.currentTarget.value.length;
-      $('#btn_create_tok').prop('disabled', charsNeeded > 0);
-      $('#tok_chars_needed').html(charsNeeded > 0 ? `${charsNeeded} ${$.i18n('general_chars_needed')}` : "<br />");
-    });
-
-    $(globalThis.hyperion).off("cmd-authorize-createToken").on("cmd-authorize-createToken", function (event) {
-      const val = event.response.info;
-      showInfoDialog("newToken", $.i18n('conf_network_tok_diaTitle'), $.i18n('conf_network_tok_diaMsg') + `<br><div style="font-weight:bold">${val.token}</div>`);
-      addToTokenList(val);
-
-      buildTokenList();
-      $('#tok_comment').val("").prop('disabled', false);
-    });
-
-    function buildTokenList(tokenList = null) {
-      $('.tktbody').empty();
-
-      const list = tokenList || getTokenList();
-      list.forEach(token => {
-        const lastUse = token.last_use || "-";
-        const btn = `<button id="tok${token.id}" type="button" class="btn btn-danger">${$.i18n('general_btn_delete')}</button>`;
-        $('.tktbody').append(createTableRow([token.id, token.comment, lastUse, btn], false, true));
-        $(`#tok${token.id}`).off().on('click', () => handleDeleteToken(token.id));
-      });
-    }
-
-    function handleDeleteToken(id) {
-      requestTokenDelete(id);
-
-      deleteFromTokenList(id);
-      buildTokenList();
-    }
-
-    function checkApiTokenState(state) {
-      if (!state && storedAccess !== 'expert') {
-        $("#conf_cont_token").hide();
-      } else {
-        $("#conf_cont_token").show();
-      }
-    }
-  }
 
   function onChangeForwarderServiceSections(type) {
     const editor = editors["forwarder"].getEditor(`root.forwarder.${type}`);
@@ -369,9 +287,11 @@ $(document).ready(function () {
 
     const addSchemaElements = { "uniqueItems": true };
 
-    if (enumVals.length === 0) {
+    const isServiceAvailable = enumVals.length > 0;
+    if (!isServiceAvailable) {
       enumVals.push("NONE");
       enumTitleVals.push($.i18n('edt_conf_forwarder_remote_service_discovered_none'));
+      enumDefaultVals.push("NONE");
     }
 
     updateJsonEditorMultiSelection(
@@ -383,6 +303,12 @@ $(document).ready(function () {
       enumTitleVals,
       enumDefaultVals
     );
+
+    if (isServiceAvailable) {
+      editors["forwarder"].getEditor(`root.forwarder.${type}select`).activate();
+    } else {
+      editors["forwarder"].getEditor(`root.forwarder.${type}select`).deactivate();
+    }
   }
 
   function updateServiceCacheForwarderConfiguredItems(serviceType) {
@@ -441,6 +367,71 @@ $(document).ready(function () {
 
 });
 
+function setupTokenManagement() {
+  createTable('tkthead', 'tktbody', 'tktable');
+  $('.tkthead').html(createTableRow([$.i18n('conf_network_tok_idhead'), $.i18n('conf_network_tok_cidhead'), $.i18n('conf_network_tok_lastuse')], true, true));
+
+  buildTokenList();
+
+  // Initial state check based on server config
+  checkApiTokenState(globalThis.serverConfig.network.localApiAuth || storedAccess === 'expert');
+
+  // Listen for changes on the local API Auth toggle
+  $('#root_network_localApiAuth').on("change", function () {
+    checkApiTokenState($(this).is(":checked"));
+  });
+
+  $('#btn_create_tok').off().on('click', function () {
+    requestToken(encodeHTML($('#tok_comment').val()));
+    $('#tok_comment').val("").prop('disabled', true);
+  });
+
+  $('#tok_comment').off().on('input', function (e) {
+    const charsNeeded = 10 - e.currentTarget.value.length;
+    $('#btn_create_tok').prop('disabled', charsNeeded > 0);
+    $('#tok_chars_needed').html(charsNeeded > 0 ? `${charsNeeded} ${$.i18n('general_chars_needed')}` : "<br />");
+  });
+
+  $(globalThis.hyperion).off("cmd-authorize-createToken").on("cmd-authorize-createToken", function (event) {
+    const val = event.response.info;
+    showInfoDialog("newToken", $.i18n('conf_network_tok_diaTitle'), $.i18n('conf_network_tok_diaMsg') + `<br><div style="font-weight:bold">${val.token}</div>`);
+    addToTokenList(val);
+
+    buildTokenList();
+    $('#tok_comment').val("").prop('disabled', false);
+  });
+
+  function buildTokenList(tokenList = null) {
+    $('.tktbody').empty();
+
+    const list = tokenList || getTokenList();
+    list.forEach(token => {
+      const lastUse = token.last_use || "-";
+      const delBtn = `<button type="button" class="btn btn-outline-danger" id="tok${token.id}">
+                        <i class="mdi mdi-delete-forever"></i>
+                    </button>`;
+
+      $('.tktbody').append(createTableRow([token.id, token.comment, lastUse, delBtn], false, true));
+      $(`#tok${token.id}`).off().on('click', () => handleDeleteToken(token.id));
+    });
+  }
+
+  function handleDeleteToken(id) {
+    requestTokenDelete(id);
+
+    deleteFromTokenList(id);
+    buildTokenList();
+  }
+
+  function checkApiTokenState(state) {
+    if (!state && storedAccess !== 'expert') {
+      $("#conf_cont_token").hide();
+    } else {
+      $("#conf_cont_token").show();
+    }
+  }
+}
+
 function createSection(id, titleKey, schemaProps, helpPanelId = null) {
   const containerId = `conf_cont_${id}`;
   $('#conf_cont').append(createRow(containerId));
@@ -491,4 +482,25 @@ function appendPanel(id, titleKey) {
 function toggleHelpPanel(editor, key, panelId) {
   const enable = editor.getEditor(`root.${key}.enable`).getValue();
   $(`#${panelId}`).toggle(enable);
+}
+
+
+function handleFlatbufChange(editor) {
+  editor.on('change', () => toggleHelpPanel(editor, "flatbufServer", "flatbufServerHelpPanelId"));
+
+  editor.watch('root.flatbufServer.enable', () => {
+    if (!editor.ready) return;
+    const enable = editor.getEditor("root.flatbufServer.enable").getValue();
+    showInputOptionsForKey(editor, "flatbufServer", "enable", enable);
+  });
+}
+
+function handleProtoBufChange(editor) {
+  editor.on('change', () => toggleHelpPanel(editor, "protoServer", "protoServerHelpPanelId"));
+
+  editor.watch('root.protoServer.enable', () => {
+    if (!editor.ready) return;
+    const enable = editor.getEditor("root.protoServer.enable").getValue();
+    showInputOptionsForKey(editor, "protoServer", "enable", enable);
+  });
 }

@@ -47,7 +47,7 @@
 			"type": "array",
 			"title": "edt_conf_forwarder_json_title",
 			"options": {
-				"infoText": "edt_conf_fw_json_title_info"
+				"infoText": "edt_conf_forwarder_json_title_info"
 			},
 			"uniqueItems": true,
 			"access": "expert",
@@ -112,7 +112,7 @@
 			"type": "array",
 			"title": "edt_conf_forwarder_flat_title",
 			"options": {
-				"infoText": "edt_conf_fw_flat_title_info"
+				"infoText": "edt_conf_forwarder_flat_title_info"
 			},
 			"uniqueItems": true,
 			"access": "expert",
