@@ -22,18 +22,18 @@ $(document).ready(function () {
   function initializeUI() {
     if (globalThis.showOptHelp) {
       createSection("network", "edt_conf_network_heading_title", globalThis.schema.network.properties);
+      createTokenSection();
       createSection("jsonServer", "edt_conf_jsonServer_heading_title", globalThis.schema.jsonServer.properties);
       if (isFlatbufEnabled) createSection("flatbufServer", "edt_conf_flatbufServer_heading_title", globalThis.schema.flatbufServer.properties, "flatbufServerHelpPanelId");
       if (isProtoBufEnabled) createSection("protoServer", "edt_conf_protoServer_heading_title", globalThis.schema.protoServer.properties, "protoServerHelpPanelId");
       if (isForwarderEnabled && storedAccess !== 'default') createSection("forwarder", "edt_conf_forwarder_heading_title", globalThis.schema.forwarder.properties, "forwarderHelpPanelId");
     } else {
-      $('#conf_cont').addClass('row');
       appendPanel("network", "edt_conf_network_heading_title");
+      createTokenSection();
       appendPanel("jsonServer", "edt_conf_jsonServer_heading_title");
-      if (isFlatbufEnabled) appendPanel("flatbufServer", "edt_conf_flatbufSserver_heading_title");
+      if (isFlatbufEnabled) appendPanel("flatbufServer", "edt_conf_flatbufServer_heading_title");
       if (isProtoBufEnabled) appendPanel("protoServer", "edt_conf_protoServer_heading_title");
       if (isForwarderEnabled) appendPanel("forwarder", "edt_conf_forwarder_heading_title");
-      $("#conf_cont_tok").removeClass('row');
     }
   }
 
@@ -80,6 +80,7 @@ $(document).ready(function () {
       editor.on('change', () => toggleHelpPanel(editor, "flatbufServer", "flatbufServerHelpPanelId"));
 
       editor.watch('root.flatbufServer.enable', () => {
+        if (!editor.ready) return;
         const enable = editor.getEditor("root.flatbufServer.enable").getValue();
         showInputOptionsForKey(editor, "flatbufServer", "enable", enable);
       });
@@ -89,6 +90,7 @@ $(document).ready(function () {
       editor.on('change', () => toggleHelpPanel(editor, "protoServer", "protoServerHelpPanelId"));
 
       editor.watch('root.protoServer.enable', () => {
+        if (!editor.ready) return;
         const enable = editor.getEditor("root.protoServer.enable").getValue();
         showInputOptionsForKey(editor, "protoServer", "enable", enable);
       });
@@ -146,14 +148,17 @@ $(document).ready(function () {
 
       ["jsonapi", "flatbuffer"].forEach(function (type) {
         editor.watch(`root.forwarder.${type}select`, () => {
+          if (!editor.ready) return;
           updateForwarderServiceSections(type);
         });
         editor.watch(`root.forwarder.${type}`, () => {
+          if (!editor.ready) return;
           onChangeForwarderServiceSections(type);
         });
       });
 
       editor.watch('root.forwarder.enable', () => {
+        if (!editor.ready) return;
         const isEnabled = editor.getEditor("root.forwarder.enable").getValue();
         if (isEnabled) {
 
@@ -176,6 +181,7 @@ $(document).ready(function () {
       });
 
       editor.watch('root.forwarder.instanceList', () => {
+        if (!editor.ready) return;
         const instanceId = editor.getEditor("root.forwarder.instanceList").getValue();
         if (!["NONE", "SELECT", "", undefined].includes(instanceId)) {
           editor.getEditor("root.forwarder.instance").setValue(Number.parseInt(instanceId, 10));
@@ -236,9 +242,6 @@ $(document).ready(function () {
 
     buildTokenList();
 
-    // Reorder hardcoded token div after the general token setting div
-    $("#conf_cont_tok").insertAfter("#conf_cont_network");
-
     // Initial state check based on server config
     checkApiTokenState(globalThis.serverConfig.network.localApiAuth || storedAccess === 'expert');
 
@@ -264,6 +267,7 @@ $(document).ready(function () {
       addToTokenList(val);
 
       buildTokenList();
+      $('#tok_comment').val("").prop('disabled', false);
     });
 
     function buildTokenList(tokenList = null) {
@@ -287,9 +291,9 @@ $(document).ready(function () {
 
     function checkApiTokenState(state) {
       if (!state && storedAccess !== 'expert') {
-        $("#conf_cont_tok").hide();
+        $("#conf_cont_token").hide();
       } else {
-        $("#conf_cont_tok").show();
+        $("#conf_cont_token").show();
       }
     }
   }
@@ -445,17 +449,43 @@ function createSection(id, titleKey, schemaProps, helpPanelId = null) {
     .append(createHelpTable(schemaProps, $.i18n(titleKey), helpPanelId));
 }
 
+function createTokenSection() {
+
+  const phead = '<i class="fa fa-key fa-fw"></i>' + $.i18n('conf_network_tok_title');
+  let pfooter = document.createElement('button');
+  pfooter.className = "btn btn-primary";
+  pfooter.setAttribute("id", `btn_create_tok`);
+  pfooter.innerHTML = '<i class="mdi mdi-key-plus"></i> ' + $.i18n('conf_network_createToken_btn');
+
+  const bodyid = `<div id="tktable"></div>
+  <div style="margin: 30px 0;"></div>
+  <div class="row g-3 align-items-start">
+    <div class="col-auto">
+      <label for="tok_comment" class="col-form-label fw-bold" style="white-space:nowrap;">${$.i18n('conf_network_tok_comment_title')}</label>
+    </div>
+    <div class="col">
+      <input type="text" id="tok_comment" class="form-control" aria-describedby="tok_chars_needed">
+      <span id="tok_chars_needed" class="form-text">&nbsp;</span>
+    </div>
+  </div>
+  `;
+
+  const containerId = `conf_cont_token`;
+  $('#conf_cont').append(createRow(containerId));
+  $(`#${containerId}`)
+    .append(createPanel(phead, bodyid, pfooter, bodyid, 'card-system'));
+
+  if (globalThis.showOptHelp) {
+    $(`#${containerId}`)
+      .append(createHelpTable({}, $.i18n('conf_network_tok_title')));
+  }
+}
+
 function appendPanel(id, titleKey) {
   const containerId = `conf_cont_${id}`;
-
-  // Create the container element
-  const $newContainer = $('<div></div>', { id: containerId });
-
-  // Append the newly created container to #conf_cont
-  $('#conf_cont').append($newContainer);
-
-  // Append the option panel inside the newly created container
-  $newContainer.append(createOptPanel('fa-sitemap', $.i18n(titleKey), `editor_container_${id}`, `btn_submit_${id}`, 'card-system'));
+  $('#conf_cont').append(createRow(containerId));
+  $(`#${containerId}`)
+    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), `editor_container_${id}`, `btn_submit_${id}`, 'card-system'));
 }
 
 function toggleHelpPanel(editor, key, panelId) {
