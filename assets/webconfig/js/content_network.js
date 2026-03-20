@@ -369,7 +369,7 @@ $(document).ready(function () {
 
 function setupTokenManagement() {
   createTable('tkthead', 'tktbody', 'tktable');
-  $('.tkthead').html(createTableRow([$.i18n('conf_network_tok_idhead'), $.i18n('conf_network_tok_cidhead'), $.i18n('conf_network_tok_lastuse')], true, true));
+  $('.tkthead').html(createTableRow([$.i18n('conf_network_token_idhead'), $.i18n('conf_network_token_cidhead'), $.i18n('conf_network_token_lastuse')], true, true));
 
   buildTokenList();
 
@@ -381,24 +381,24 @@ function setupTokenManagement() {
     checkApiTokenState($(this).is(":checked"));
   });
 
-  $('#btn_create_tok').off().on('click', function () {
-    requestToken(encodeHTML($('#tok_comment').val()));
-    $('#tok_comment').val("").prop('disabled', true);
+  $('#btn_create_token').off().on('click', function () {
+    requestToken(encodeHTML($('#token_comment').val()));
+    $('#token_comment').val("").prop('disabled', true);
   });
 
-  $('#tok_comment').off().on('input', function (e) {
+  $('#token_comment').off().on('input', function (e) {
     const charsNeeded = 10 - e.currentTarget.value.length;
-    $('#btn_create_tok').prop('disabled', charsNeeded > 0);
-    $('#tok_chars_needed').html(charsNeeded > 0 ? `${charsNeeded} ${$.i18n('general_chars_needed')}` : "<br />");
+    $('#btn_create_token').prop('disabled', charsNeeded > 0);
+    $('#token_chars_needed').html(charsNeeded > 0 ? `${charsNeeded} ${$.i18n('general_chars_needed')}` : "<br />");
   });
 
   $(globalThis.hyperion).off("cmd-authorize-createToken").on("cmd-authorize-createToken", function (event) {
     const val = event.response.info;
-    showInfoDialog("newToken", $.i18n('conf_network_tok_diaTitle'), $.i18n('conf_network_tok_diaMsg') + `<br><div style="font-weight:bold">${val.token}</div>`);
+    showInfoDialog("newToken", $.i18n('conf_network_token_diaTitle'), $.i18n('conf_network_token_diaMsg') + `<br><div style="font-weight:bold">${val.token}</div>`);
     addToTokenList(val);
 
     buildTokenList();
-    $('#tok_comment').val("").prop('disabled', false);
+    $('#token_comment').val("").prop('disabled', false);
   });
 
   function buildTokenList(tokenList = null) {
@@ -407,12 +407,12 @@ function setupTokenManagement() {
     const list = tokenList || getTokenList();
     list.forEach(token => {
       const lastUse = token.last_use || "-";
-      const delBtn = `<button type="button" class="btn btn-outline-danger" id="tok${token.id}">
+      const delBtn = `<button type="button" class="btn btn-outline-danger" id="token${token.id}">
                         <i class="mdi mdi-delete-forever"></i>
                     </button>`;
 
       $('.tktbody').append(createTableRow([token.id, token.comment, lastUse, delBtn], false, true));
-      $(`#tok${token.id}`).off().on('click', () => handleDeleteToken(token.id));
+      $(`#token${token.id}`).off().on('click', () => handleDeleteToken(token.id));
     });
   }
 
@@ -434,29 +434,38 @@ function setupTokenManagement() {
 
 function createSection(id, titleKey, schemaProps, helpPanelId = null) {
   const containerId = `conf_cont_${id}`;
+  const bodyContainerId = `editor_body_${id}`;
+  const editorContainerId = `editor_container_${id}`;
   $('#conf_cont').append(createRow(containerId));
+
   $(`#${containerId}`)
-    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), `editor_container_${id}`, `btn_submit_${id}`, 'card-system'))
+    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, 'card-system'))
     .append(createHelpTable(schemaProps, $.i18n(titleKey), helpPanelId));
+
+  if (globalThis.showOptHelp) {
+    createHint("intro", $.i18n(`conf_network_${id}_intro`), bodyContainerId);
+  }
+
+  $(`#${bodyContainerId}`).append(`<div id="${editorContainerId}"></div>`);
 }
 
 function createTokenSection() {
 
-  const phead = '<i class="fa fa-key fa-fw"></i>' + $.i18n('conf_network_tok_title');
+  const phead = '<i class="fa fa-key fa-fw"></i>' + $.i18n('conf_network_token_title');
   let pfooter = document.createElement('button');
   pfooter.className = "btn btn-primary";
-  pfooter.setAttribute("id", `btn_create_tok`);
+  pfooter.setAttribute("id", `btn_create_token`);
   pfooter.innerHTML = '<i class="mdi mdi-key-plus"></i> ' + $.i18n('conf_network_createToken_btn');
 
   const bodyid = `<div id="tktable"></div>
   <div style="margin: 30px 0;"></div>
   <div class="row g-3 align-items-start">
     <div class="col-auto">
-      <label for="tok_comment" class="col-form-label fw-bold" style="white-space:nowrap;">${$.i18n('conf_network_tok_comment_title')}</label>
+      <label for="token_comment" class="col-form-label fw-bold" style="white-space:nowrap;">${$.i18n('conf_network_token_comment_title')}</label>
     </div>
     <div class="col">
-      <input type="text" id="tok_comment" class="form-control" aria-describedby="tok_chars_needed">
-      <span id="tok_chars_needed" class="form-text">&nbsp;</span>
+      <input type="text" id="token_comment" class="form-control" aria-describedby="token_chars_needed">
+      <span id="token_chars_needed" class="form-text">&nbsp;</span>
     </div>
   </div>
   `;
@@ -464,19 +473,25 @@ function createTokenSection() {
   const containerId = `conf_cont_token`;
   $('#conf_cont').append(createRow(containerId));
   $(`#${containerId}`)
-    .append(createPanel(phead, bodyid, pfooter, bodyid, 'card-system'));
+    .append(createPanel(phead, bodyid, pfooter, 'editor_container_token', 'card-system'));
 
   if (globalThis.showOptHelp) {
+    createHint("intro", $.i18n(`conf_network_token_intro`), 'editor_container_token');
+
+    const schemaProps = { "token_comment": { "title": "conf_network_token_comment_title" } };
     $(`#${containerId}`)
-      .append(createHelpTable({}, $.i18n('conf_network_tok_title')));
+      .append(createHelpTable(schemaProps, $.i18n('conf_network_token_title')));
   }
 }
 
 function appendPanel(id, titleKey) {
   const containerId = `conf_cont_${id}`;
+  const bodyContainerId = `editor_body_${id}`;
   $('#conf_cont').append(createRow(containerId));
   $(`#${containerId}`)
-    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), `editor_container_${id}`, `btn_submit_${id}`, 'card-system'));
+    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, 'card-system'));
+
+  $(`#${bodyContainerId}`).append(`<div id="editor_container_${id}"></div>`);
 }
 
 function toggleHelpPanel(editor, key, panelId) {
