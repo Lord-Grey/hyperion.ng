@@ -84,8 +84,15 @@ $(document).ready(function () {
     }
 
     if (enumVals.length > 0) {
-      updateJsonEditorSelection(editors["forwarder"], 'root.forwarder',
-        'instanceList', {}, enumVals, enumTitelVals, enumDefaultVal, addSelect, false);
+      updateJsonEditorSelection(editors["forwarder"], 'root.forwarder', {
+        key: 'instanceList',
+        addElements: {},
+        newEnumVals: enumVals,
+        newTitleVals: enumTitelVals,
+        newDefaultVal: enumDefaultVal,
+        addSelect,
+        addCustom: false
+      });
     }
   }
 
@@ -294,15 +301,13 @@ $(document).ready(function () {
       enumDefaultVals.push("NONE");
     }
 
-    updateJsonEditorMultiSelection(
-      editors["forwarder"],
-      'root.forwarder',
-      selectionElement,
-      addSchemaElements,
-      enumVals,
-      enumTitleVals,
-      enumDefaultVals
-    );
+    updateJsonEditorMultiSelection(editors["forwarder"], 'root.forwarder', {
+      key: selectionElement,
+      addElements: addSchemaElements,
+      newEnumVals: enumVals,
+      newTitleVals: enumTitleVals,
+      newDefaultVal: enumDefaultVals
+    });
 
     if (isServiceAvailable) {
       editors["forwarder"].getEditor(`root.forwarder.${type}select`).activate();

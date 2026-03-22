@@ -231,6 +231,7 @@
 		},
 		"signalDetection": {
 			"type": "boolean",
+			"format": "checkbox",
 			"title": "edt_conf_v4l2_signalDetection_title",
 			"default": false,
 			"required": true,
