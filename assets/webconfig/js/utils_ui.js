@@ -302,138 +302,143 @@ function setClassByBool(obj, enable, class1, class2) {
   }
 }
 
-function showInfoDialog(type, header = "", message = "", details = []) {
-  if (type == "success") {
-    $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-check modal-icon-check">');
-    if (header == "")
-      $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_success_title') + '</h4>');
-    $('#id_footer').html('<button type="button" class="btn btn-success" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
-  }
-  else if (type == "warning") {
-    $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-warning">');
-    if (header == "")
-      $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_warning_title') + '</h4>');
-    $('#id_footer').html('<button type="button" class="btn btn-warning" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
-  }
-  else if (type == "error") {
-    $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-error"></i>');
-    if (header == "") {
-      $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_error_title') + '</h4>');
+function setupDialogContent(type, header, message) {
+  const typeHandlers = {
+    success: () => {
+      $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-check modal-icon-check">');
+      if (header == "")
+        $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_success_title') + '</h4>');
+      $('#id_footer').html('<button type="button" class="btn btn-success" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    },
+    warning: () => {
+      $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-warning">');
+      if (header == "")
+        $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_warning_title') + '</h4>');
+      $('#id_footer').html('<button type="button" class="btn btn-warning" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    },
+    error: () => {
+      $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-error"></i>');
+      if (header == "") {
+        $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_general_error_title') + '</h4>');
+      }
+      $('#id_footer').html('<button type="button" class="btn btn-danger" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    },
+    select: () => {
+      $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
+      $('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-bs-dismiss="modal"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_saveandreload') + '</button>');
+      $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    },
+    iswitch: () => {
+      $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
+      $('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-bs-dismiss="modal"><i class="fa fa-fw fa-exchange"></i>' + $.i18n('general_btn_iswitch') + '</button>');
+      $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    },
+    uilock: () => {
+      $('#id_body').html('<img id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
+      $('#id_footer').html('<b>' + $.i18n('InfoDialog_nowrite_foottext') + '</b>');
+    },
+    import: () => {
+      $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-warning"></i>');
+      $('#id_footer').html('<button type="button" id="id_btn_import" class="btn btn-warning"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_saverestart') + '</button>');
+      $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    },
+    delInst: () => {
+      $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-remove modal-icon-warning">');
+      $('#id_footer').html('<button type="button" id="id_btn_yes" class="btn btn-warning" data-bs-dismiss="modal"><i class="fa fa-fw fa-trash"></i>' + $.i18n('general_btn_yes') + '</button>');
+      $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    },
+    renInst: () => {
+      $('#id_body_rename').html('<i style="margin-bottom:20px" class="fa fa-pencil modal-icon-edit"><br>');
+      $('#id_body_rename').append('<h4>' + header + '</h4>');
+      $('#id_body_rename').append('<input class="form-control" id="renInst_name" type="text" value="' + message + '">');
+      $('#id_footer_rename').html('<button type="button" id="id_btn_ok" class="btn btn-success" data-bs-dismiss="modal" disabled><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_ok') + '</button>');
+      $('#id_footer_rename').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
+    },
+    changePassword: () => {
+      $('#id_body_rename').html('<i style="margin-bottom:20px" class="fa fa-key modal-icon-edit"><br>');
+      $('#id_body_rename').append('<h4>' + header + '</h4><br>');
+      $('#id_body_rename').append('<form id="changePasswordForm"; return false;">');
+      $('#changePasswordForm').append(
+        '<div class="row">' +
+        '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_username_text') + '</p></div>' +
+        '<div class="col-md-8"><input class="form-control" id="username" type="text" value="Hyperion" disabled autocomplete="username"></div>' +
+        '</div><br>'
+      );
+      $('#changePasswordForm').append(
+        '<div class="row">' +
+        '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_password_current_text') + '</p></div>' +
+        '<div class="col-md-8"><input class="form-control" id="current-password" placeholder="Old" type="password" autocomplete="current-password"></div>' +
+        '</div><br>'
+      );
+      $('#changePasswordForm').append(
+        '<div class="row">' +
+        '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_password_new_text') + '</p></div>' +
+        '<div class="col-md-8"><input class="form-control" id="new-password" placeholder="New" type="password" autocomplete="new-password"></div>' +
+        '</div>'
+      );
+      $('#changePasswordForm').append(
+        '<div class="alert alert-info"><span>' + $.i18n('infoDialog_password_minimum_length') + '</span></div>'
+      );
+      $('#changePasswordForm').append('</form>');
+      $('#id_footer_rename').html(
+        '<button type="submit" form="changePasswordForm" id="id_btn_ok" class="btn btn-success" data-bs-dismiss="modal" disabled>' +
+        '<i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_ok') + '</button>'
+      );
+      $('#id_footer_rename').append(
+        '<button type="button" class="btn btn-danger" data-bs-dismiss="modal">' +
+        '<i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>'
+      );
+    },
+    checklist: () => {
+      $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
+      $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_checklist_title') + '</h4>');
+      $('#id_body').append(header);
+      $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    },
+    newToken: () => {
+      $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
+      $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
+    },
+    grantToken: () => {
+      $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
+      $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="tok_grant_acc">' + $.i18n('general_btn_grantAccess') + '</button>');
+      $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal" id="tok_deny_acc">' + $.i18n('general_btn_denyAccess') + '</button>');
     }
-    $('#id_footer').html('<button type="button" class="btn btn-danger" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
-  }
-  else if (type == "select") {
-    $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-bs-dismiss="modal"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_saveandreload') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
-  }
-  else if (type == "iswitch") {
-    $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<button type="button" id="id_btn_saveset" class="btn btn-primary" data-bs-dismiss="modal"><i class="fa fa-fw fa-exchange"></i>' + $.i18n('general_btn_iswitch') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
-  }
-  else if (type == "uilock") {
-    $('#id_body').html('<img id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<b>' + $.i18n('InfoDialog_nowrite_foottext') + '</b>');
-  }
-  else if (type == "import") {
-    $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-warning modal-icon-warning"></i>');
-    $('#id_footer').html('<button type="button" id="id_btn_import" class="btn btn-warning"><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_saverestart') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
-  }
-  else if (type == "delInst") {
-    $('#id_body').html('<i style="margin-bottom:20px" class="fa fa-remove modal-icon-warning">');
-    $('#id_footer').html('<button type="button" id="id_btn_yes" class="btn btn-warning" data-bs-dismiss="modal"><i class="fa fa-fw fa-trash"></i>' + $.i18n('general_btn_yes') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
-  }
-  else if (type == "renInst") {
-    $('#id_body_rename').html('<i style="margin-bottom:20px" class="fa fa-pencil modal-icon-edit"><br>');
-    $('#id_body_rename').append('<h4>' + header + '</h4>');
-    $('#id_body_rename').append('<input class="form-control" id="renInst_name" type="text" value="' + message + '">');
-    $('#id_footer_rename').html('<button type="button" id="id_btn_ok" class="btn btn-success" data-bs-dismiss="modal" disabled><i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_ok') + '</button>');
-    $('#id_footer_rename').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>');
-  }
-  else if (type == "changePassword") {
-    $('#id_body_rename').html('<i style="margin-bottom:20px" class="fa fa-key modal-icon-edit"><br>');
-    $('#id_body_rename').append('<h4>' + header + '</h4><br>');
+  };
 
-    // Start form wrapper
-    $('#id_body_rename').append('<form id="changePasswordForm"; return false;">');
-    $('#changePasswordForm').append(
-      '<div class="row">' +
-      '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_username_text') + '</p></div>' +
-      '<div class="col-md-8"><input class="form-control" id="username" type="text" value="Hyperion" disabled autocomplete="username"></div>' +
-      '</div><br>'
-    );
-    $('#changePasswordForm').append(
-      '<div class="row">' +
-      '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_password_current_text') + '</p></div>' +
-      '<div class="col-md-8"><input class="form-control" id="current-password" placeholder="Old" type="password" autocomplete="current-password"></div>' +
-      '</div><br>'
-    );
-    $('#changePasswordForm').append(
-      '<div class="row">' +
-      '<div class="col-md-4"><p class="text-start">' + $.i18n('infoDialog_password_new_text') + '</p></div>' +
-      '<div class="col-md-8"><input class="form-control" id="new-password" placeholder="New" type="password" autocomplete="new-password"></div>' +
-      '</div>'
-    );
-    $('#changePasswordForm').append(
-      '<div class="alert alert-info"><span>' + $.i18n('infoDialog_password_minimum_length') + '</span></div>'
-    );
-    $('#changePasswordForm').append('</form>');
+  if (typeHandlers[type]) {
+    typeHandlers[type]();
+  }
+}
 
-    // Footer buttons
-    $('#id_footer_rename').html(
-      '<button type="submit" form="changePasswordForm" id="id_btn_ok" class="btn btn-success" data-bs-dismiss="modal" disabled>' +
-      '<i class="fa fa-fw fa-save"></i>' + $.i18n('general_btn_ok') + '</button>'
-    );
-    $('#id_footer_rename').append(
-      '<button type="button" class="btn btn-danger" data-bs-dismiss="modal">' +
-      '<i class="fa fa-fw fa-close"></i>' + $.i18n('general_btn_cancel') + '</button>'
-    );
-  }
-
-  else if (type == "checklist") {
-    $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + $.i18n('infoDialog_checklist_title') + '</h4>');
-    $('#id_body').append(header);
-    $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
-  }
-  else if (type == "newToken") {
-    $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal">' + $.i18n('general_btn_ok') + '</button>');
-  }
-  else if (type == "grantToken") {
-    $('#id_body').html('<img style="margin-bottom:20px" id="id_logo" src="img/hyperion/logo_positiv.png" alt="Redefine ambient light!">');
-    $('#id_footer').html('<button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="tok_grant_acc">' + $.i18n('general_btn_grantAccess') + '</button>');
-    $('#id_footer').append('<button type="button" class="btn btn-danger" data-bs-dismiss="modal" id="tok_deny_acc">' + $.i18n('general_btn_denyAccess') + '</button>');
-  }
-
+function appendDialogContent(type, header, message, details) {
   if (type != "renInst" && type != "changePassword") {
     $('#id_body').append('<h4 style="font-weight:bold;text-transform:uppercase;">' + header + '</h4>');
     $('#id_body').append(message);
   }
 
-  if (type == "select" || type == "iswitch")
+  if (type == "select" || type == "iswitch") {
     $('#id_body').append('<select id="id_select" class="form-select" style="margin-top:10px;width:auto;"></select>');
+  }
 
-  // Append details if available
   if (Array.isArray(details) && details.length > 0) {
-
-    // Create a container div for additional details with proper styles
     const detailsContent = $('<div></div>').css({
       'text-align': 'left',
-      'white-space': 'pre-wrap',     // Ensures newlines are respected
-      'word-wrap': 'break-word',     // Prevents long words from overflowing
+      'white-space': 'pre-wrap',
+      'word-wrap': 'break-word',
       'margin-top': '15px'
     });
-
     detailsContent.append('<hr>');
     details.forEach((desc, index) => {
       detailsContent.append(document.createTextNode(`${index + 1}. ${desc}\n`));
     });
     $('#id_body').append(detailsContent);
   }
+}
+
+function showInfoDialog(type, header = "", message = "", details = []) {
+  setupDialogContent(type, header, message);
+  appendDialogContent(type, header, message, details);
 
   if (getStorage("darkMode") == "on")
     $('#id_logo').attr("src", 'img/hyperion/logo_negativ.png');
@@ -595,352 +600,6 @@ function isJsonString(str) {
     return e;
   }
   return "";
-}
-
-const getObjectProperty = (obj, path) => path.split(".").reduce((o, key) => o?.[key] === undefined ? undefined : o[key], obj);
-
-const setObjectProperty = (object, path, value) => {
-  const parts = path.split('.');
-  const limit = parts.length - 1;
-  for (let i = 0; i < limit; ++i) {
-    const key = parts[i];
-    if (key === "__proto__" || key === "constructor") continue;
-    object = object[key] ?? (object[key] = {});
-  }
-  const key = parts[limit];
-  object[key] = value;
-};
-
-function getLongPropertiesPath(path) {
-  if (path) {
-    // Remove 'root.' from the start of the path
-    path = path.replace('root.', '');
-
-    // Split the path into parts and append ".properties" to each part
-    const parts = path.split('.');
-    parts.forEach(function (part, index) {
-      parts[index] += ".properties";
-    });
-
-    // Join the parts back together and append a final '.'
-    path = parts.join('.') + '.';
-  }
-  return path;
-}
-
-function createJsonEditor(container, schema, setconfig, usePanel, arrayre = undefined) {
-  $('#' + container).off();
-  $('#' + container).html("");
-
-  if (arrayre === undefined)
-    arrayre = true;
-
-  JSONEditor.defaults.translateProperty = function (key, variables) {
-    let text;
-    if (key !== null) {
-      text = $.i18n(key, variables);
-      //console.log("translateProperty - key[", key, "] var[", variables, "]-> ", text);
-    }
-    return text;
-  };
-
-    let theme = {theme: 'bootstrap5'};
-
-
-  let editor = new JSONEditor(document.getElementById(container),
-    {
-      theme: 'bootstrap5',
-      //iconlib: "fontawesome4",
-      iconlib: "bootstrap",
-      titleHidden: false,
-      disable_collapse: true,
-      form_name_root: 'root',
-      disable_edit_json: false,
-      disable_properties: true,
-      disable_array_reorder: arrayre,
-      no_additional_properties: true,
-      disable_array_delete_all_rows: true,
-      disable_array_delete_last_row: true,
-      schema: {
-        options: { titleHidden: true },
-        properties: schema
-      }
-    });
-
-  if (usePanel) {
-    $('#' + container + ' .card').first().removeClass('card');
-    $('#' + container + ' h4').first().remove();
-  }
-
-  if (setconfig) {
-    editor.on('ready', function () {
-      // Suppress watcher notifications during initial config load to prevent
-      // watchers firing before dependent editors are fully initialised.
-      const origNotifyWatchers = editor.notifyWatchers.bind(editor);
-      editor.notifyWatchers = function () {};
-      for (let key in editor.root.editors) {
-        editor.getEditor("root." + key).setValue({ ...editor.getEditor("root." + key).value, ...globalThis.serverConfig[key] });
-      }
-      editor.notifyWatchers = origNotifyWatchers;
-    });
-  }
-
-  return editor;
-}
-
-// Update the selection for JSON Editor
-function updateJsonEditorSelection(
-  rootEditor, path, key, addElements, newEnumVals, newTitleVals, newDefaultVal,
-  addSelect, addCustom, addCustomAsFirst, customText = "edt_conf_enum_custom"
-) {
-  const editor = rootEditor.getEditor(path);
-  const originalProperties = editor.schema.properties[key];
-  const originalWatchFunctions = rootEditor.watchlist[path + "." + key];
-
-  // Unwatch the existing path
-  rootEditor.unwatch(path + "." + key);
-
-  const newSchema = {
-    [key]: {
-      type: "string",
-      enum: [],
-      required: true,
-      options: { enum_titles: [], infoText: "" },
-      propertyOrder: 1,
-      ...addElements, // Merge custom elements directly into schema
-    }
-  };
-
-  // Retain original properties if available
-  if (originalProperties) {
-    const { title, options, propertyOrder } = originalProperties;
-    newSchema[key].title = title || newSchema[key].title;
-    newSchema[key].options.infoText = options?.infoText || newSchema[key].options.infoText;
-    newSchema[key].propertyOrder = propertyOrder || newSchema[key].propertyOrder;
-  }
-
-  // Handle custom values
-  if (addCustom) {
-    if (newTitleVals.length === 0) newTitleVals = [...newEnumVals];
-
-    const customPosition = addCustomAsFirst ? "unshift" : "push";
-    newEnumVals[customPosition]("CUSTOM");
-    newTitleVals[customPosition](customText);
-
-    // Append custom infoText if exists
-    if (newSchema[key].options.infoText) {
-      newSchema[key].options.infoText += "_custom";
-    }
-  }
-
-  // Handle Select options
-  if (addSelect) {
-    newEnumVals.unshift("SELECT");
-    newTitleVals.unshift("edt_conf_enum_please_select");
-    newDefaultVal = "SELECT";
-  }
-
-  // Set new values
-  if (newEnumVals) newSchema[key].enum = newEnumVals;
-  if (newTitleVals) newSchema[key].options.enum_titles = newTitleVals;
-  if (newDefaultVal) newSchema[key].default = newDefaultVal;
-
-  // Update the editor schema
-  editor.original_schema.properties[key] = originalProperties;
-  editor.schema.properties[key] = newSchema[key];
-
-  // Update schema for validation
-  setObjectProperty(rootEditor.validator.schema.properties, getLongPropertiesPath(path) + key, newSchema[key]);
-
-  // Re-apply changes to the editor
-  editor.removeObjectProperty(key);
-  delete editor.cached_editors[key];
-  editor.addObjectProperty(key);
-
-  // Reapply original watch functions
-  if (originalWatchFunctions) {
-    originalWatchFunctions.forEach(element => rootEditor.watch(path + "." + key, element));
-  }
-
-  // Notify watchers
-  rootEditor.notifyWatchers(path + "." + key);
-}
-
-
-// Handle custom values logic for enum and title values
-function handleCustomValues(newEnumVals, newTitleVals, customText, addCustomAsFirst) {
-  if (newTitleVals.length === 0) {
-    newTitleVals = [...newEnumVals];
-  }
-
-  if (!customText) {
-    customText = "edt_conf_enum_custom";
-  }
-
-  if (addCustomAsFirst) {
-    newEnumVals.unshift("CUSTOM");
-    newTitleVals.unshift(customText);
-  } else {
-    newEnumVals.push("CUSTOM");
-    newTitleVals.push(customText);
-  }
-
-  // Add infoText for custom options
-  if (newSchema[key].options.infoText) {
-    const customInfoText = newSchema[key].options.infoText + "_custom";
-    newSchema[key].options.infoText = customInfoText;
-  }
-}
-
-// Update the JSON Editor for multi-selection fields
-function updateJsonEditorMultiSelection(rootEditor, path, key, addElements, newEnumVals, newTitleVals, newDefaultVal) {
-  const editor = rootEditor.getEditor(path);
-  const originalProperties = editor.schema.properties[key];
-  const originalWatchFunctions = rootEditor.watchlist[path + "." + key];
-
-  // Unwatch the existing path
-  rootEditor.unwatch(path + "." + key);
-
-  const newSchema = {
-    [key]: {
-      type: "array",
-      format: "select",
-      items: {
-        type: "string",
-        enum: [],
-        options: { enum_titles: [] }
-      },
-      options: { infoText: "" },
-      default: [],
-      propertyOrder: 1
-    }
-  };
-
-  // Overwrite default properties with additional elements
-  Object.assign(newSchema[key], addElements);
-
-  // Retain original properties
-  if (originalProperties) {
-    if (originalProperties.title) newSchema[key].title = originalProperties.title;
-    if (originalProperties?.options?.infoText) newSchema[key].options.infoText = originalProperties.options.infoText;
-    if (originalProperties.propertyOrder) newSchema[key].propertyOrder = originalProperties.propertyOrder;
-  }
-
-  // Set new enum and title values
-  if (newEnumVals) newSchema[key].items.enum = newEnumVals;
-  if (newTitleVals) newSchema[key].items.options.enum_titles = newTitleVals;
-  if (newDefaultVal) newSchema[key].default = newDefaultVal;
-
-  // Update the editor schema
-  editor.original_schema.properties[key] = originalProperties;
-  editor.schema.properties[key] = newSchema[key];
-
-  // Update schema for validation
-  setObjectProperty(rootEditor.validator.schema.properties, getLongPropertiesPath(path) + key, newSchema[key]);
-
-  // Re-apply changes to the editor
-  editor.removeObjectProperty(key);
-  delete editor.cached_editors[key];
-  editor.addObjectProperty(key);
-
-  // Reapply original watch functions
-  if (originalWatchFunctions) {
-    originalWatchFunctions.forEach((element) => {
-      rootEditor.watch(path + "." + key, element);
-    });
-  }
-
-  // Notify watchers
-  rootEditor.notifyWatchers(path + "." + key);
-}
-
-// Update JSON Editor Range with min, max, and step values
-function updateJsonEditorRange(rootEditor, path, key, minimum, maximum, defaultValue, step, clear) {
-  const editor = rootEditor.getEditor(path);
-  const currentValue = rootEditor.getEditor(path + "." + key).getValue();
-  const originalProperties = editor.schema.properties[key];
-
-  // Initialize the new schema with original properties
-  const newSchema = { [key]: { ...originalProperties } };
-
-  // Clear range-related properties if needed
-  if (clear) {
-    delete newSchema[key].minimum;
-    delete newSchema[key].maximum;
-    delete newSchema[key].default;
-    delete newSchema[key].step;
-  }
-
-  // Set the range values
-  if (minimum !== undefined) newSchema[key].minimum = minimum;
-  if (maximum !== undefined) newSchema[key].maximum = maximum;
-  if (defaultValue !== undefined) {
-    newSchema[key].default = defaultValue;
-  }
-  if (step !== undefined) newSchema[key].step = step;
-
-  // Update the editor schema
-  editor.original_schema.properties[key] = originalProperties;
-  editor.schema.properties[key] = newSchema[key];
-
-  // Update schema for validation
-  setObjectProperty(rootEditor.validator.schema.properties, getLongPropertiesPath(path) + key, newSchema[key]);
-
-  // Re-apply changes to the editor
-  editor.removeObjectProperty(key);
-  delete editor.cached_editors[key];
-  editor.addObjectProperty(key);
-
-  // restore the current value, if no default value given
-  if (defaultValue === undefined) {
-    rootEditor.getEditor(path + "." + key).setValue(currentValue);
-  } else {
-    rootEditor.getEditor(path + "." + key).setValue(defaultValue);
-  }
-}
-
-// Add custom host validation to JSON Editor
-function addJsonEditorHostValidation() {
-  JSONEditor.defaults.custom_validators.push(function (schema, value, path) {
-    const errors = [];
-
-    if (!jQuery.isEmptyObject(value)) {
-      switch (schema.format) {
-        case "hostname_or_ip":
-          if (!isValidHostnameOrIP(value)) {
-            errors.push({ path, property: 'format', message: $.i18n('edt_msgcust_error_hostname_ip') });
-          }
-          break;
-        case "hostname_or_ip4":
-          if (!isValidHostnameOrIP4(value)) {
-            errors.push({ path, property: 'format', message: $.i18n('edt_msgcust_error_hostname_ip4') });
-          }
-          break;
-        case "ipv4":
-          if (!isValidIPv4(value)) {
-            errors.push({ path, property: 'format', message: $.i18n('edt_msg_error_ipv4') });
-          }
-          break;
-        case "ipv6":
-          if (!isValidIPv6(value)) {
-            errors.push({ path, property: 'format', message: $.i18n('edt_msg_error_ipv6') });
-          }
-          break;
-        case "hostname":
-          if (!isValidHostname(value)) {
-            errors.push({ path, property: 'format', message: $.i18n('edt_msg_error_hostname') });
-          }
-          break;
-        case "uuid":
-          errors.push(...validateUUIDSchema(schema, value, path));      
-          break;
-        default:
-          break;
-      }
-    }
-
-    return errors;
-  });
 }
 
 // Build a link with localization
@@ -1154,6 +813,15 @@ function createOptPanel(phicon, phead, bodyid, footerid, css, panelId) {
   return createPanel(phead, "", pfooter, bodyid, css, panelId);
 }
 
+function compareValues(varA, varB) {
+  if (varA > varB) {
+    return 1;
+  } else if (varA < varB) {
+    return -1;
+  }
+  return 0;
+}
+
 function compareTwoValues(key1, key2, order = 'asc') {
   return function innerSort(a, b) {
     if (!a.hasOwnProperty(key1) || !b.hasOwnProperty(key1)) {
@@ -1166,12 +834,9 @@ function compareTwoValues(key1, key2, order = 'asc') {
     const varB1 = (typeof b[key1] === 'string')
       ? b[key1].toUpperCase() : b[key1];
 
-    let comparison = 0;
-    if (varA1 > varB1) {
-      comparison = 1;
-    } else if (varA1 < varB1) {
-      comparison = -1;
-    } else {
+    let comparison = compareValues(varA1, varB1);
+    
+    if (comparison === 0) {
       if (!a.hasOwnProperty(key2) || !b.hasOwnProperty(key2)) {
         // property key2 doesn't exist on either object
         return 0;
@@ -1182,15 +847,10 @@ function compareTwoValues(key1, key2, order = 'asc') {
       const varB2 = (typeof b[key1] === 'string')
         ? b[key2].toUpperCase() : b[key2];
 
-      if (varA2 > varB2) {
-        comparison = 1;
-      } else {
-        comparison = -1;
-      }
+      comparison = compareValues(varA2, varB2);
     }
-    return (
-      (order === 'desc') ? (comparison * -1) : comparison
-    );
+    
+    return (order === 'desc') ? (comparison * -1) : comparison;
   };
 }
 
@@ -1211,6 +871,36 @@ function sortProperties(list) {
   return mappedList.sort((a, b) => a.propertyOrder - b.propertyOrder);
 }
 
+function shouldSkipItem(item) {
+  if ("options" in item && "hidden" in item.options && item.options.hidden) {
+    return true;
+  }
+
+  if ("access" in item && ((item.access === "advanced" && storedAccess === "default") || (item.access === "expert" && storedAccess !== "expert"))) {
+    return true;
+  }
+
+  return false;
+}
+
+function addItemRowToTable(item, tbody) {
+  const text = item.title.replace('title', 'expl');
+  tbody.appendChild(createTableRow([$.i18n(item.title), $.i18n(text)], false, false));
+}
+
+function addSubItemsToTable(item, tbody) {
+  if (item.items?.properties) {
+    const ilist = sortProperties(item.items.properties);
+    for (const ikey in ilist) {
+      if (shouldSkipItem(ilist[ikey])) {
+        continue;
+      }
+
+      addItemRowToTable(ilist[ikey], tbody);
+    }
+  }
+}
+
 function createHelpTable(list, phead, panelId) {
   const table = document.createElement('table');
   const thead = document.createElement('thead');
@@ -1228,36 +918,16 @@ function createHelpTable(list, phead, panelId) {
 
   // Iterate over the list and populate the table
   for (const key in list) {
-    if (list[key].access !== 'system') {
-      // Skip entries if they are hidden or have access restrictions
-      if ("options" in list[key] && "hidden" in list[key].options && list[key].options.hidden) {
-        continue;
-      }
-
-      if ("access" in list[key] && ((list[key].access === "advanced" && storedAccess === "default") || (list[key].access === "expert" && storedAccess !== "expert"))) {
-        continue;
-      }
-
-      const text = list[key].title.replace('title', 'expl');
-      tbody.appendChild(createTableRow([$.i18n(list[key].title), $.i18n(text)], false, false));
-
-      if (list[key].items?.properties) {
-        const ilist = sortProperties(list[key].items.properties);
-        for (const ikey in ilist) {
-          // Skip items based on hidden or access restrictions
-          if ("options" in ilist[ikey] && "hidden" in ilist[ikey].options && ilist[ikey].options.hidden) {
-            continue;
-          }
-
-          if ("access" in ilist[ikey] && ((ilist[ikey].access === "advanced" && storedAccess === "default") || (ilist[ikey].access === "expert" && storedAccess !== "expert"))) {
-            continue;
-          }
-
-          const itext = ilist[ikey].title.replace('title', 'expl');
-          tbody.appendChild(createTableRow([$.i18n(ilist[ikey].title), $.i18n(itext)], false, false));
-        }
-      }
+    if (list[key].access === 'system') {
+      continue;
     }
+
+    if (shouldSkipItem(list[key])) {
+      continue;
+    }
+
+    addItemRowToTable(list[key], tbody);
+    addSubItemsToTable(list[key], tbody);
   }
 
   table.appendChild(thead);
@@ -1438,129 +1108,8 @@ function handleDarkMode() {
   $('#navbar_brand_logo').attr("src", 'img/hyperion/logo_negativ.png');
 }
 
-function isAccessLevelCompliant(accessLevel) {
-  if (!accessLevel) return true;
-
-  switch (accessLevel) {
-    case 'system':
-      return false;
-    case 'advanced':
-      return storedAccess !== 'default';
-    case 'expert':
-      return storedAccess === 'expert';
-    default:
-      return true;
-  }
-}
-
-function showInputOptions(path, elements, state) {
-
-  if (!path.startsWith("root.")) {
-    path = ["root", path].join('.');
-  }
-
-  for (const element of elements) {
-    $('[data-schemapath="' + path + '.' + element + '"]').toggle(state);
-  }
-}
-
-function showInputOptionForItem(editor, path, item, state) {
-  // Get access level for the full path and item
-  const accessLevel = getObjectProperty(editor.schema.properties, `${getLongPropertiesPath(path)}${item}.access`);
-
-  // Enable the element only if access level is compliant
-  if (!state || isAccessLevelCompliant(accessLevel)) {
-    // If path is not provided, use the editor's path
-    if (!path) {
-      path = editor.path;
-    }
-    showInputOptions(path, [item], state);
-  }
-}
-
-function showInputOptionsForKey(editor, item, showForKeys, state) {
-  const elements = [];
-  let keysToShow = [];
-
-  // Determine keys to show based on input type
-  if (Array.isArray(showForKeys)) {
-    keysToShow = showForKeys;
-  } else if (typeof showForKeys === 'string') {
-    keysToShow.push(showForKeys);
-  } else {
-    return;
-  }
-
-  const itemProperties = editor.schema.properties[item].properties;
-
-  for (const key in itemProperties) {
-    // Skip the key if it is not in the list of keys to show
-    if (!keysToShow.includes(key)) {
-      const { access, options } = itemProperties[key];
-      const hidden = options?.hidden || false;
-
-      // Always disable all elements, but enable only if access level is compliant and not hidden
-      if ((!state || isAccessLevelCompliant(access)) && !hidden) {
-        elements.push(key);
-      }
-    }
-  }
-
-  showInputOptions(item, elements, state);
-}
-
 function encodeHTML(s) {
   return s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
-}
-
-function isValidIPv4(value) {
-  const parts = value.split('.')
-  if (parts.length !== 4) {
-    return false;
-  }
-  for (let part of parts) {
-    if (Number.isNaN(part) || part < 0 || part > 255) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function isValidIPv6(value) {
-  return !!(value.match(
-    '^(?:(?:(?:[a-fA-F0-9]{1,4}:){6}|(?=(?:[a-fA-F0-9]{0,4}:){2,6}(?:[0-9]{1,3}.){3}[0-9]{1,3}$)(([0-9a-fA-F]{1,4}:){1,5}|:)((:[0-9a-fA-F]{1,4}){1,5}:|:)|::(?:[a-fA-F0-9]{1,4}:){5})(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]).){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])|(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}|(?=(?:[a-fA-F0-9]{0,4}:){0,7}[a-fA-F0-9]{0,4}$)(([0-9a-fA-F]{1,4}:){1,7}|:)((:[0-9a-fA-F]{1,4}){1,7}|:)|(?:[a-fA-F0-9]{1,4}:){7}:|:(:[a-fA-F0-9]{1,4}){7})$'
-  ));
-}
-
-function isValidHostname(value) {
-  return !!(value.match(
-    '^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])(.([a-zA-Z0-9]|[_a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]))*$'
-  ));
-}
-
-function isValidServicename(value) {
-  return !!(value.match(
-    '^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9 -]{0,61}[a-zA-Z0-9])(.([a-zA-Z0-9]|[_a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]))*$'
-  ));
-}
-
-function isValidHostnameOrIP4(value) {
-  return (isValidHostname(value) || isValidIPv4(value));
-}
-
-function isValidHostnameOrIP(value) {
-  return (isValidHostnameOrIP4(value) || isValidIPv6(value) || isValidServicename(value));
-}
-
-function validateUUIDSchema(schema, value, path) {
-  if (!(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))) {
-    return [{
-      path,
-      property: 'format',
-      message: $.i18n('edt_msg_error_uuid')
-    }]
-  }
-  return []
 }
 
 const loadedScripts = [];
