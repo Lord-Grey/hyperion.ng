@@ -226,7 +226,6 @@ $(document).ready(function () {
   // Create introduction hints if help is shown
   if (globalThis.showOptHelp) {
     createHint("intro", $.i18n('conf_general_intro'), "editor_container");
-    createHint("intro", $.i18n('conf_general_tok_desc'), "tok_desc_cont");
     createHint("intro", $.i18n('conf_general_inst_desc'), "inst_desc_cont");
     createHint("intro", $.i18n('conf_general_impexp_l1') + " " + $.i18n('conf_general_impexp_l2'), "imp_desc_cont");
   }

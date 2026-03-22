@@ -116,8 +116,8 @@ $(document).ready(function () {
 
     $('#log_content').html('<pre><div id="logmessages" style="overflow:scroll;max-height:400px"></div></pre>');
     $('#log_footer').append(
-      '<div class="form-check form-switch d-inline-flex align-items-center gap-2" style="margin:3px">'
-      + '<input class="form-check-input" role="switch" id="btn_scroll" ' + isScrollEnableStyle + ' type="checkbox">'
+      '<div class="form-check form-switch form-switch-md d-inline-flex align-items-center gap-2" style="margin:3px">'
+      + '<input class="form-check-input" role="switch" id="btn_scroll" ' + isScrollEnableStyle + ' type="checkbox" switch>'
       + '<label class="form-check-label" for="btn_scroll">' + $.i18n('conf_logging_btn_autoscroll') + '</label>'
       + '</div>'
     );
@@ -136,12 +136,10 @@ $(document).ready(function () {
     $('#log_footer').append('<button class="btn btn-primary float-end" id="btn_clipboard"><i class="fa fa-fw fa-clipboard"></i>' + $.i18n("conf_logging_btn_clipboard") + '</button>');
 
     $('#btn_clipboard').off().on('click', function () {
-      const temp = document.createElement('textarea');
-      temp.textContent = infoSummary();
-      document.body.append(temp);
-      temp.select();
-      document.execCommand("copy");
-      temp.remove();
+      const text = infoSummary();
+      navigator.clipboard.writeText(text).catch(err => {
+        console.error('Failed to copy to clipboard:', err);
+      });
     });
   }
 
