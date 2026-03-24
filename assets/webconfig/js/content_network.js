@@ -21,19 +21,19 @@ $(document).ready(function () {
 
   function initializeUI() {
     if (globalThis.showOptHelp) {
-      createSection("network", "edt_conf_network_heading_title", globalThis.schema.network.properties);
+      createSection("network", "edt_conf_network_heading_title", globalThis.schema.network.properties,'fa-sitemap', "conf_network_network_intro", "networkHelpPanelId");
       createTokenSection();
-      createSection("jsonServer", "edt_conf_jsonServer_heading_title", globalThis.schema.jsonServer.properties);
-      if (isFlatbufEnabled) createSection("flatbufServer", "edt_conf_flatbufServer_heading_title", globalThis.schema.flatbufServer.properties, "flatbufServerHelpPanelId");
-      if (isProtoBufEnabled) createSection("protoServer", "edt_conf_protoServer_heading_title", globalThis.schema.protoServer.properties, "protoServerHelpPanelId");
-      if (isForwarderEnabled && storedAccess !== 'default') createSection("forwarder", "edt_conf_forwarder_heading_title", globalThis.schema.forwarder.properties, "forwarderHelpPanelId");
+      createSection("jsonServer", "edt_conf_jsonServer_heading_title", globalThis.schema.jsonServer.properties,'fa-sitemap', "conf_network_jsonServer_intro", "jsonServerHelpPanelId");
+      if (isFlatbufEnabled) createSection("flatbufServer", "edt_conf_flatbufServer_heading_title", globalThis.schema.flatbufServer.properties, 'fa-sitemap', "conf_network_flatbufServer_intro", "flatbufServerHelpPanelId");
+      if (isProtoBufEnabled) createSection("protoServer", "edt_conf_protoServer_heading_title", globalThis.schema.protoServer.properties, 'fa-sitemap', "conf_network_protoServer_intro", "protoServerHelpPanelId");
+      if (isForwarderEnabled && storedAccess !== 'default') createSection("forwarder", "edt_conf_forwarder_heading_title", globalThis.schema.forwarder.properties, 'fa-sitemap', "conf_network_forwarder_intro", "forwarderHelpPanelId");
     } else {
-      appendPanel("network", "edt_conf_network_heading_title");
+      appendPanel("network", "edt_conf_network_heading_title", 'fa-sitemap');
       createTokenSection();
-      appendPanel("jsonServer", "edt_conf_jsonServer_heading_title");
-      if (isFlatbufEnabled) appendPanel("flatbufServer", "edt_conf_flatbufServer_heading_title");
-      if (isProtoBufEnabled) appendPanel("protoServer", "edt_conf_protoServer_heading_title");
-      if (isForwarderEnabled) appendPanel("forwarder", "edt_conf_forwarder_heading_title");
+      appendPanel("jsonServer", "edt_conf_jsonServer_heading_title", 'fa-sitemap');
+      if (isFlatbufEnabled) appendPanel("flatbufServer", "edt_conf_flatbufServer_heading_title", 'fa-sitemap');
+      if (isProtoBufEnabled) appendPanel("protoServer", "edt_conf_protoServer_heading_title", 'fa-sitemap');
+      if (isForwarderEnabled) appendPanel("forwarder", "edt_conf_forwarder_heading_title", 'fa-sitemap');
     }
   }
 
@@ -420,23 +420,6 @@ function setupTokenManagement() {
   }
 }
 
-function createSection(id, titleKey, schemaProps, helpPanelId = null) {
-  const containerId = `conf_cont_${id}`;
-  const bodyContainerId = `editor_body_${id}`;
-  const editorContainerId = `editor_container_${id}`;
-  $('#conf_cont').append(createRow(containerId));
-
-  $(`#${containerId}`)
-    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, 'card-system'))
-    .append(createHelpTable(schemaProps, $.i18n(titleKey), helpPanelId));
-
-  if (globalThis.showOptHelp) {
-    createHint("intro", $.i18n(`conf_network_${id}_intro`), bodyContainerId);
-  }
-
-  $(`#${bodyContainerId}`).append(`<div id="${editorContainerId}"></div>`);
-}
-
 function createTokenSection() {
 
   const phead = '<i class="fa fa-key fa-fw"></i>' + $.i18n('conf_network_token_title');
@@ -498,16 +481,6 @@ function createTokenSection() {
     $(`#${containerId}`)
       .append(createHelpTable(schemaProps, $.i18n('conf_network_token_title')));
   }
-}
-
-function appendPanel(id, titleKey) {
-  const containerId = `conf_cont_${id}`;
-  const bodyContainerId = `editor_body_${id}`;
-  $('#conf_cont').append(createRow(containerId));
-  $(`#${containerId}`)
-    .append(createOptPanel('fa-sitemap', $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, 'card-system'));
-
-  $(`#${bodyContainerId}`).append(`<div id="editor_container_${id}"></div>`);
 }
 
 function toggleHelpPanel(editor, key, panelId) {

@@ -127,36 +127,12 @@ function getCurrentInstanceName() {
   return getInstanceName(instanceId);
 }
 
-function loadContent(event, forceRefresh) {
-
-  let tag;
-
-  if (event === undefined) {
-    tag = getHashtag();
-  } else {
-    tag = event.currentTarget.hash;
-    tag = tag.substr(tag.indexOf("#") + 1);
-    setStorage('lasthashtag', tag);
-  }
-
-  // Only load content if the tag is different or forced
-  if (forceRefresh || prevTag !== tag) {
-    prevTag = tag;
-
-    $("#page-content").off().empty(); // Off all events and clear the content
-
-    $("#page-content").load("/content/" + tag + ".html", function (response, status, xhr) {
-      if (status === "error") {
-        tag = 'dashboard';
-        console.log("Could not find page:", prevTag, ", Redirecting to:", tag);
-        setStorage('lasthashtag', tag);
-        $("#page-content").html('<h3>' + encode_utf8(tag) + '<br/>' + $.i18n('info_404') + '</h3>');
-        removeOverlay();
-      } else {
-        updateUiOnInstance(globalThis.currentHyperionInstance);
-      }
-    });
-  }
+function instanceSwitch(inst) {
+  const instanceID = Number(inst);
+  requestInstanceSwitch(instanceID)
+  globalThis.currentHyperionInstance = instanceID;
+  globalThis.currentHyperionInstanceName = getInstanceName(instanceID);
+  setStorage('lastSelectedInstance', instanceID)
 }
 
 function updateHyperionInstanceListing() {
@@ -167,66 +143,47 @@ function updateHyperionInstanceListing() {
     // Sort instances by friendly_name (case-insensitive)
     instances.sort((a, b) => a.friendly_name.toLowerCase().localeCompare(b.friendly_name.toLowerCase()));
 
-    $('#hyp_inst_listing').html("");
+    const listingElement = document.getElementById('hyp_inst_listing');
+    if (!listingElement) {
+      return;
+    }
+    listingElement.innerHTML = "";
 
     instances.forEach((instance, index) => {
-      const isRunningMarker = isInstanceRunning(instance.instance) ? "component-on" : "";
+      const isRunningMarker = isInstanceRunning(instance.instance) ? "success" : "secondary";
 
-      const html = `
-        <li id="hyperioninstance_${instance.instance}">
-          <a>
-            <div>
-              <i class="fa fa-circle fa-fw ${isRunningMarker}"></i>
-              <span>${instance.friendly_name}</span>
-            </div>
-          </a>
-        </li>
-        ${index < instances.length - 1 ? '<li class="divider"></li>' : ''}
-      `;
+      const itemElement = document.createElement('li');
+      itemElement.id = `hyperioninstance_${instance.instance}`;
 
-      $('#hyp_inst_listing').append(html);
+      const linkElement = document.createElement('a');
+      linkElement.className = 'dropdown-item d-flex align-items-center gap-2';
 
-      $(`#hyperioninstance_${instance.instance}`).off().on("click", (e) => {
-        const inst = e.currentTarget.id.split("_")[1];
-        instanceSwitch(inst);
+      const badgeElement = document.createElement('span');
+      badgeElement.className = `badge text-bg-${isRunningMarker}`;
+      badgeElement.textContent = ' ';
+
+      const nameElement = document.createElement('span');
+      nameElement.textContent = instance.friendly_name;
+
+      linkElement.appendChild(badgeElement);
+      linkElement.appendChild(nameElement);
+      itemElement.appendChild(linkElement);
+
+      itemElement.addEventListener('click', () => {
+        instanceSwitch(instance.instance);
       });
+
+      listingElement.appendChild(itemElement);
+
+      if (index < instances.length - 1) {
+        const dividerListItem = document.createElement('li');
+        const dividerElement = document.createElement('hr');
+        dividerElement.className = 'dropdown-divider';
+        dividerListItem.appendChild(dividerElement);
+        listingElement.appendChild(dividerListItem);
+      }
     });
   }
-}
-
-function initLanguageSelection() {
-  const $select = $('#language-select');
-  $select.empty(); // clear existing options
-
-  for (let i = 0; i < availLang.length; i++) {
-    $select.append('<option value="' + availLang[i] + '">' + availLangText[i] + '</option>');
-  }
-
-  let langLocale = storedLang;
-  if (!langLocale) {
-    langLocale = navigator.language?.substring(0, 2) || 'en';
-  }
-
-  let langIdx = availLang.indexOf(langLocale);
-  if (langIdx === -1) {
-    // Try fallback
-    langLocale = $.i18n().options.fallbackLocale.substring(0, 2);
-    langIdx = availLang.indexOf(langLocale);
-  }
-
-  if (langIdx === -1) {
-    // Default to English
-    langLocale = 'en';
-  }
-
-  // Update the language select dropdown
-  // $select.val(langLocale); 
-  // $select.selectpicker({
-  //   container: 'body',
-  //   width: 'fit',
-  //   style: 'btn-transparent'
-  // });
-  // $select.selectpicker('refresh');
 }
 
 function updateUiOnInstance(inst) {
@@ -268,12 +225,71 @@ function updateUiOnInstance(inst) {
   }
 }
 
-function instanceSwitch(inst) {
-  const instanceID = Number(inst);
-  requestInstanceSwitch(instanceID)
-  globalThis.currentHyperionInstance = instanceID;
-  globalThis.currentHyperionInstanceName = getInstanceName(instanceID);
-  setStorage('lastSelectedInstance', instanceID)
+function initLanguageSelection() {
+  const $select = $('#language-select');
+  $select.empty(); // clear existing options
+
+  for (let i = 0; i < availLang.length; i++) {
+    $select.append('<option value="' + availLang[i] + '">' + availLangText[i] + '</option>');
+  }
+
+  let langLocale = storedLang;
+  if (!langLocale) {
+    langLocale = navigator.language?.substring(0, 2) || 'en';
+  }
+
+  let langIdx = availLang.indexOf(langLocale);
+  if (langIdx === -1) {
+    // Try fallback
+    langLocale = $.i18n().options.fallbackLocale.substring(0, 2);
+    langIdx = availLang.indexOf(langLocale);
+  }
+
+  if (langIdx === -1) {
+    // Default to English
+    langLocale = 'en';
+  }
+
+  // Update the language select dropdown
+  // $select.val(langLocale); 
+  // $select.selectpicker({
+  //   container: 'body',
+  //   width: 'fit',
+  //   style: 'btn-transparent'
+  // });
+  // $select.selectpicker('refresh');
+}
+
+function loadContent(event, forceRefresh) {
+
+  let tag;
+
+  if (event === undefined) {
+    tag = getHashtag();
+  } else {
+    tag = event.currentTarget.hash;
+    tag = tag.substr(tag.indexOf("#") + 1);
+    setStorage('lasthashtag', tag);
+  }
+
+  // Only load content if the tag is different or forced
+  if (forceRefresh || prevTag !== tag) {
+    prevTag = tag;
+
+    $("#page-content").off().empty(); // Off all events and clear the content
+
+    $("#page-content").load("/content/" + tag + ".html", function (response, status, xhr) {
+      if (status === "error") {
+        tag = 'dashboard';
+        console.log("Could not find page:", prevTag, ", Redirecting to:", tag);
+        setStorage('lasthashtag', tag);
+        $("#page-content").html('<h3>' + encode_utf8(tag) + '<br/>' + $.i18n('info_404') + '</h3>');
+        removeOverlay();
+      } else {
+        updateUiOnInstance(globalThis.currentHyperionInstance);
+      }
+    });
+  }
 }
 
 function loadContentTo(containerId, fileName) {
@@ -460,7 +476,7 @@ function createHintH(type, text, container) {
 
   let tclass;
   if (type == "intro") {
-    tclass = "introd";
+    tclass = "intro-header";
   }
 
   // Prepend the formatted hint to the container
@@ -1020,6 +1036,34 @@ function createPanelWide(head, body, footer, bodyid, css, panelId, type = 'card-
 function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-default') {
   return createPanelInternal({ head, body, footer, bodyid, css, panelId, type, containerClass: 'col-lg-6' });
 }
+
+function createSection(id, titleKey, schemaProps, icon, introTitleKey, helpPanelId = null) {
+  const containerId = `conf_cont_${id}`;
+  const bodyContainerId = `editor_body_${id}`;
+  const editorContainerId = `editor_container_${id}`;
+  $('#conf_cont').append(createRow(containerId));
+
+  $(`#${containerId}`)
+    .append(createOptPanel(icon, $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, 'card-system'))
+    .append(createHelpTable(schemaProps, $.i18n(titleKey), helpPanelId));
+
+  if (globalThis.showOptHelp) {
+    createHint("intro", $.i18n(introTitleKey), bodyContainerId);
+  }
+
+  $(`#${bodyContainerId}`).append(`<div id="${editorContainerId}"></div>`);
+}
+
+function appendPanel(id, titleKey, icon) {
+  const containerId = `conf_cont_${id}`;
+  const bodyContainerId = `editor_body_${id}`;
+  $('#conf_cont').append(createRow(containerId));
+  $(`#${containerId}`)
+    .append(createOptPanel(icon, $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, 'card-system'));
+
+  $(`#${bodyContainerId}`).append(`<div id="editor_container_${id}"></div>`);
+}
+
 
 function createSelGroup(group) {
   const el = document.createElement('optgroup');
