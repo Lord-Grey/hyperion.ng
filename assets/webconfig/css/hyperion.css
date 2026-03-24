@@ -4,13 +4,10 @@
     src: url("../fonts/Roboto-Regular.woff") format('woff'),
          url("../fonts/Roboto-Regular.ttf") format('ttf');
 }
-body{font-family:Roboto,"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:15px;max-width:2000px;margin: 0 auto;}
+body{font-family:Roboto,"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:15px;max-width:2000px;margin: 0 auto;overflow-y: scroll;}
 .form-group{margin-bottom:11px;}
 #page-content {
     padding-bottom:50px;
-}
-body{
-    overflow-y: scroll;
 }
     
 /* fixed brand icon */
@@ -229,6 +226,29 @@ table.first_cell_borderless td:first-child{width: 25px !important;}
 .card-default > .card-instance a.dropdown-toggle {color:#fff !important;}
 .card-default > .card-instance a.dropdown-toggle:hover {color:rgba(255,255,255,0.85) !important;}
 .card-default > .card-instance .mdi {line-height:0; font-size:1.4em; vertical-align:middle;}
+
+.logging-fullscreen-btn,
+.logging-fullscreen-btn:hover,
+.logging-fullscreen-btn:focus,
+.logging-fullscreen-btn:active {
+  color: inherit;
+}
+
+.logging-logmessages {
+  overflow: auto;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  font-family: monospace;
+}
+
+.logging-logline {
+  display: block;
+}
+
+.logging-footer {
+  margin: 3px;
+}
 
 
 /* 

@@ -1,139 +1,97 @@
-var conf_editor = null;
-var createdCont = false;
-var isScroll = true;
-
-performTranslation();
-
 $(document).ready(function () {
 
-  window.addEventListener('hashchange', function (event) {
+  const editors = {};
+  let isScroll = true;
+  const LOG_MAX_HEIGHT = 'clamp(180px, 55dvh, 70dvh)';
+
+  performTranslation();
+
+  globalThis.addEventListener('hashchange', function (event) {
     requestLoggingStop();
   });
 
+  initializeUI();
   requestLoggingStart();
+  setupEditors();
+  setupLoggingHandler();
+  setupSettingsHandler();
 
-  $('#conf_cont').append(createOptPanel('fa-reorder', $.i18n("edt_conf_log_heading_title"), 'editor_container', 'btn_submit'));
-  if (window.showOptHelp) {
-    $('#conf_cont').append(createHelpTable(window.schema.logger.properties, $.i18n("edt_conf_log_heading_title")));
-    createHintH("intro", $.i18n('conf_logging_label_intro'), "log_head");
+  removeOverlay();
+
+  function initializeUI() {
+    createHintH('intro', $.i18n('conf_logging_label_intro'), 'log_header');
+    $('#conf_cont').append(createOptPanel('fa-reorder', $.i18n('edt_conf_log_heading_title'), 'editor_container_container', 'btn_submit_container', 'card-system'));
+    if (globalThis.showOptHelp) {
+      $('#conf_cont').append(createHelpTable(globalThis.schema.logger.properties, $.i18n('edt_conf_log_heading_title')));
+    }
+
+    createLogContainer();
   }
 
-  conf_editor = createJsonEditor('editor_container', {
-    logger: window.schema.logger
-  }, true, true);
+  function setupEditors() {
+    createEditor(editors, 'container', 'logger', handleLoggingChange, {
+      bindDefaultChange: false,
+      bindSubmit: false,
+      submitButtonId: 'btn_submit_container'
+    });
 
-  conf_editor.on('change', function () {
-    conf_editor.validate().length || window.readOnlyMode ? $('#btn_submit').prop('disabled', true) : $('#btn_submit').prop('disabled', false);
-  });
+    $('#btn_submit_container').off().on('click', function () {
 
-  $('#btn_submit').off().on('click', function () {
+      const displayedLogLevel = editors['container'].getEditor('root.logger.level').getValue();
+      const newLogLevel = { logger: {} };
+      newLogLevel.logger.level = displayedLogLevel;
 
-    var displayedLogLevel = conf_editor.getEditor("root.logger.level").getValue();
-    var newLogLevel = { logger: {} };
-    newLogLevel.logger.level = displayedLogLevel;
+      requestWriteConfig(newLogLevel);
+    });
+  }
 
-    requestWriteConfig(newLogLevel);
-  });
+  function handleLoggingChange(editor) {
+    editor.on('change', function () {
+      onLoggingEditorChange(editor);
+    });
+  }
 
-  function infoSummary() {
-    let info = '';
-
-    const serverConfig = window.serverConfig ?? {};
-    const currentInstance = window.currentHyperionInstance;
-    const currentInstanceName = window.currentHyperionInstanceName ?? 'Unknown';
-
-    info += `Hyperion System Summary Report (${serverConfig.general?.name ?? 'Unknown'})\n`;
-
-    if (currentInstance !== null) {
-      info += `Reported instance: [${currentInstance}] - ${currentInstanceName}\n`;
+  function onLoggingEditorChange(editor) {
+    if (!editor.ready) {
+      return;
     }
-
-    info += `\n< ----- System information -------------------- >\n`;
-    info += `${getSystemInfo()}\n`;
-
-    // Configured Instances
-    info += `\n< ----- Configured Instances ------------------ >\n`;
-    const instances = serverInfo.instance ?? [];
-
-    if (instances.length > 0) {
-      info += instances.map(inst =>
-        `${inst.instance ?? 'Unknown Instance'}: ${inst.friendly_name ?? 'Unnamed'}, Running: ${inst.running ?? 'Unknown'}`
-      ).join('\n') + '\n';
-
-      // Priorities (Only shown if instances exist)
-      info += `\n< ----- This instance's priorities ------------ >\n`;
-      const priorities = serverInfo.priorities ?? [];
-
-      if (priorities.length > 0) {
-        info += priorities.map(prio => {
-          const priorityStr = prio.priority?.toString().padStart(3, '0') ?? 'N/A';
-          return `${priorityStr}: ${prio.visible ? 'VISIBLE   -' : 'INVISIBLE -'} (${prio.componentId ?? 'Unknown Component'})` +
-            (prio.owner ? ` (Owner: ${prio.owner})` : '');
-        }).join('\n') + '\n';
-      } else {
-        info += `The current priority list is empty or unavailable!\n`;
-      }
-
-      info += `Autoselect: ${serverInfo.priorities_autoselect ?? 'N/A'}\n`;
-
-      // Components Status (Only shown if instances exist)
-      info += `\n< ----- This instance components' status ------->\n`;
-      const components = serverInfo.components ?? [];
-
-      if (components.length > 0) {
-        info += components.map(comp =>
-          `${comp.name} - ${comp.enabled ?? 'Unknown'}`
-        ).join('\n') + '\n';
-      } else {
-        info += `No components found or unavailable!\n`;
-      }
-    } else {
-      info += `No instances are configured!\n`;
-    }
-
-    // Configuration
-    const config = transformConfig(serverConfig, currentInstance);
-    info += `\n< ----- Global configuration items------------- >\n`;
-    info += `${JSON.stringify(config.global, null, 2)}\n`;
-
-    if (instances.length > 0) {
-      info += `\n< ----- Selected Instance configuration items-- >\n`;
-      info += `${JSON.stringify(config.instances, null, 2)}\n`;
-    }
-
-    // Log Messages
-    info += `\n< ----- Current Log --------------------------- >\n`;
-    const logMessages = document.getElementById("logmessages")?.textContent.trim() ?? '';
-
-    info += logMessages.length > 0 ? logMessages : "Log is empty!";
-
-    return info;
+    const hasErrors = editor.validate().length > 0;
+    $('#btn_submit_container').prop('disabled', hasErrors || globalThis.readOnlyMode);
   }
 
   function createLogContainer() {
+    const header = createLogHeader();
+    const body = createLogBodyElement(LOG_MAX_HEIGHT);
+    const footer = createLogFooterElement(isScroll);
 
-    const isScrollEnableStyle = (isScroll ? "checked" : "");
+    $('#container_logoutput').append(createPanelWide(header, body, footer, '', 'card-system'));
 
-    $('#log_content').html('<pre><div id="logmessages" style="overflow:scroll;max-height:400px"></div></pre>');
-    $('#log_footer').append(
-      '<div class="form-check form-switch form-switch-md d-inline-flex align-items-center gap-2" style="margin:3px">'
-      + '<input class="form-check-input" role="switch" id="btn_scroll" ' + isScrollEnableStyle + ' type="checkbox" switch>'
-      + '<label class="form-check-label" for="btn_scroll">' + $.i18n('conf_logging_btn_autoscroll') + '</label>'
-      + '</div>'
-    );
-    $(`#btn_scroll`).on("change", e => {
+    $('.fullscreen-btn').mousedown(function (e) {
+      e.preventDefault();
+    });
+
+    $('.fullscreen-btn').click(function (e) {
+      e.preventDefault();
+      $(this).children('i')
+        .toggleClass('fa-expand')
+        .toggleClass('fa-compress');
+      $('#conf_cont').toggle();
+      const currentMaxHeight = $('#logmessages').css('max-height');
+      const nextMaxHeight = currentMaxHeight === 'none' ? LOG_MAX_HEIGHT : 'none';
+      $('#logmessages').css('max-height', nextMaxHeight);
+    });
+
+    $('#btn_scroll').on('change', e => {
       if (e.currentTarget.checked) {
         //Scroll to end of log
         isScroll = true;
-        if ($("#logmessages").length > 0) {
+        if ($('#logmessages').length > 0) {
           $('#logmessages')[0].scrollTop = $('#logmessages')[0].scrollHeight;
         }
       } else {
         isScroll = false;
       }
     });
-
-    $('#log_footer').append('<button class="btn btn-primary float-end" id="btn_clipboard"><i class="fa fa-fw fa-clipboard"></i>' + $.i18n("conf_logging_btn_clipboard") + '</button>');
 
     $('#btn_clipboard').off().on('click', function () {
       const text = infoSummary();
@@ -143,96 +101,265 @@ $(document).ready(function () {
     });
   }
 
-  function updateLogOutput(messages) {
-
-    if (messages.length != 0) {
-
-      for (var idx = 0; idx < messages.length; idx++) {
-        var logger_name = messages[idx].loggerName;
-        var logger_subname = messages[idx].loggerSubName;
-        var function_ = messages[idx].function;
-        var line = messages[idx].line;
-        var file_name = messages[idx].fileName;
-        var msg = encodeHTML(messages[idx].message);
-        var level_string = messages[idx].levelString;
-        var utime = messages[idx].utime;
-
-        var debug = "";
-        if (level_string == "DEBUG") {
-          debug = "(" + file_name + ":" + line + ":" + function_ + "()) ";
-        }
-
-        var date = new Date(parseInt(utime));
-        var subComponent = "";
-        if (window.serverInfo.instance.length >= 1) {
-          if (logger_subname.startsWith("I")) {
-            var instanceNum = logger_subname.substring(1);
-            if (window.serverInfo.instance[instanceNum]) {
-              subComponent = window.serverInfo.instance[instanceNum].friendly_name;
-            } else {
-              subComponent = instanceNum;
-            }
-          }
-        }
-        var newLogLine = date.toISOString() + " [" + logger_name + (subComponent ? "|" + subComponent : "") + "] (" + level_string + ") " + debug + msg;
-
-        $("#logmessages").append("<code>" + newLogLine + "</code>\n");
-      }
-
-      if (isScroll && $("#logmessages").length > 0) {
-        $('#logmessages').stop().animate({
-          scrollTop: $('#logmessages')[0].scrollHeight
-        }, 800);
-      }
+  function scrollLogToBottom() {
+    if (isScroll && $('#logmessages').length > 0) {
+      $('#logmessages').stop().animate({
+        scrollTop: $('#logmessages')[0].scrollHeight
+      }, 800);
     }
   }
 
-  if (!window.loggingHandlerInstalled) {
-    window.loggingHandlerInstalled = true;
+  function updateLogOutput(messages) {
+    if (messages.length === 0) {
+      return;
+    }
 
-    $(window.hyperion).on("cmd-logmsg-update", function (event) {
+    const logMessages = document.getElementById('logmessages');
+    if (!logMessages) {
+      return;
+    }
 
-      var messages = (event.response.data.messages);
+    for (const message of messages) {
+      const newLogLine = createLogLine(message);
+      const logLineElement = document.createElement('span');
+      const levelClass = getLogLevelTextClass(message.levelString);
+      logLineElement.className = levelClass ? `logging-logline ${levelClass}` : 'logging-logline';
+      logLineElement.textContent = newLogLine;
+      logMessages.appendChild(logLineElement);
+    }
 
-      if (messages.length != 0) {
-        if (!createdCont) {
-          createLogContainer();
-          createdCont = true;
-        }
-        updateLogOutput(messages)
+    scrollLogToBottom();
+  }
+
+  function setupLoggingHandler() {
+    if (!globalThis.loggingHandlerInstalled) {
+      globalThis.loggingHandlerInstalled = true;
+
+      $(globalThis.hyperion).on('cmd-logmsg-update', function (event) {
+
+        const messages = (event.response.data.messages);
+        updateLogOutput(messages);
+      });
+    }
+  }
+
+  function setupSettingsHandler() {
+    $(globalThis.hyperion).on('cmd-settings-update', function (event) {
+
+      const settingsUpdate = event.response.data;
+      if (settingsUpdate.logger) {
+        Object.getOwnPropertyNames(settingsUpdate).forEach(function (val) {
+          globalThis.serverConfig[val] = settingsUpdate[val];
+        });
+
+        const currentLogLevel = globalThis.serverConfig.logger.level;
+        editors['container'].getEditor('root.logger.level').setValue(currentLogLevel);
+        location.reload();
       }
+
     });
   }
 
-  $(window.hyperion).on("cmd-settings-update", function (event) {
-
-    var obj = event.response.data
-    if (obj.logger) {
-      Object.getOwnPropertyNames(obj).forEach(function (val, idx, array) {
-        window.serverConfig[val] = obj[val];
-      });
-
-      var currentlogLevel = window.serverConfig.logger.level;
-      conf_editor.getEditor("root.logger.level").setValue(currentlogLevel);
-      location.reload();
-    }
-
-  });
-
-  // toggle fullscreen button in log output
-  $(".fullscreen-btn").mousedown(function (e) {
-    e.preventDefault();
-  });
-
-  $(".fullscreen-btn").click(function (e) {
-    e.preventDefault();
-    $(this).children('i')
-      .toggleClass('fa-expand')
-      .toggleClass('fa-compress');
-    $('#conf_cont').toggle();
-    $('#logmessages').css('max-height', $('#logmessages').css('max-height') !== 'none' ? 'none' : '400px');
-  });
-
-  removeOverlay();
 });
 
+function createLogHeader() {
+  const header = document.createElement('div');
+
+  const bookIcon = document.createElement('i');
+  bookIcon.className = 'fa fa-book fa-fw';
+
+  const title = document.createTextNode($.i18n('conf_logging_logoutput'));
+
+  const fullscreenLink = document.createElement('a');
+  fullscreenLink.href = '#';
+  fullscreenLink.className = 'fullscreen-btn logging-fullscreen-btn float-end';
+  fullscreenLink.setAttribute('role', 'button');
+  fullscreenLink.title = 'Toggle fullscreen';
+
+  const fullscreenIcon = document.createElement('i');
+  fullscreenIcon.className = 'fa fa-expand fa-fw';
+
+  fullscreenLink.appendChild(fullscreenIcon);
+
+  header.appendChild(bookIcon);
+  header.appendChild(title);
+  header.appendChild(fullscreenLink);
+
+  return header;
+}
+
+function createLogBodyElement(logMaxHeight) {
+  const logMessages = document.createElement('div');
+  logMessages.id = 'logmessages';
+  logMessages.className = 'logging-logmessages';
+  logMessages.style.maxHeight = logMaxHeight;
+  return logMessages;
+}
+
+function createLogFooterElement(isScrollEnabled) {
+  const footerContainer = document.createElement('div');
+  footerContainer.className = 'logging-footer d-flex align-items-center justify-content-between w-100';
+
+  const scrollControlContainer = document.createElement('div');
+  scrollControlContainer.className = 'form-check form-switch form-switch-md d-inline-flex align-items-center gap-2 mb-0';
+
+  const scrollInput = document.createElement('input');
+  scrollInput.className = 'form-check-input';
+  scrollInput.setAttribute('role', 'switch');
+  scrollInput.id = 'btn_scroll';
+  scrollInput.type = 'checkbox';
+  scrollInput.setAttribute('switch', '');
+  scrollInput.checked = isScrollEnabled;
+
+  const scrollLabel = document.createElement('label');
+  scrollLabel.className = 'form-check-label';
+  scrollLabel.setAttribute('for', 'btn_scroll');
+  scrollLabel.textContent = $.i18n('conf_logging_btn_autoscroll');
+
+  scrollControlContainer.appendChild(scrollInput);
+  scrollControlContainer.appendChild(scrollLabel);
+
+  const clipboardButton = document.createElement('button');
+  clipboardButton.className = 'btn btn-primary';
+  clipboardButton.id = 'btn_clipboard';
+
+  const clipboardIcon = document.createElement('i');
+  clipboardIcon.className = 'fa fa-fw fa-clipboard';
+
+  clipboardButton.appendChild(clipboardIcon);
+  clipboardButton.appendChild(document.createTextNode(' ' + $.i18n('conf_logging_btn_clipboard')));
+
+  footerContainer.appendChild(scrollControlContainer);
+  footerContainer.appendChild(clipboardButton);
+
+  return footerContainer;
+}
+
+function getDebugText(message) {
+  if (message.levelString !== 'DEBUG') {
+    return '';
+  }
+  return '(' + message.fileName + ':' + message.line + ':' + message.function + '()) ';
+}
+
+function getLogSubComponent(loggerSubName) {
+  const instances = globalThis.serverInfo.instance;
+  if (instances.length === 0 || !loggerSubName.startsWith('I')) {
+    return '';
+  }
+
+  const instanceNum = loggerSubName.substring(1);
+  if (instances[instanceNum]) {
+    return instances[instanceNum].friendly_name;
+  }
+  return instanceNum;
+}
+
+function getLogLevelTextClass(levelString) {
+  switch (levelString) {
+    case 'ERROR':
+      return 'text-danger-emphasis bg-danger-subtle';
+    case 'WARNING':
+    case 'WARN':
+      return 'text-warning-emphasis bg-warning-subtle';
+    case 'DEBUG':
+      return 'text-primary-emphasis bg-primary-subtle';
+    default:
+      return '';
+  }
+}
+
+function createLogLine(message) {
+  const date = new Date(Number.parseInt(message.utime));
+  const loggerName = message.loggerName;
+  const subComponent = getLogSubComponent(message.loggerSubName);
+  const level = message.levelString;
+  const debugText = getDebugText(message);
+  const msg = encodeHTML(message.message);
+
+  return date.toISOString() + ' [' + loggerName + (subComponent ? '|' + subComponent : '') + '] (' + level + ') ' + debugText + msg;
+}
+
+function formatInstancesList(instances) {
+  return instances.map(inst =>
+    `${inst.instance ?? 'Unknown Instance'}: ${inst.friendly_name ?? 'Unnamed'}, Running: ${inst.running ?? 'Unknown'}`
+  ).join('\n') + '\n';
+}
+
+function formatPriorities(priorities) {
+  if (priorities.length === 0) {
+    return 'The current priority list is empty or unavailable!\n';
+  }
+
+  return priorities.map(prio => {
+    const priorityStr = prio.priority?.toString().padStart(3, '0') ?? 'N/A';
+    return `${priorityStr}: ${prio.visible ? 'VISIBLE   -' : 'INVISIBLE -'} (${prio.componentId ?? 'Unknown Component'})`
+      + (prio.owner ? ` (Owner: ${prio.owner})` : '');
+  }).join('\n') + '\n';
+}
+
+function formatComponents(components) {
+  if (components.length === 0) {
+    return 'No components found or unavailable!\n';
+  }
+
+  return components.map(comp =>
+    `${comp.name} - ${comp.enabled ?? 'Unknown'}`
+  ).join('\n') + '\n';
+}
+
+function getLogMessagesText() {
+  const logMessages = document.getElementById('logmessages')?.textContent.trim() ?? '';
+  return logMessages.length > 0 ? logMessages : 'Log is empty!';
+}
+
+function infoSummary() {
+  const serverConfig = globalThis.serverConfig ?? {};
+  const currentServerInfo = globalThis.serverInfo ?? {};
+  const currentInstance = globalThis.currentHyperionInstance;
+  const currentInstanceName = globalThis.currentHyperionInstanceName ?? 'Unknown';
+  const instances = currentServerInfo.instance ?? [];
+
+  let info = '';
+
+  info += `Hyperion System Summary Report (${serverConfig.general?.name ?? 'Unknown'})\n`;
+
+  if (currentInstance !== null) {
+    info += `Reported instance: [${currentInstance}] - ${currentInstanceName}\n`;
+  }
+
+  info += `\n< ----- System information -------------------- >\n`;
+  info += `${getSystemInfo()}\n`;
+
+  info += `\n< ----- Configured Instances ------------------ >\n`;
+
+  if (instances.length > 0) {
+    info += formatInstancesList(instances);
+
+    info += `\n< ----- This instance's priorities ------------ >\n`;
+    const priorities = currentServerInfo.priorities ?? [];
+    info += formatPriorities(priorities);
+
+    info += `Autoselect: ${currentServerInfo.priorities_autoselect ?? 'N/A'}\n`;
+
+    info += `\n< ----- This instance components' status ------->\n`;
+    const components = currentServerInfo.components ?? [];
+    info += formatComponents(components);
+  } else {
+    info += `No instances are configured!\n`;
+  }
+
+  const config = transformConfig(serverConfig, currentInstance);
+  info += `\n< ----- Global configuration items------------- >\n`;
+  info += `${JSON.stringify(config.global, null, 2)}\n`;
+
+  if (instances.length > 0) {
+    info += `\n< ----- Selected Instance configuration items-- >\n`;
+    info += `${JSON.stringify(config.instances, null, 2)}\n`;
+  }
+
+  info += `\n< ----- Current Log --------------------------- >\n`;
+  info += getLogMessagesText();
+
+  return info;
+}
