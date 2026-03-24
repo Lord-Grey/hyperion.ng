@@ -11,7 +11,10 @@
 			"title": "edt_conf_general_enable_title",
 			"required": true,
 			"default": false,
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_general_enable_expl"
+			}
 		},
 		"available_devices": {
 			"type": "string",
@@ -23,7 +26,7 @@
 				"enum_titles": [
 					"edt_conf_grabber_discovery_inprogress"
 				],
-				"infoText": "edt_conf_grabber_discovered_title_info"
+				"infoText": "edt_conf_grabber_discovered_expl"
 			},
 			"required": false,
 			"propertyOrder": 2
@@ -43,7 +46,10 @@
 			"type": "string",
 			"title": "edt_conf_v4l2_input_title",
 			"propertyOrder": 4,
-			"required": false
+			"required": false,
+			"options": {
+				"infoText": "edt_conf_v4l2_input_expl"
+			}
 		},
 		"input": {
 			"type": "integer",
@@ -60,20 +66,29 @@
 			"type": "string",
 			"title": "edt_conf_v4l2_standard_title",
 			"required": false,
-			"propertyOrder": 6
+			"propertyOrder": 6,
+			"options": {
+				"infoText": "edt_conf_v4l2_standard_expl"
+			}
 		},
 		"encoding": {
 			"type": "string",
 			"title": "edt_conf_v4l2_encoding_title",
 			"required": false,
 			"access": "advanced",
-			"propertyOrder": 7
+			"propertyOrder": 7,
+			"options": {
+				"infoText": "edt_conf_v4l2_encoding_expl"
+			}
 		},
 		"resolutions": {
 			"type": "string",
 			"title": "edt_conf_v4l2_resolution_title",
 			"propertyOrder": 8,
-			"required": false
+			"required": false,
+			"options": {
+				"infoText": "edt_conf_v4l2_resolution_expl"
+			}
 		},
 		"width": {
 			"type": "integer",
@@ -82,7 +97,8 @@
 			"minimum": 0,
 			"append": "edt_append_pixel",
 			"options": {
-				"hidden": true
+				"hidden": true,
+				"infoText": "edt_conf_fg_width_expl"
 			},
 			"required": true,
 			"propertyOrder": 9,
@@ -95,7 +111,8 @@
 			"minimum": 0,
 			"append": "edt_append_pixel",
 			"options": {
-				"hidden": true
+				"hidden": true,
+				"infoText": "edt_conf_fg_height_expl"
 			},
 			"required": true,
 			"propertyOrder": 10,
@@ -105,7 +122,10 @@
 			"type": "string",
 			"title": "edt_conf_v4l2_framerate_title",
 			"propertyOrder": 11,
-			"required": false
+			"required": false,
+			"options": {
+				"infoText": "edt_conf_v4l2_framerate_expl"
+			}
 		},
 		"fps": {
 			"type": "integer",
@@ -128,7 +148,10 @@
 			"default": 0,
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 13
+			"propertyOrder": 13,
+			"options": {
+				"infoText": "edt_conf_v4l2_fpsSoftwareDecimation_expl"
+			}
 		},
 		"flip": {
 			"type": "string",
@@ -146,7 +169,8 @@
 					"edt_conf_enum_HORIZONTAL",
 					"edt_conf_enum_VERTICAL",
 					"edt_conf_enum_BOTH"
-				]
+				],
+				"infoText": "edt_conf_v4l2_flip_expl"
 			},
 			"required": true,
 			"access": "advanced",
@@ -159,7 +183,10 @@
 			"maximum": 30,
 			"default": 8,
 			"required": true,
-			"propertyOrder": 15
+			"propertyOrder": 15,
+			"options": {
+				"infoText": "edt_conf_v4l2_sizeDecimation_expl"
+			}
 		},
 		"hardware_brightness": {
 			"type": "integer",
@@ -167,7 +194,10 @@
 			"default": 0,
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 16
+			"propertyOrder": 16,
+			"options": {
+				"infoText": "edt_conf_v4l2_hardware_brightness_expl"
+			}
 		},
 		"hardware_contrast": {
 			"type": "integer",
@@ -175,7 +205,10 @@
 			"default": 0,
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 17
+			"propertyOrder": 17,
+			"options": {
+				"infoText": "edt_conf_v4l2_hardware_contrast_expl"
+			}
 		},
 		"hardware_saturation": {
 			"type": "integer",
@@ -183,7 +216,10 @@
 			"default": 0,
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 18
+			"propertyOrder": 18,
+			"options": {
+				"infoText": "edt_conf_v4l2_hardware_saturation_expl"
+			}
 		},
 		"hardware_hue": {
 			"type": "integer",
@@ -191,7 +227,10 @@
 			"default": 0,
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 19
+			"propertyOrder": 19,
+			"options": {
+				"infoText": "edt_conf_v4l2_hardware_hue_expl"
+			}
 		},
 		"cropLeft": {
 			"type": "integer",
@@ -200,7 +239,10 @@
 			"default": 0,
 			"append": "edt_append_pixel",
 			"required": true,
-			"propertyOrder": 20
+			"propertyOrder": 20,
+			"options": {
+				"infoText": "edt_conf_v4l2_cropLeft_expl"
+			}
 		},
 		"cropRight": {
 			"type": "integer",
@@ -209,7 +251,10 @@
 			"default": 0,
 			"append": "edt_append_pixel",
 			"required": true,
-			"propertyOrder": 21
+			"propertyOrder": 21,
+			"options": {
+				"infoText": "edt_conf_v4l2_cropRight_expl"
+			}
 		},
 		"cropTop": {
 			"type": "integer",
@@ -218,7 +263,10 @@
 			"default": 0,
 			"append": "edt_append_pixel",
 			"required": true,
-			"propertyOrder": 22
+			"propertyOrder": 22,
+			"options": {
+				"infoText": "edt_conf_v4l2_cropTop_expl"
+			}
 		},
 		"cropBottom": {
 			"type": "integer",
@@ -227,7 +275,10 @@
 			"default": 0,
 			"append": "edt_append_pixel",
 			"required": true,
-			"propertyOrder": 23
+			"propertyOrder": 23,
+			"options": {
+				"infoText": "edt_conf_v4l2_cropBottom_expl"
+			}
 		},
 		"signalDetection": {
 			"type": "boolean",
@@ -236,7 +287,10 @@
 			"default": false,
 			"required": true,
 			"access": "expert",
-			"propertyOrder": 24
+			"propertyOrder": 24,
+			"options": {
+				"infoText": "edt_conf_v4l2_signalDetection_expl"
+			}
 		},
 		"redSignalThreshold": {
 			"type": "integer",
@@ -248,7 +302,8 @@
 			"options": {
 				"dependencies": {
 					"signalDetection": true
-				}
+				},
+				"infoText": "edt_conf_v4l2_redSignalThreshold_expl"
 			},
 			"access": "expert",
 			"required": true,
@@ -264,7 +319,8 @@
 			"options": {
 				"dependencies": {
 					"signalDetection": true
-				}
+				},
+				"infoText": "edt_conf_v4l2_greenSignalThreshold_expl"
 			},
 			"required": true,
 			"access": "expert",
@@ -280,7 +336,8 @@
 			"options": {
 				"dependencies": {
 					"signalDetection": true
-				}
+				},
+				"infoText": "edt_conf_v4l2_blueSignalThreshold_expl"
 			},
 			"required": true,
 			"access": "expert",
@@ -295,7 +352,8 @@
 			"options": {
 				"dependencies": {
 					"signalDetection": true
-				}
+				},
+				"infoText": "edt_conf_v4l2_noSignalCounterThreshold_expl"
 			},
 			"required": true,
 			"access": "expert",
@@ -311,7 +369,8 @@
 			"options": {
 				"dependencies": {
 					"signalDetection": true
-				}
+				},
+				"infoText": "edt_conf_v4l2_sDVOffsetMin_expl"
 			},
 			"required": true,
 			"access": "expert",
@@ -327,7 +386,8 @@
 			"options": {
 				"dependencies": {
 					"signalDetection": true
-				}
+				},
+				"infoText": "edt_conf_v4l2_sDVOffsetMax_expl"
 			},
 			"required": true,
 			"access": "expert",
@@ -343,7 +403,8 @@
 			"options": {
 				"dependencies": {
 					"signalDetection": true
-				}
+				},
+				"infoText": "edt_conf_v4l2_sDHOffsetMin_expl"
 			},
 			"required": true,
 			"access": "expert",
@@ -359,7 +420,8 @@
 			"options": {
 				"dependencies": {
 					"signalDetection": true
-				}
+				},
+				"infoText": "edt_conf_v4l2_sDHOffsetMax_expl"
 			},
 			"required": true,
 			"access": "expert",

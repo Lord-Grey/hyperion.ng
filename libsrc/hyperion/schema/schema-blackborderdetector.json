@@ -1,73 +1,95 @@
 {
-	"type" : "object",
-	"title" : "edt_conf_bb_heading_title",
-	"properties" :
-	{
+	"type": "object",
+	"title": "edt_conf_bb_heading_title",
+	"properties": {
 		"enable": {
 			"type": "boolean",
 			"format": "checkbox",
 			"title": "edt_conf_general_enable_title",
 			"default": true,
-			"format": "checkbox",
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_general_enable_expl"
+			}
 		},
-		"threshold" :
-		{
-			"type" : "integer",
-			"title" : "edt_conf_bb_threshold_title",
-			"minimum" : 0,
-			"maximum" : 100,
-			"default" : 5,
-			"append" : "edt_append_percent",
-			"propertyOrder" : 2
+		"threshold": {
+			"type": "integer",
+			"title": "edt_conf_bb_threshold_title",
+			"minimum": 0,
+			"maximum": 100,
+			"default": 5,
+			"append": "edt_append_percent",
+			"propertyOrder": 2,
+			"options": {
+				"infoText": "edt_conf_bb_threshold_expl"
+			}
 		},
-		"unknownFrameCnt"    :
-		{
-			"type" : "integer",
-			"title" : "edt_conf_bb_unknownFrameCnt_title",
-			"minimum" : 0,
-			"default" : 600,
-			"access" : "expert",
-			"propertyOrder" : 3
+		"unknownFrameCnt": {
+			"type": "integer",
+			"title": "edt_conf_bb_unknownFrameCnt_title",
+			"minimum": 0,
+			"default": 600,
+			"access": "expert",
+			"propertyOrder": 3,
+			"options": {
+				"infoText": "edt_conf_bb_unknownFrameCnt_expl"
+			}
 		},
-		"borderFrameCnt" :
-		{
-			"type" : "integer",
-			"title" : "edt_conf_bb_borderFrameCnt_title",
-			"minimum" : 0,
-			"default" : 50,
-			"access" : "expert",
-			"propertyOrder" : 4
+		"borderFrameCnt": {
+			"type": "integer",
+			"title": "edt_conf_bb_borderFrameCnt_title",
+			"minimum": 0,
+			"default": 50,
+			"access": "expert",
+			"propertyOrder": 4,
+			"options": {
+				"infoText": "edt_conf_bb_borderFrameCnt_expl"
+			}
 		},
-		"maxInconsistentCnt" :
-		{
-			"type" : "integer",
-			"title" : "edt_conf_bb_maxInconsistentCnt_title",
-			"minimum" : 0,
-			"default" : 10,
-			"access" : "expert",
-			"propertyOrder" : 5
+		"maxInconsistentCnt": {
+			"type": "integer",
+			"title": "edt_conf_bb_maxInconsistentCnt_title",
+			"minimum": 0,
+			"default": 10,
+			"access": "expert",
+			"propertyOrder": 5,
+			"options": {
+				"infoText": "edt_conf_bb_maxInconsistentCnt_expl"
+			}
 		},
-		"blurRemoveCnt" :
-		{
-			"type" : "integer",
-			"title" : "edt_conf_bb_blurRemoveCnt_title",
-			"minimum" : 0,
-			"default" : 1,
-			"access" : "expert",
-			"propertyOrder" : 6
+		"blurRemoveCnt": {
+			"type": "integer",
+			"title": "edt_conf_bb_blurRemoveCnt_title",
+			"minimum": 0,
+			"default": 1,
+			"access": "expert",
+			"propertyOrder": 6,
+			"options": {
+				"infoText": "edt_conf_bb_blurRemoveCnt_expl"
+			}
 		},
 		"mode": {
 			"type": "string",
 			"title": "edt_conf_bb_mode_title",
-			"enum": [ "default", "classic", "osd", "letterbox" ],
+			"enum": [
+				"default",
+				"classic",
+				"osd",
+				"letterbox"
+			],
 			"default": "default",
 			"required": true,
 			"options": {
-				"enum_titles": [ "edt_conf_enum_bbdefault", "edt_conf_enum_bbclassic", "edt_conf_enum_bbosd", "edt_conf_enum_bbletterbox" ]
+				"enum_titles": [
+					"edt_conf_enum_bbdefault",
+					"edt_conf_enum_bbclassic",
+					"edt_conf_enum_bbosd",
+					"edt_conf_enum_bbletterbox"
+				],
+				"infoText": "edt_conf_bb_mode_expl"
 			},
 			"propertyOrder": 7
 		}
 	},
-	"additionalProperties" : false
+	"additionalProperties": false
 }

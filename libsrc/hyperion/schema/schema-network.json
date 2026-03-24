@@ -11,7 +11,10 @@
 			"title": "edt_conf_network_localApiAuth_title",
 			"required": true,
 			"default": false,
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_network_localApiAuth_expl"
+			}
 		}
 	},
 	"additionalProperties": false

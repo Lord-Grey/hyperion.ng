@@ -28,7 +28,8 @@
 					"edt_conf_enum_unicolor_dominant",
 					"edt_conf_enum_dominant_color_advanced",
 					"edt_conf_enum_unicolor_dominant_advanced"
-				]
+				],
+				"infoText": "edt_conf_color_imageToLedMappingType_expl"
 			},
 			"propertyOrder": 1
 		},
@@ -46,7 +47,8 @@
 						"dominant_color_advanced",
 						"unicolor_dominant_advanced"
 					]
-				}
+				},
+				"infoText": "edt_conf_color_accuracyLevel_expl"
 			}
 		},
 		"reducedPixelSetFactorFactor": {
@@ -66,7 +68,8 @@
 					"edt_conf_enum_low",
 					"edt_conf_enum_medium",
 					"edt_conf_enum_high"
-				]
+				],
+				"infoText": "edt_conf_color_reducedPixelSetFactorFactor_expl"
 			},
 			"propertyOrder": 3
 		},
@@ -86,14 +89,20 @@
 						"title": "edt_conf_color_id_title",
 						"required": true,
 						"default": "A userdefined name",
-						"propertyOrder": 1
+						"propertyOrder": 1,
+						"options": {
+							"infoText": "edt_conf_color_id_expl"
+						}
 					},
 					"leds": {
 						"type": "string",
 						"title": "edt_conf_color_leds_title",
 						"required": true,
 						"default": "*",
-						"propertyOrder": 2
+						"propertyOrder": 2,
+						"options": {
+							"infoText": "edt_conf_color_leds_expl"
+						}
 					},
 					"white": {
 						"type": "string",
@@ -101,7 +110,10 @@
 						"format": "color",
 						"default": "#ffffff",
 						"required": true,
-						"propertyOrder": 2
+						"propertyOrder": 2,
+						"options": {
+							"infoText": "edt_conf_color_white_expl"
+						}
 					},
 					"red": {
 						"type": "string",
@@ -109,7 +121,10 @@
 						"format": "color",
 						"default": "#ff0000",
 						"required": true,
-						"propertyOrder": 3
+						"propertyOrder": 3,
+						"options": {
+							"infoText": "edt_conf_color_red_expl"
+						}
 					},
 					"green": {
 						"type": "string",
@@ -117,7 +132,10 @@
 						"format": "color",
 						"default": "#00ff00",
 						"required": true,
-						"propertyOrder": 4
+						"propertyOrder": 4,
+						"options": {
+							"infoText": "edt_conf_color_green_expl"
+						}
 					},
 					"blue": {
 						"type": "string",
@@ -125,7 +143,10 @@
 						"format": "color",
 						"default": "#0000ff",
 						"required": true,
-						"propertyOrder": 5
+						"propertyOrder": 5,
+						"options": {
+							"infoText": "edt_conf_color_blue_expl"
+						}
 					},
 					"cyan": {
 						"type": "string",
@@ -133,7 +154,10 @@
 						"format": "color",
 						"default": "#00ffff",
 						"required": true,
-						"propertyOrder": 6
+						"propertyOrder": 6,
+						"options": {
+							"infoText": "edt_conf_color_cyan_expl"
+						}
 					},
 					"magenta": {
 						"type": "string",
@@ -141,7 +165,10 @@
 						"format": "color",
 						"default": "#ff00ff",
 						"required": true,
-						"propertyOrder": 7
+						"propertyOrder": 7,
+						"options": {
+							"infoText": "edt_conf_color_magenta_expl"
+						}
 					},
 					"yellow": {
 						"type": "string",
@@ -149,7 +176,10 @@
 						"format": "color",
 						"default": "#ffff00",
 						"required": true,
-						"propertyOrder": 8
+						"propertyOrder": 8,
+						"options": {
+							"infoText": "edt_conf_color_yellow_expl"
+						}
 					},
 					"saturationGain": {
 						"type": "number",
@@ -159,7 +189,10 @@
 						"maximum": 10.0,
 						"default": 1.0,
 						"step": 0.1,
-						"propertyOrder": 11
+						"propertyOrder": 11,
+						"options": {
+							"infoText": "edt_conf_color_saturationGain_expl"
+						}
 					},
 					"backlightThreshold": {
 						"type": "integer",
@@ -169,7 +202,10 @@
 						"maximum": 100,
 						"default": 0,
 						"append": "edt_append_percent",
-						"propertyOrder": 12
+						"propertyOrder": 12,
+						"options": {
+							"infoText": "edt_conf_color_backlightThreshold_expl"
+						}
 					},
 					"backlightColored": {
 						"type": "boolean",
@@ -177,7 +213,10 @@
 						"title": "edt_conf_color_backlightColored_title",
 						"required": true,
 						"default": false,
-						"propertyOrder": 13
+						"propertyOrder": 13,
+						"options": {
+							"infoText": "edt_conf_color_backlightColored_expl"
+						}
 					},
 					"brightness": {
 						"type": "integer",
@@ -187,7 +226,10 @@
 						"maximum": 100,
 						"default": 100,
 						"append": "edt_append_percent",
-						"propertyOrder": 14
+						"propertyOrder": 14,
+						"options": {
+							"infoText": "edt_conf_color_brightness_expl"
+						}
 					},
 					"brightnessCompensation": {
 						"type": "integer",
@@ -197,7 +239,10 @@
 						"maximum": 100,
 						"default": 0,
 						"append": "edt_append_percent",
-						"propertyOrder": 15
+						"propertyOrder": 15,
+						"options": {
+							"infoText": "edt_conf_color_brightnessComp_expl"
+						}
 					},
 					"brightnessGain": {
 						"type": "number",
@@ -207,7 +252,10 @@
 						"maximum": 10.0,
 						"default": 1.0,
 						"step": 0.1,
-						"propertyOrder": 16
+						"propertyOrder": 16,
+						"options": {
+							"infoText": "edt_conf_color_brightnessGain_expl"
+						}
 					},
 					"temperature": {
 						"type": "integer",
@@ -218,7 +266,10 @@
 						"default": 6600,
 						"step": 100,
 						"append": "edt_append_kelvin",
-						"propertyOrder": 17
+						"propertyOrder": 17,
+						"options": {
+							"infoText": "edt_conf_color_temperature_expl"
+						}
 					},
 					"gammaRed": {
 						"type": "number",
@@ -228,7 +279,10 @@
 						"maximum": 100.0,
 						"default": 2.2,
 						"step": 0.1,
-						"propertyOrder": 18
+						"propertyOrder": 18,
+						"options": {
+							"infoText": "edt_conf_color_gammaRed_expl"
+						}
 					},
 					"gammaGreen": {
 						"type": "number",
@@ -238,7 +292,10 @@
 						"maximum": 100.0,
 						"default": 2.2,
 						"step": 0.1,
-						"propertyOrder": 19
+						"propertyOrder": 19,
+						"options": {
+							"infoText": "edt_conf_color_gammaGreen_expl"
+						}
 					},
 					"gammaBlue": {
 						"type": "number",
@@ -248,10 +305,16 @@
 						"maximum": 100.0,
 						"default": 2.2,
 						"step": 0.1,
-						"propertyOrder": 20
+						"propertyOrder": 20,
+						"options": {
+							"infoText": "edt_conf_color_gammaBlue_expl"
+						}
 					}
 				},
 				"additionalProperties": false
+			},
+			"options": {
+				"infoText": "edt_conf_color_channelAdjustment_header_expl"
 			}
 		}
 	},

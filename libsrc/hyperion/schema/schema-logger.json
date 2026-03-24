@@ -21,7 +21,8 @@
 					"edt_conf_enum_logwarn",
 					"edt_conf_enum_logverbose",
 					"edt_conf_enum_logdebug"
-				]
+				],
+				"infoText": "edt_conf_log_level_expl"
 			},
 			"default": "warn"
 		}

@@ -11,7 +11,10 @@
 			"title": "edt_conf_general_enable_title",
 			"required": true,
 			"default": false,
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_general_enable_expl"
+			}
 		},
 		"instanceList": {
 			"type": "string",
@@ -19,7 +22,7 @@
 			"required": true,
 			"default": "NONE",
 			"options": {
-				"infoText": "edt_conf_forwarder_instance_title_info"
+				"infoText": "edt_conf_forwarder_instance_expl"
 			},
 			"propertyOrder": 2
 		},
@@ -31,7 +34,8 @@
 			"minimum": 0,
 			"maximum": 255,
 			"options": {
-				"hidden": true
+				"hidden": true,
+				"infoText": "edt_conf_forwarder_instance_expl"
 			},
 			"comment": "The instance-ID is dynamically inserted",
 			"propertyOrder": 3
@@ -41,13 +45,16 @@
 			"uniqueItems": true,
 			"format": "select",
 			"title": "edt_conf_forwarder_json_services_discovered_title",
-			"propertyOrder": 4
+			"propertyOrder": 4,
+			"options": {
+				"infoText": "edt_conf_forwarder_json_services_discovered_expl"
+			}
 		},
 		"jsonapi": {
 			"type": "array",
 			"title": "edt_conf_forwarder_json_title",
 			"options": {
-				"infoText": "edt_conf_forwarder_json_title_info"
+				"infoText": "edt_conf_forwarder_json_expl"
 			},
 			"uniqueItems": true,
 			"access": "expert",
@@ -61,7 +68,10 @@
 						"title": "edt_conf_forwarder_service_name_title",
 						"required": true,
 						"access": "expert",
-						"propertyOrder": 1
+						"propertyOrder": 1,
+						"options": {
+							"infoText": "edt_conf_forwarder_service_name_expl"
+						}
 					},
 					"host": {
 						"type": "string",
@@ -70,7 +80,10 @@
 						"title": "edt_dev_spec_targetIpHost_title",
 						"required": true,
 						"access": "expert",
-						"propertyOrder": 2
+						"propertyOrder": 2,
+						"options": {
+							"infoText": "edt_dev_spec_targetIpHost_expl"
+						}
 					},
 					"port": {
 						"type": "integer",
@@ -80,7 +93,10 @@
 						"title": "edt_dev_spec_port_title",
 						"required": true,
 						"access": "expert",
-						"propertyOrder": 3
+						"propertyOrder": 3,
+						"options": {
+							"infoText": "edt_dev_spec_port_expl"
+						}
 					},
 					"instanceIds": {
 						"title": "edt_conf_forwarder_target_instances_title",
@@ -95,7 +111,10 @@
 							"maximum": 255,
 							"default": 255
 						},
-						"propertyOrder": 4
+						"propertyOrder": 4,
+						"options": {
+							"infoText": "edt_conf_forwarder_target_instances_expl"
+						}
 					}
 				}
 			},
@@ -106,13 +125,16 @@
 			"uniqueItems": true,
 			"format": "select",
 			"title": "edt_conf_forwarder_flat_services_discovered_title",
-			"propertyOrder": 6
+			"propertyOrder": 6,
+			"options": {
+				"infoText": "edt_conf_forwarder_flat_services_discovered_expl"
+			}
 		},
 		"flatbuffer": {
 			"type": "array",
 			"title": "edt_conf_forwarder_flat_title",
 			"options": {
-				"infoText": "edt_conf_forwarder_flat_title_info"
+				"infoText": "edt_conf_forwarder_flat_expl"
 			},
 			"uniqueItems": true,
 			"access": "expert",
@@ -125,7 +147,10 @@
 						"type": "string",
 						"title": "edt_conf_forwarder_service_name_title",
 						"access": "expert",
-						"propertyOrder": 1
+						"propertyOrder": 1,
+						"options": {
+							"infoText": "edt_conf_forwarder_service_name_expl"
+						}
 					},
 					"host": {
 						"type": "string",
@@ -134,7 +159,10 @@
 						"title": "edt_dev_spec_targetIpHost_title",
 						"required": true,
 						"access": "expert",
-						"propertyOrder": 2
+						"propertyOrder": 2,
+						"options": {
+							"infoText": "edt_dev_spec_targetIpHost_expl"
+						}
 					},
 					"port": {
 						"type": "integer",
@@ -144,7 +172,10 @@
 						"title": "edt_dev_spec_port_title",
 						"required": true,
 						"access": "expert",
-						"propertyOrder": 3
+						"propertyOrder": 3,
+						"options": {
+							"infoText": "edt_dev_spec_port_expl"
+						}
 					}
 				}
 			},

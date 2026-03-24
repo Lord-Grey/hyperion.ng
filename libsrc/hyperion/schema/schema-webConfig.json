@@ -9,7 +9,10 @@
 			"type": "string",
 			"title": "edt_conf_webConfig_docroot_title",
 			"access": "expert",
-			"propertyOrder": 2
+			"propertyOrder": 2,
+			"options": {
+				"infoText": "edt_conf_webConfig_docroot_expl"
+			}
 		},
 		"port": {
 			"type": "integer",
@@ -17,7 +20,10 @@
 			"minimum": 80,
 			"maximum": 65535,
 			"default": 8090,
-			"propertyOrder": 3
+			"propertyOrder": 3,
+			"options": {
+				"infoText": "edt_conf_webConfig_port_expl"
+			}
 		},
 		"sslPort": {
 			"type": "integer",
@@ -26,28 +32,40 @@
 			"minimum": 80,
 			"maximum": 65535,
 			"default": 8092,
-			"propertyOrder": 4
+			"propertyOrder": 4,
+			"options": {
+				"infoText": "edt_conf_webConfig_sslPort_expl"
+			}
 		},
 		"crtPath": {
 			"type": "string",
 			"title": "edt_conf_webConfig_crtPath_title",
 			"required": true,
 			"default": "",
-			"propertyOrder": 5
+			"propertyOrder": 5,
+			"options": {
+				"infoText": "edt_conf_webConfig_crtPath_expl"
+			}
 		},
 		"keyPath": {
 			"type": "string",
 			"title": "edt_conf_webConfig_keyPath_title",
 			"required": true,
 			"default": "",
-			"propertyOrder": 6
+			"propertyOrder": 6,
+			"options": {
+				"infoText": "edt_conf_webConfig_keyPath_expl"
+			}
 		},
 		"keyPassPhrase": {
 			"type": "string",
 			"title": "edt_conf_webConfig_keyPassPhrase_title",
 			"required": true,
 			"default": "",
-			"propertyOrder": 7
+			"propertyOrder": 7,
+			"options": {
+				"infoText": "edt_conf_webConfig_keyPassPhrase_expl"
+			}
 		}
 	},
 	"additionalProperties": false

@@ -1,100 +1,116 @@
 {
-  "type": "object",
-  "title": "edt_conf_smooth_heading_title",
-  "options": {
-    "titleHidden": true
-  },
-  "properties": {
-    "enable": {
-      "type": "boolean",
-      "format": "checkbox",
-      "title": "edt_conf_general_enable_title",
-      "default": true,
-      "propertyOrder": 1
-    },
-    "type": {
-      "type": "string",
-      "required": true,
-      "title": "edt_conf_smooth_type_title",
-      "enum": [
-        "linear",
-        "decay"
-      ],
-      "default": "linear",
-      "options": {
-        "enum_titles": [
-          "edt_conf_enum_linear",
-          "edt_conf_enum_decay"
-        ]
-      },
-      "propertyOrder": 2
-    },
-    "time_ms": {
-      "type": "integer",
-      "title": "edt_conf_smooth_time_ms_title",
-      "minimum": 1,
-      "maximum": 5000,
-      "default": 150,
-      "append": "edt_append_ms",
-      "propertyOrder": 3
-    },
-    "updateFrequency": {
-      "type": "number",
-      "title": "edt_conf_smooth_updateFrequency_title",
-      "minimum": 1.0,
-      "maximum": 2000.0,
-      "default": 25.0,
-      "append": "edt_append_hz",
-      "propertyOrder": 4
-    },
-    "interpolationRate": {
-      "type": "number",
-      "title": "edt_conf_smooth_interpolationRate_title",
-      "minimum": 1.0,
-      "maximum": 1000.0,
-      "default": 1.0,
-      "append": "edt_append_hz",
-      "propertyOrder": 5,
-      "options": {
-        "dependencies": {
-          "type": "decay"
-        }
-      }
-    },
-    "decay": {
-      "type": "number",
-      "title": "edt_conf_smooth_decay_title",
-      "default": 1.0,
-      "minimum": 1.0,
-      "maximum": 20.0,
-      "propertyOrder": 7,
-      "options": {
-        "dependencies": {
-          "type": "decay"
-        }
-      }
-    },
-    "dithering": {
-      "type": "boolean",
-      "format": "checkbox",
-      "title": "edt_conf_smooth_dithering_title",
-      "default": true,
-      "propertyOrder": 8,
-      "options": {
-        "dependencies": {
-          "type": "decay"
-        }
-      }
-    },
-    "updateDelay": {
-      "type": "integer",
-      "title": "edt_conf_smooth_updateDelay_title",
-      "minimum": 0,
-      "maximum": 2048,
-      "default": 0,
-      "append": "edt_append_frames",
-      "propertyOrder": 9
-    }
-  },
-  "additionalProperties": false
+	"type": "object",
+	"title": "edt_conf_smooth_heading_title",
+	"options": {
+		"titleHidden": true
+	},
+	"properties": {
+		"enable": {
+			"type": "boolean",
+			"format": "checkbox",
+			"title": "edt_conf_general_enable_title",
+			"default": true,
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_general_enable_expl"
+			}
+		},
+		"type": {
+			"type": "string",
+			"required": true,
+			"title": "edt_conf_smooth_type_title",
+			"enum": [
+				"linear",
+				"decay"
+			],
+			"default": "linear",
+			"options": {
+				"enum_titles": [
+					"edt_conf_enum_linear",
+					"edt_conf_enum_decay"
+				],
+				"infoText": "edt_conf_smooth_type_expl"
+			},
+			"propertyOrder": 2
+		},
+		"time_ms": {
+			"type": "integer",
+			"title": "edt_conf_smooth_time_ms_title",
+			"minimum": 1,
+			"maximum": 5000,
+			"default": 150,
+			"append": "edt_append_ms",
+			"propertyOrder": 3,
+			"options": {
+				"infoText": "edt_conf_smooth_time_ms_expl"
+			}
+		},
+		"updateFrequency": {
+			"type": "number",
+			"title": "edt_conf_smooth_updateFrequency_title",
+			"minimum": 1.0,
+			"maximum": 2000.0,
+			"default": 25.0,
+			"append": "edt_append_hz",
+			"propertyOrder": 4,
+			"options": {
+				"infoText": "edt_conf_smooth_updateFrequency_expl"
+			}
+		},
+		"interpolationRate": {
+			"type": "number",
+			"title": "edt_conf_smooth_interpolationRate_title",
+			"minimum": 1.0,
+			"maximum": 1000.0,
+			"default": 1.0,
+			"append": "edt_append_hz",
+			"propertyOrder": 5,
+			"options": {
+				"dependencies": {
+					"type": "decay"
+				},
+				"infoText": "edt_conf_smooth_interpolationRate_expl"
+			}
+		},
+		"decay": {
+			"type": "number",
+			"title": "edt_conf_smooth_decay_title",
+			"default": 1.0,
+			"minimum": 1.0,
+			"maximum": 20.0,
+			"propertyOrder": 7,
+			"options": {
+				"dependencies": {
+					"type": "decay"
+				},
+				"infoText": "edt_conf_smooth_decay_expl"
+			}
+		},
+		"dithering": {
+			"type": "boolean",
+			"format": "checkbox",
+			"title": "edt_conf_smooth_dithering_title",
+			"default": true,
+			"propertyOrder": 8,
+			"options": {
+				"dependencies": {
+					"type": "decay"
+				},
+				"infoText": "edt_conf_smooth_dithering_expl"
+			}
+		},
+		"updateDelay": {
+			"type": "integer",
+			"title": "edt_conf_smooth_updateDelay_title",
+			"minimum": 0,
+			"maximum": 2048,
+			"default": 0,
+			"append": "edt_append_frames",
+			"propertyOrder": 9,
+			"options": {
+				"infoText": "edt_conf_smooth_updateDelay_expl"
+			}
+		}
+	},
+	"additionalProperties": false
 }

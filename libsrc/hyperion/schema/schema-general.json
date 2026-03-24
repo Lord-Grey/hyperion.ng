@@ -12,7 +12,10 @@
 			"minLength": 4,
 			"maxLength": 20,
 			"required": true,
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_gen_name_expl"
+			}
 		},
 		"watchedVersionBranch": {
 			"type": "string",
@@ -30,7 +33,8 @@
 					"Stable",
 					"Beta",
 					"Alpha"
-				]
+				],
+				"infoText": "edt_conf_gen_watchedVersionBranch_expl"
 			},
 			"propertyOrder": 2
 		},
@@ -40,7 +44,10 @@
 			"title": "edt_conf_gen_showOptHelp_title",
 			"default": true,
 			"required": true,
-			"propertyOrder": 3
+			"propertyOrder": 3,
+			"options": {
+				"infoText": "edt_conf_gen_showOptHelp_expl"
+			}
 		},
 		"configVersion": {
 			"type": "string",

@@ -11,7 +11,10 @@
 			"required": true,
 			"title": "edt_conf_os_events_suspendEnable_title",
 			"default": true,
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_os_events_suspendEnable_expl"
+			}
 		},
 		"lockEnable": {
 			"type": "boolean",
@@ -19,7 +22,10 @@
 			"required": true,
 			"title": "edt_conf_os_events_lockEnable_title",
 			"default": true,
-			"propertyOrder": 2
+			"propertyOrder": 2,
+			"options": {
+				"infoText": "edt_conf_os_events_lockEnable_expl"
+			}
 		},
 		"suspendOnLockEnable": {
 			"type": "boolean",
@@ -30,7 +36,8 @@
 			"options": {
 				"dependencies": {
 					"lockEnable": true
-				}
+				},
+				"infoText": "edt_conf_os_events_suspendOnLockEnable_expl"
 			},
 			"propertyOrder": 3
 		}

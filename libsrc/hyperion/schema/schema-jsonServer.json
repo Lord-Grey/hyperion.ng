@@ -11,7 +11,10 @@
 			"title": "edt_conf_general_port_title",
 			"minimum": 1024,
 			"maximum": 65535,
-			"default": 19444
+			"default": 19444,
+			"options": {
+				"infoText": "edt_conf_general_port_expl"
+			}
 		}
 	},
 	"additionalProperties": false

@@ -11,14 +11,17 @@
 			"title": "edt_conf_general_enable_title",
 			"required": true,
 			"default": false,
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_general_enable_expl"
+			}
 		},
 		"available_devices": {
 			"type": "string",
 			"title": "edt_conf_grabber_discovered_title",
 			"default": "edt_conf_grabber_discovery_inprogress",
 			"options": {
-				"infoText": "edt_conf_grabber_discovered_title_info"
+				"infoText": "edt_conf_grabber_discovered_expl"
 			},
 			"propertyOrder": 2,
 			"required": false
@@ -38,7 +41,10 @@
 			"type": "string",
 			"title": "edt_conf_v4l2_input_title",
 			"propertyOrder": 4,
-			"required": false
+			"required": false,
+			"options": {
+				"infoText": "edt_conf_v4l2_input_expl"
+			}
 		},
 		"input": {
 			"type": "integer",
@@ -56,7 +62,10 @@
 			"type": "string",
 			"title": "edt_conf_v4l2_resolution_title",
 			"propertyOrder": 6,
-			"required": false
+			"required": false,
+			"options": {
+				"infoText": "edt_conf_v4l2_resolution_expl"
+			}
 		},
 		"width": {
 			"type": "integer",
@@ -86,7 +95,10 @@
 			"type": "string",
 			"title": "edt_conf_fg_frequency_Hz_title",
 			"propertyOrder": 11,
-			"required": false
+			"required": false,
+			"options": {
+				"infoText": "edt_conf_fg_frequency_Hz_expl"
+			}
 		},
 		"fps": {
 			"type": "integer",
@@ -107,7 +119,10 @@
 			"maximum": 30,
 			"default": 8,
 			"required": true,
-			"propertyOrder": 13
+			"propertyOrder": 13,
+			"options": {
+				"infoText": "edt_conf_fg_pixelDecimation_expl"
+			}
 		},
 		"cropLeft": {
 			"type": "integer",
@@ -115,7 +130,10 @@
 			"minimum": 0,
 			"default": 0,
 			"append": "edt_append_pixel",
-			"propertyOrder": 14
+			"propertyOrder": 14,
+			"options": {
+				"infoText": "edt_conf_v4l2_cropLeft_expl"
+			}
 		},
 		"cropRight": {
 			"type": "integer",
@@ -123,7 +141,10 @@
 			"minimum": 0,
 			"default": 0,
 			"append": "edt_append_pixel",
-			"propertyOrder": 15
+			"propertyOrder": 15,
+			"options": {
+				"infoText": "edt_conf_v4l2_cropRight_expl"
+			}
 		},
 		"cropTop": {
 			"type": "integer",
@@ -131,7 +152,10 @@
 			"minimum": 0,
 			"default": 0,
 			"append": "edt_append_pixel",
-			"propertyOrder": 16
+			"propertyOrder": 16,
+			"options": {
+				"infoText": "edt_conf_v4l2_cropTop_expl"
+			}
 		},
 		"cropBottom": {
 			"type": "integer",
@@ -139,7 +163,10 @@
 			"minimum": 0,
 			"default": 0,
 			"append": "edt_append_pixel",
-			"propertyOrder": 17
+			"propertyOrder": 17,
+			"options": {
+				"infoText": "edt_conf_v4l2_cropBottom_expl"
+			}
 		}
 	},
 	"additionalProperties": false

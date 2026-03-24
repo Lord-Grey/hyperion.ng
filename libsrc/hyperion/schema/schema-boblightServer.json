@@ -10,7 +10,10 @@
 			"format": "checkbox",
 			"title": "edt_conf_general_enable_title",
 			"default": false,
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_general_enable_expl"
+			}
 		},
 		"port": {
 			"type": "integer",
@@ -19,7 +22,10 @@
 			"default": 19333,
 			"minimum": 1024,
 			"maximum": 65535,
-			"propertyOrder": 2
+			"propertyOrder": 2,
+			"options": {
+				"infoText": "edt_conf_general_port_expl"
+			}
 		},
 		"priority": {
 			"type": "integer",
@@ -27,7 +33,10 @@
 			"minimum": 2,
 			"maximum": 253,
 			"default": 128,
-			"propertyOrder": 3
+			"propertyOrder": 3,
+			"options": {
+				"infoText": "edt_conf_general_priority_expl"
+			}
 		}
 	},
 	"additionalProperties": false

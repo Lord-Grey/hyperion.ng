@@ -11,7 +11,10 @@
 			"required": true,
 			"title": "edt_conf_general_enable_title",
 			"default": true,
-			"propertyOrder": 1
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_general_enable_expl"
+			}
 		},
 		"port": {
 			"type": "integer",
@@ -20,7 +23,10 @@
 			"minimum": 1024,
 			"maximum": 65535,
 			"default": 19400,
-			"propertyOrder": 2
+			"propertyOrder": 2,
+			"options": {
+				"infoText": "edt_conf_general_port_expl"
+			}
 		},
 		"timeout": {
 			"type": "integer",
@@ -29,7 +35,10 @@
 			"append": "edt_append_s",
 			"minimum": 1,
 			"default": 5,
-			"propertyOrder": 3
+			"propertyOrder": 3,
+			"options": {
+				"infoText": "edt_conf_flatbufServer_timeout_expl"
+			}
 		},
 		"pixelDecimation": {
 			"type": "integer",
@@ -39,7 +48,10 @@
 			"default": 1,
 			"required": false,
 			"access": "advanced",
-			"propertyOrder": 4
+			"propertyOrder": 4,
+			"options": {
+				"infoText": "edt_conf_fg_pixelDecimation_expl"
+			}
 		}
 	},
 	"additionalProperties": false

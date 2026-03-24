@@ -1,43 +1,52 @@
 {
-  "type": "object",
-  "title": "conf_sched_events_heading_title",
-  "options": {
-    "titleHidden": true
-  },
-  "properties": {
-    "enable": {
-      "type": "boolean",
-      "format": "checkbox",
-      "required": true,
-      "title": "edt_conf_general_enable_title",
-      "default": false,
-      "propertyOrder": 1
-    },
-    "actions": {
-      "type": "array",
-      "title": "edt_conf_sched_actions_header_title",
-      "minItems": 0,
-      "required": false,
-      "propertyOrder": 2,
-      "items": {
-        "type": "object",
-        "required": true,
-        "title": "edt_conf_sched_actions_header_item_title",
-        "properties": {
-          "event": {
-            "type": "string",
-            "format": "time",
-            "default": "23:00",
-            "title": "edt_conf_time_event_title",
-            "propertyOrder": 1
-          },
-          "action": {
-            "$ref": "schema-eventActions.json"
-          }
-        },
-        "additionalProperties": false
-      }
-    }
-  },
-  "additionalProperties": false
+	"type": "object",
+	"title": "conf_sched_events_heading_title",
+	"options": {
+		"titleHidden": true
+	},
+	"properties": {
+		"enable": {
+			"type": "boolean",
+			"format": "checkbox",
+			"required": true,
+			"title": "edt_conf_general_enable_title",
+			"default": false,
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_general_enable_expl"
+			}
+		},
+		"actions": {
+			"type": "array",
+			"title": "edt_conf_sched_actions_header_title",
+			"minItems": 0,
+			"required": false,
+			"propertyOrder": 2,
+			"items": {
+				"type": "object",
+				"required": true,
+				"title": "edt_conf_sched_actions_header_item_title",
+				"properties": {
+					"event": {
+						"type": "string",
+						"format": "time",
+						"default": "23:00",
+						"title": "edt_conf_time_event_title",
+						"propertyOrder": 1,
+						"options": {
+							"infoText": "edt_conf_time_event_expl"
+						}
+					},
+					"action": {
+						"$ref": "schema-eventActions.json"
+					}
+				},
+				"additionalProperties": false
+			},
+			"options": {
+				"infoText": "edt_conf_sched_actions_header_expl"
+			}
+		}
+	},
+	"additionalProperties": false
 }
