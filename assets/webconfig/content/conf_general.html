@@ -17,15 +17,15 @@
 						<div id="inst_desc_cont"></div>
 						<div id="itable"></div>
 						<hr style="margin: 30px 0" </hr>
-						<div class="row">
-							<div class="col-lg-6">
-								<p data-i18n="conf_general_inst_name_title" style="font-weight:bold"></p>
+						<div class="row g-3 align-items-start">
+							<div class="col-auto">
+								<label for="instance_name" class="col-form-label fw-bold" style="white-space:nowrap;"
+									data-i18n="conf_general_inst_name_title"></label>
 							</div>
-							<div class="col-lg-6">
-								<input class="form-control" id="inst_name" type="text"></input>
-							</div>
-							<div class="col-lg-6">
-								<span id="inst_chars_needed"><br /></span>
+							<div class="col">
+								<input type="text" id="instance_name" class="form-control"
+									aria-describedby="instance_chars_needed">
+								<span id="instance_chars_needed" class="form-text">&nbsp;</span>
 							</div>
 						</div>
 					</div>

@@ -7,7 +7,7 @@ $(document).ready(function () {
   const isFlatbufEnabled = isServiceEnabled("flatbuffer");
   const isProtoBufEnabled = isServiceEnabled("protobuffer");
 
-  let editors = {}; // Store JSON editors in a structured way
+  const editors = {}; // Store JSON editors in a structured way
 
   // Service properties , 2-dimensional array of [servicetype][id]
   let discoveredRemoteServices = new Map();
@@ -35,26 +35,6 @@ $(document).ready(function () {
       if (isProtoBufEnabled) appendPanel("protoServer", "edt_conf_protoServer_heading_title");
       if (isForwarderEnabled) appendPanel("forwarder", "edt_conf_forwarder_heading_title");
     }
-  }
-
-  function createEditor(container, schemaKey, changeHandler) {
-    editors[container] = createJsonEditor(
-      `editor_container_${container}`,
-      { [schemaKey]: globalThis.schema[schemaKey] },
-      true,
-      true
-    );
-
-    editors[container].on('change', function () {
-      const isValid = editors[container].validate().length === 0 && !globalThis.readOnlyMode;
-      $(`#btn_submit_${container}`).prop('disabled', !isValid);
-    });
-
-    $(`#btn_submit_${container}`).off().on('click', function () {
-      requestWriteConfig(editors[container].getValue());
-    });
-
-    if (changeHandler) changeHandler(editors[container]);
   }
 
   function updateConfiguredInstancesList() {
@@ -97,12 +77,6 @@ $(document).ready(function () {
   }
 
   function setupEditors() {
-    createEditor("network", "network");
-    createEditor("jsonServer", "jsonServer");
-    if (isFlatbufEnabled) createEditor("flatbufServer", "flatbufServer", handleFlatbufChange);
-    if (isProtoBufEnabled) createEditor("protoServer", "protoServer", handleProtoBufChange);
-    if (isForwarderEnabled && storedAccess !== 'default') createEditor("forwarder", "forwarder", handleForwarderChange);
-
     const editorConfigs = [
       { key: "network", schemaKey: "network" },
       { key: "jsonServer", schemaKey: "jsonServer" },
@@ -112,7 +86,7 @@ $(document).ready(function () {
     ];
 
     editorConfigs.forEach(({ key, schemaKey, enabled = true, handler }) => {
-      if (enabled) createEditor(key, schemaKey, handler);
+      if (enabled) createEditor(editors, key, schemaKey, handler);
     });
   }
 
@@ -131,7 +105,7 @@ $(document).ready(function () {
     });
 
     editor.on('change', () => {
-      toggleHelpPanel(editor, "forwarder", "forwarderHelpPanelId");
+      onForwarderEditorChange(editor);
     });
 
     ["jsonapi", "flatbuffer"].forEach(function (type) {
@@ -176,6 +150,10 @@ $(document).ready(function () {
       }
     });
   }
+
+  const onForwarderEditorChange = (editor) => {
+    toggleHelpPanel(editor, "forwarder", "forwarderHelpPanelId");
+  };
 
   // Validate for conflicting ports
   JSONEditor.defaults.custom_validators.push(function (schema, value, path) {
@@ -412,9 +390,14 @@ function setupTokenManagement() {
     const list = tokenList || getTokenList();
     list.forEach(token => {
       const lastUse = token.last_use || "-";
-      const delBtn = `<button type="button" class="btn btn-outline-danger" id="token${token.id}">
-                        <i class="mdi mdi-delete-forever"></i>
-                    </button>`;
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn btn-outline-danger';
+      delBtn.id = `token${token.id}`;
+
+      const delIcon = document.createElement('i');
+      delIcon.className = 'mdi mdi-delete-forever';
+      delBtn.appendChild(delIcon);
 
       $('.tktbody').append(createTableRow([token.id, token.comment, lastUse, delBtn], false, true));
       $(`#token${token.id}`).off().on('click', () => handleDeleteToken(token.id));
@@ -457,28 +440,56 @@ function createSection(id, titleKey, schemaProps, helpPanelId = null) {
 function createTokenSection() {
 
   const phead = '<i class="fa fa-key fa-fw"></i>' + $.i18n('conf_network_token_title');
-  let pfooter = document.createElement('button');
+  const pfooter = document.createElement('button');
   pfooter.className = "btn btn-primary";
   pfooter.setAttribute("id", `btn_create_token`);
   pfooter.innerHTML = '<i class="mdi mdi-key-plus"></i> ' + $.i18n('conf_network_createToken_btn');
 
-  const bodyid = `<div id="tktable"></div>
-  <div style="margin: 30px 0;"></div>
-  <div class="row g-3 align-items-start">
-    <div class="col-auto">
-      <label for="token_comment" class="col-form-label fw-bold" style="white-space:nowrap;">${$.i18n('conf_network_token_comment_title')}</label>
-    </div>
-    <div class="col">
-      <input type="text" id="token_comment" class="form-control" aria-describedby="token_chars_needed">
-      <span id="token_chars_needed" class="form-text">&nbsp;</span>
-    </div>
-  </div>
-  `;
+  const bodyContent = document.createElement('div');
+
+  const tokenTable = document.createElement('div');
+  tokenTable.id = 'tktable';
+  bodyContent.appendChild(tokenTable);
+
+  const spacer = document.createElement('div');
+  spacer.className = 'my-4';
+  bodyContent.appendChild(spacer);
+
+  const inputRow = document.createElement('div');
+  inputRow.className = 'row g-3 align-items-start';
+
+  const labelCol = document.createElement('div');
+  labelCol.className = 'col-auto';
+  const tokenLabel = document.createElement('label');
+  tokenLabel.setAttribute('for', 'token_comment');
+  tokenLabel.className = 'col-form-label fw-bold text-nowrap';
+  tokenLabel.textContent = $.i18n('conf_network_token_comment_title');
+  labelCol.appendChild(tokenLabel);
+
+  const inputCol = document.createElement('div');
+  inputCol.className = 'col';
+  const tokenInput = document.createElement('input');
+  tokenInput.type = 'text';
+  tokenInput.id = 'token_comment';
+  tokenInput.className = 'form-control';
+  tokenInput.setAttribute('aria-describedby', 'token_chars_needed');
+
+  const tokenCharsNeeded = document.createElement('span');
+  tokenCharsNeeded.id = 'token_chars_needed';
+  tokenCharsNeeded.className = 'form-text';
+  tokenCharsNeeded.innerHTML = '&nbsp;';
+
+  inputCol.appendChild(tokenInput);
+  inputCol.appendChild(tokenCharsNeeded);
+
+  inputRow.appendChild(labelCol);
+  inputRow.appendChild(inputCol);
+  bodyContent.appendChild(inputRow);
 
   const containerId = `conf_cont_token`;
   $('#conf_cont').append(createRow(containerId));
   $(`#${containerId}`)
-    .append(createPanel(phead, bodyid, pfooter, 'editor_container_token', 'card-system'));
+    .append(createPanel(phead, bodyContent, pfooter, 'editor_container_token', 'card-system'));
 
   if (globalThis.showOptHelp) {
     createHint("intro", $.i18n(`conf_network_token_intro`), 'editor_container_token');
@@ -504,9 +515,17 @@ function toggleHelpPanel(editor, key, panelId) {
   $(`#${panelId}`).toggle(enable);
 }
 
+function onFlatbufEditorChange(editor) {
+  toggleHelpPanel(editor, "flatbufServer", "flatbufServerHelpPanelId");
+}
+
+function onProtoBufEditorChange(editor) {
+  toggleHelpPanel(editor, "protoServer", "protoServerHelpPanelId");
+}
+
 
 function handleFlatbufChange(editor) {
-  editor.on('change', () => toggleHelpPanel(editor, "flatbufServer", "flatbufServerHelpPanelId"));
+  editor.on('change', () => onFlatbufEditorChange(editor));
 
   editor.watch('root.flatbufServer.enable', () => {
     if (!editor.ready) return;
@@ -516,7 +535,7 @@ function handleFlatbufChange(editor) {
 }
 
 function handleProtoBufChange(editor) {
-  editor.on('change', () => toggleHelpPanel(editor, "protoServer", "protoServerHelpPanelId"));
+  editor.on('change', () => onProtoBufEditorChange(editor));
 
   editor.watch('root.protoServer.enable', () => {
     if (!editor.ready) return;

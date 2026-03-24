@@ -4,41 +4,68 @@ $(document).ready(function () {
 
   let importedConf;
   let confName;
-  let conf_editor = null;
+  const editors = {};
 
-  // Initialize the configuration card
-  $('#conf_cont').append(createOptPanel('fa-wrench', $.i18n("edt_conf_gen_heading_title"), 'editor_container', 'btn_submit', 'card-system'));
-
-  // Show help if needed
-  if (globalThis.showOptHelp) {
-    $('#conf_cont').append(createHelpTable(globalThis.schema.general.properties, $.i18n("edt_conf_gen_heading_title")));
-  } else {
-    $('#conf_imp').appendTo('#conf_cont');
-  }
-
-  // Create JSON editor
-  conf_editor = createJsonEditor('editor_container', { general: globalThis.schema.general }, true, true);
-
-  // Handle editor change
-  conf_editor.on('change', function () {
-    const isValid = !conf_editor.validate().length && !globalThis.readOnlyMode;
-    $('#btn_submit').prop('disabled', !isValid);
-  });
-
-  // Submit button click handler
-  $('#btn_submit').off().on('click', function () {
-    globalThis.showOptHelp = conf_editor.getEditor("root.general.showOptHelp").getValue();
-    requestWriteConfig(conf_editor.getValue());
-  });
-
-  createTable('ithead', 'itbody', 'itable');
-
-  // Initialize the table header
-  if ($('#ithead').length === 0) {
-    $('.ithead').html(createTableRow([$.i18n('conf_general_inst_namehead'), "", $.i18n('conf_general_inst_actionhead'), ""], true, true));
-  }
-
+  initializeUI();
+  setupEditors();
+  addHints();
   buildInstanceList();
+  removeOverlay();
+
+  function initializeUI() {
+    // Initialize the configuration card
+    $('#conf_cont').append(createOptPanel('fa-wrench', $.i18n("edt_conf_gen_heading_title"), 'editor_container_container', 'btn_submit_container', 'card-system'));
+
+    // Show help if needed
+    if (globalThis.showOptHelp) {
+      $('#conf_cont').append(createHelpTable(globalThis.schema.general.properties, $.i18n("edt_conf_gen_heading_title")));
+    } else {
+      $('#conf_imp').appendTo('#conf_cont');
+    }
+
+    // Create instance table structure
+    createTable('ithead', 'itbody', 'itable');
+    if ($('#ithead').length === 0) {
+      $('.ithead').html(createTableRow([$.i18n('conf_general_inst_namehead'), "", $.i18n('conf_general_inst_actionhead'), ""], true, true));
+    }
+  }
+
+  function addHints() {
+    // Create introduction hints if help is shown
+    if (globalThis.showOptHelp) {
+      createHint("intro", $.i18n('conf_general_intro'), "editor_container_container");
+      createHint("intro", $.i18n('conf_general_inst_desc'), "inst_desc_cont");
+      createHint("intro", $.i18n('conf_general_impexp_l1') + " " + $.i18n('conf_general_impexp_l2'), "imp_desc_cont");
+    }
+  }
+
+  function setupEditors() {
+    createEditor(editors, 'container', 'general', handleGeneralChange, {
+      bindDefaultChange: false,
+      bindSubmit: false,
+      submitButtonId: 'btn_submit_container'
+    });
+
+    $('#btn_submit_container').off().on('click', function () {
+      globalThis.showOptHelp = editors["container"].getEditor("root.general.showOptHelp").getValue();
+      requestWriteConfig(editors["container"].getValue());
+    });
+  }
+
+  function handleGeneralChange(editor) {
+    editor.on('change', function () {
+      onGeneralEditorChange(editor);
+    });
+  }
+
+  function onGeneralEditorChange(editor) {
+    if (!editor.ready) {
+      return;
+    }
+    const isValid = !editor.validate().length && !globalThis.readOnlyMode;
+    $('#btn_submit_container').prop('disabled', !isValid);
+  }
+
 
   // Instance handling functions
   function handleInstanceRename(instance) {
@@ -89,17 +116,32 @@ $(document).ready(function () {
       // Build all instance rows
       for (const instance of instances) {
         const instanceID = instance.instance;
-        const enableStyle = instance.running ? "checked" : "";
+        const renameBtn = document.createElement('button');
+        renameBtn.type = 'button';
+        renameBtn.className = 'btn btn-outline-primary';
+        renameBtn.id = `instren_${instanceID}`;
+        const renameIcon = document.createElement('i');
+        renameIcon.className = 'mdi mdi-lead-pencil';
+        renameBtn.appendChild(renameIcon);
 
-        const renameBtn = `<button type="button" class="btn btn-outline-primary" id="instren_${instanceID}">
-                               <i class="mdi mdi-lead-pencil"></i>
-                           </button>`;
-        const delBtn = `<button type="button" class="btn btn-outline-danger" id="instdel_${instanceID}">
-                            <i class="mdi mdi-delete-forever"></i>
-                        </button>`;
-        const startBtn = `<div class="form-check form-switch form-switch-md">
-                            <input class="form-check-input" type="checkbox" role="switch" id="inst_${instanceID}" ${enableStyle} switch"> 
-                        </div>`;
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'btn btn-outline-danger';
+        delBtn.id = `instdel_${instanceID}`;
+        const delIcon = document.createElement('i');
+        delIcon.className = 'mdi mdi-delete-forever';
+        delBtn.appendChild(delIcon);
+
+        const startBtn = document.createElement('div');
+        startBtn.className = 'form-check form-switch form-switch-md';
+        const startInput = document.createElement('input');
+        startInput.className = 'form-check-input';
+        startInput.type = 'checkbox';
+        startInput.setAttribute('role', 'switch');
+        startInput.id = `inst_${instanceID}`;
+        startInput.setAttribute('switch', '');
+        startInput.checked = instance.running;
+        startBtn.appendChild(startInput);
 
         const $row = createTableRow(
           [instance.friendly_name, startBtn, renameBtn, delBtn],
@@ -136,18 +178,18 @@ $(document).ready(function () {
   }
 
   // Instance name input validation
-  $('#inst_name').off().on('input', function (e) {
+  $('#instance_name').off().on('input', function (e) {
     const isValid = e.currentTarget.value.length >= 5 && !globalThis.readOnlyMode;
     $('#btn_create_inst').prop('disabled', !isValid);
 
     const charsNeeded = 5 - e.currentTarget.value.length;
-    $('#inst_chars_needed').html(charsNeeded >= 1 && charsNeeded <= 4 ? `${charsNeeded} ${$.i18n('general_chars_needed')}` : "<br />");
+    $('#instance_chars_needed').html(charsNeeded >= 1 && charsNeeded <= 4 ? `${charsNeeded} ${$.i18n('general_chars_needed')}` : "<br />");
   });
 
   // Instance creation button click handler
   $('#btn_create_inst').off().on('click', function (e) {
-    requestInstanceCreate(encodeHTML($('#inst_name').val()));
-    $('#inst_name').val("");
+    requestInstanceCreate(encodeHTML($('#instance_name').val()));
+    $('#instance_name').val("");
     $('#btn_create_inst').prop('disabled', true);
   });
 
@@ -223,14 +265,6 @@ $(document).ready(function () {
     }
   });
 
-  // Create introduction hints if help is shown
-  if (globalThis.showOptHelp) {
-    createHint("intro", $.i18n('conf_general_intro'), "editor_container");
-    createHint("intro", $.i18n('conf_general_inst_desc'), "inst_desc_cont");
-    createHint("intro", $.i18n('conf_general_impexp_l1') + " " + $.i18n('conf_general_impexp_l2'), "imp_desc_cont");
-  }
-
-  removeOverlay();
 });
 
 // Command for restoring config

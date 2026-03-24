@@ -779,15 +779,21 @@ function createTableRow(list, head, align) {
   const row = document.createElement('tr');
 
   for (const element of list) {
-    let el = head === true ? document.createElement('th') : document.createElement('td');
+    const el = head === true ? document.createElement('th') : document.createElement('td');
     if (align) {
       el.style.verticalAlign = "middle";
     }
-    const purifyConfig = {
-      ADD_TAGS: ['button'],
-      ADD_ATTR: ['onclick']
-    };
-    el.innerHTML = DOMPurify.sanitize(element, purifyConfig);
+
+    if (element instanceof Node) {
+      el.appendChild(element);
+    } else {
+      const purifyConfig = {
+        ADD_TAGS: ['button'],
+        ADD_ATTR: ['onclick']
+      };
+      el.innerHTML = DOMPurify.sanitize(String(element), purifyConfig);
+    }
+
     row.appendChild(el);
   }
 
@@ -936,14 +942,27 @@ function createHelpTable(list, phead, panelId) {
   return createPanel(phead, table, undefined, undefined, undefined, panelId, undefined);
 }
 
-function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-default') {
+function createPanelInternal(options) {
+  const {
+    head,
+    body,
+    footer,
+    bodyid,
+    css,
+    panelId,
+    type = 'card-default',
+    containerClass = ''
+  } = options;
+
   const cont = document.createElement('div');
   const card = document.createElement('div');
   const cardHeader = document.createElement('div');
   const cardBody = document.createElement('div');
   const cardFooter = document.createElement('div');
 
-  cont.className = "col-lg-6";
+  if (containerClass) {
+    cont.className = containerClass;
+  }
 
   card.className = `card ${type}`;
   if (panelId) {
@@ -954,7 +973,11 @@ function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-defa
   cardBody.className = 'card-body';
   cardFooter.className = 'card-footer';
 
-  cardHeader.innerHTML = head;
+  if (typeof head === 'string') {
+    cardHeader.innerHTML = head;
+  } else {
+    cardHeader.appendChild(head);
+  }
 
   if (bodyid) {
     cardFooter.style.textAlign = 'right';
@@ -988,6 +1011,14 @@ function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-defa
   cont.appendChild(card);
 
   return cont;
+}
+
+function createPanelWide(head, body, footer, bodyid, css, panelId, type = 'card-default') {
+  return createPanelInternal({ head, body, footer, bodyid, css, panelId, type });
+}
+
+function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-default') {
+  return createPanelInternal({ head, body, footer, bodyid, css, panelId, type, containerClass: 'col-lg-6' });
 }
 
 function createSelGroup(group) {

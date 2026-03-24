@@ -195,12 +195,59 @@ function createJsonEditor(container, schema, setconfig, useCard, arrayre = undef
 
   const applyCardLayout = () => {
     $('#' + container + ' .je-object__title, #' + container + ' .je-object__controls').remove();
-    $('#' + container + ' .card').first().removeClass('card');
-    $('#' + container + ' h4').first().remove();
   };
 
   if (useCard) {
     editor.on('ready', applyCardLayout);
+  }
+
+  return editor;
+}
+
+function createEditor(editors, container, schemaKey, changeHandler, options = {}) {
+  const {
+    bindDefaultChange = true,
+    bindSubmit = true,
+    submitButtonId = `btn_submit_${container}`,
+    onSubmit = null,
+    setconfig = true,
+    useCard = true,
+    arrayre = undefined
+  } = options;
+
+  const schemaDefinition = (typeof schemaKey === 'string')
+    ? { [schemaKey]: globalThis.schema[schemaKey] }
+    : schemaKey;
+
+  editors[container] = createJsonEditor(
+    `editor_container_${container}`,
+    schemaDefinition,
+    setconfig,
+    useCard,
+    arrayre
+  );
+
+  const editor = editors[container];
+
+  if (bindDefaultChange) {
+    editor.on('change', function () {
+      const isValid = editor.validate().length === 0 && !globalThis.readOnlyMode;
+      $(`#${submitButtonId}`).prop('disabled', !isValid);
+    });
+  }
+
+  if (bindSubmit) {
+    $(`#${submitButtonId}`).off().on('click', function () {
+      if (typeof onSubmit === 'function') {
+        onSubmit(editor, container);
+        return;
+      }
+      requestWriteConfig(editor.getValue());
+    });
+  }
+
+  if (typeof changeHandler === 'function') {
+    changeHandler(editor, container);
   }
 
   return editor;
