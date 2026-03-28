@@ -187,7 +187,7 @@ function createJsonEditor(container, schema, setconfig, useCard, arrayre = undef
       disable_array_delete_all_rows: true,
       disable_array_delete_last_row: true,
       schema: {
-        options: { titleHidden: true},
+        options: { titleHidden: true },
         properties: schema
       },
       startval
@@ -276,20 +276,20 @@ function updateJsonEditorSelection(rootEditor, path, options) {
   // previousValue and newDefaultVal may come from JSONEditor internals or raw API data — normalize
   const previousValue = toEnumString(rootEditor.getEditor(path + "." + key)?.getValue());
   newDefaultVal = toEnumString(newDefaultVal);
-  
+
   const editor = rootEditor.getEditor(path);
   const originalProperties = editor.schema.properties[key];
-  const originalWatchFunctions = rootEditor.watchlist[path + "." + key];
+  const originalWatchFunctions = rootEditor?.watchlist?.[path + "." + key];
 
   // Unwatch the existing path
   rootEditor.unwatch(path + "." + key);
 
   const newSchema = {
     [key]: {
+      key,
       type: "string",
       enum: [],
-      required: true,
-      options: { enum_titles: [], infoText: "" },
+      options: { enum_titles: [], infoText: "", dependencies: {} },
       propertyOrder: 1,
       ...addElements, // Merge custom elements directly into schema
     }
@@ -300,6 +300,7 @@ function updateJsonEditorSelection(rootEditor, path, options) {
     const { title, options: originalOptions, propertyOrder } = originalProperties;
     newSchema[key].title = title || newSchema[key].title;
     newSchema[key].options.infoText = originalOptions?.infoText || newSchema[key].options.infoText;
+    newSchema[key].options.dependencies = originalOptions?.dependencies || newSchema[key].options.dependencies;
     newSchema[key].propertyOrder = propertyOrder || newSchema[key].propertyOrder;
   }
 

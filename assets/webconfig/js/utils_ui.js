@@ -906,8 +906,10 @@ function shouldSkipItem(item) {
 }
 
 function addItemRowToTable(item, tbody) {
-  const text = item.title.replace('title', 'expl');
-  tbody.appendChild(createTableRow([$.i18n(item.title), $.i18n(text)], false, false));
+  const text = item.title?.replace('title', 'expl');
+  if (text) {
+    tbody.appendChild(createTableRow([$.i18n(item.title), $.i18n(text)], false, false));
+  }
 }
 
 function addSubItemsToTable(item, tbody) {
