@@ -1,6 +1,6 @@
 {
 	"type": "object",
-	"title": "edt_conf_fge_heading_title",
+	"title": "edt_conf_bge_heading_title",
 	"options": {
 		"titleHidden": true
 	},
@@ -17,8 +17,8 @@
 			"propertyOrder": 1
 		},
 		"type": {
-			"type": "string",
 			"title": "edt_conf_fge_type_title",
+			"type": "string",
 			"enum": [
 				"color",
 				"effect"
@@ -29,7 +29,10 @@
 				"enum_titles": [
 					"edt_conf_enum_color",
 					"edt_conf_enum_effect"
-				]
+				],
+				"dependencies": {
+					"enable": true
+				}
 			},
 			"propertyOrder": 2
 		},
@@ -37,26 +40,28 @@
 			"type": "string",
 			"title": "edt_conf_fge_color_title",
 			"format": "color",
-			"default": "#ff0000",
-			"propertyOrder": 3,
+			"default": "#ff8a00",
 			"options": {
 				"infoText": "edt_conf_fge_color_expl",
 				"dependencies": {
+					"enable": true,
 					"type": "color"
 				}
-			}
+			},
+			"propertyOrder": 3
 		},
 		"effect": {
 			"type": "string",
 			"format": "select",
 			"title": "edt_conf_fge_effect_title",
-			"propertyOrder": 4,
 			"options": {
 				"infoText": "edt_conf_fge_effect_expl",
 				"dependencies": {
+					"enable": true,
 					"type": "effect"
 				}
-			}
+			},
+			"propertyOrder": 4
 		},
 		"duration_ms": {
 			"type": "integer",
@@ -65,7 +70,10 @@
 			"minimum": 100,
 			"append": "edt_append_ms",
 			"options": {
-				"infoText": "edt_conf_fge_duration_ms_expl"
+				"infoText": "edt_conf_fge_duration_ms_expl",
+				"dependencies": {
+					"enable": true
+				}
 			},
 			"propertyOrder": 5
 		}

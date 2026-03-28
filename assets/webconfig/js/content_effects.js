@@ -1,171 +1,181 @@
 $(document).ready(function () {
+
   performTranslation();
 
-  var EFFECTENGINE_ENABLED = (jQuery.inArray("effectengine", window.serverInfo.services) !== -1);
+  const EFFECTENGINE_ENABLED = (jQuery.inArray("effectengine", globalThis.serverInfo.services) !== -1);
 
-  // update instance listing
+  const editors = {}; // Store JSON editors in a structured way
+  let availableEffectNamess = globalThis.serverInfo.effects.map(e => e.name);
+
+  initializeUI();
+  setupEditors();
   updateHyperionInstanceListing();
 
-  var oldEffects = [];
-  var effects_editor = null;
-  var confFgEff = window.serverConfig.foregroundEffect.effect;
-  var confBgEff = window.serverConfig.backgroundEffect.effect;
-  var foregroundEffect_editor = null;
-  var backgroundEffect_editor = null;
+  removeOverlay();
 
-  if (!EFFECTENGINE_ENABLED) {
-    window.schema.foregroundEffect.properties.type.enum.splice(1, 1);
-    window.schema.foregroundEffect.properties.type.options.enum_titles.splice(1, 1);
-    window.schema.foregroundEffect.properties.type.default = "color";
-    delete window.schema.foregroundEffect.properties.effect;
-
-    window.schema.backgroundEffect.properties.type.enum.splice(1, 1);
-    window.schema.backgroundEffect.properties.type.options.enum_titles.splice(1, 1);
-    window.schema.backgroundEffect.properties.type.default = "color";
-    delete window.schema.backgroundEffect.properties.effect;
-  }
-
-  if (window.showOptHelp) {
-    //foreground effect
-    $('#conf_cont').append(createRow('conf_cont_fge'));
-    $('#conf_cont_fge').append(createOptPanel('fa-spinner', $.i18n("edt_conf_fge_heading_title"), 'editor_container_foregroundEffect', 'btn_submit_foregroundEffect'));
-    $('#conf_cont_fge').append(createHelpTable(window.schema.foregroundEffect.properties, $.i18n("edt_conf_fge_heading_title"), "foregroundEffectHelpPanelId"));
-
-    //background effect
-    $('#conf_cont').append(createRow('conf_cont_bge'));
-    $('#conf_cont_bge').append(createOptPanel('fa-spinner', $.i18n("edt_conf_bge_heading_title"), 'editor_container_backgroundEffect', 'btn_submit_backgroundEffect'));
-    $('#conf_cont_bge').append(createHelpTable(window.schema.backgroundEffect.properties, $.i18n("edt_conf_bge_heading_title"), "backgroundEffectHelpPanelId"));
-
-    if (EFFECTENGINE_ENABLED) {
-      //effect path
-      if (storedAccess != 'default') {
-        $('#conf_cont').append(createRow('conf_cont_ef'));
-        $('#conf_cont_ef').append(createOptPanel('fa-spinner', $.i18n("edt_conf_effp_heading_title"), 'editor_container_effects', 'btn_submit_effects'));
-        $('#conf_cont_ef').append(createHelpTable(window.schema.effects.properties, $.i18n("edt_conf_effp_heading_title")));
+  function initializeUI() {
+    if (globalThis.showOptHelp) {
+      createSection("foregroundEffect", "edt_conf_fge_heading_title", globalThis.schema.foregroundEffect.properties, "fa-spinner", "conf_effect_fgeff_intro", "foregroundEffectHelpPanelId");
+      createSection("backgroundEffect", "edt_conf_bge_heading_title", globalThis.schema.backgroundEffect.properties, "fa-spinner", "conf_effect_bgeff_intro", "backgroundEffectHelpPanelId");
+      //if (EFFECTENGINE_ENABLED && storedAccess != 'default') {
+      if (EFFECTENGINE_ENABLED) {
+        createSection("effects", "edt_conf_effp_heading_title", globalThis.schema.effects.properties, "fa-spinner", "conf_effect_path_intro", "effectsHelpPanelId");
+      }
+    }
+    else {
+      appendPanel("foregroundEffect", "edt_conf_fge_heading_title", "fa-spinner");
+      appendPanel("backgroundEffect", "edt_conf_bge_heading_title", "fa-spinner");
+      //if (EFFECTENGINE_ENABLED && storedAccess != 'default') {
+      if (EFFECTENGINE_ENABLED) {
+        appendPanel("effects", "edt_conf_effp_heading_title", "fa-spinner");
       }
     }
   }
-  else {
-    $('#conf_cont').addClass('row');
-    $('#conf_cont').append(createOptPanel('fa-spinner', $.i18n("edt_conf_fge_heading_title"), 'editor_container_foregroundEffect', 'btn_submit_foregroundEffect'));
-    $('#conf_cont').append(createOptPanel('fa-spinner', $.i18n("edt_conf_bge_heading_title"), 'editor_container_backgroundEffect', 'btn_submit_backgroundEffect'));
+
+  function setupForegroundEffectEditor() {
+    if (editors["foregroundEffect"]) {
+      editors["foregroundEffect"].destroy();
+      delete editors["foregroundEffect"];
+    }
+
     if (EFFECTENGINE_ENABLED) {
-      if (storedAccess != 'default')
-        $('#conf_cont').append(createOptPanel('fa-spinner', $.i18n("edt_conf_effp_heading_title"), 'editor_container_effects', 'btn_submit_effects'));
-    }
-  }
-
-  if (EFFECTENGINE_ENABLED) {
-    if (storedAccess != 'default') {
-      effects_editor = createJsonEditor('editor_container_effects', {
-        effects: window.schema.effects
-      }, true, true);
-
-      effects_editor.on('change', function () {
-        effects_editor.validate().length || window.readOnlyMode ? $('#btn_submit_effects').prop('disabled', true) : $('#btn_submit_effects').prop('disabled', false);
-      });
-
-      $('#btn_submit_effects').off().on('click', function () {
-        requestWriteConfig(effects_editor.getValue());
-      });
-    }
-  }
-
-  foregroundEffect_editor = createJsonEditor('editor_container_foregroundEffect', {
-    foregroundEffect: window.schema.foregroundEffect
-  }, true, true);
-
-  backgroundEffect_editor = createJsonEditor('editor_container_backgroundEffect', {
-    backgroundEffect: window.schema.backgroundEffect
-  }, true, true);
-
-  foregroundEffect_editor.on('ready', function () {
-    if (EFFECTENGINE_ENABLED) {
-      updateEffectlist();
-    }
-  });
-
-  foregroundEffect_editor.on('change', function () {
-    var foregroundEffectEnable = foregroundEffect_editor.getEditor("root.foregroundEffect.enable").getValue();
-    if (foregroundEffectEnable) {
-      showInputOptionsForKey(foregroundEffect_editor, "foregroundEffect", "enable", true);
-      $('#foregroundEffectHelpPanelId').show();
-
+      // Populate "effect" enumuration with available effects from the server
+      globalThis.schema.foregroundEffect.properties.effect.enum = availableEffectNamess;
+      globalThis.schema.foregroundEffect.properties.effect.options.enum_titles = availableEffectNamess;
     } else {
-      showInputOptionsForKey(foregroundEffect_editor, "foregroundEffect", "enable", false);
+      // Remove "effect" type if effect engine is not enabled
+      globalThis.schema.foregroundEffect.properties.type.enum.splice(1, 1);
+      globalThis.schema.foregroundEffect.properties.type.options.enum_titles.splice(1, 1);
+      globalThis.schema.foregroundEffect.properties.type.default = "color";
+      delete globalThis.schema.foregroundEffect.properties.effect;
+    }
+
+    createEditor(editors, 'foregroundEffect', 'foregroundEffect', handleForegroundEffectChange, {
+      bindDefaultChange: true,
+      bindSubmit: false,
+      submitButtonId: 'btn_submit_foregroundEffect'
+    });
+
+    $('#btn_submit_foregroundEffect').off().on('click', function () {
+      const value = editors["foregroundEffect"].getValue();
+      if (value.foregroundEffect.effect === undefined) {
+        value.foregroundEffect.effect = globalThis.serverConfig.foregroundEffect.effect;
+      }
+      requestWriteConfig(value);
+    });
+  }
+
+  function setupBackgroundEffectEditor() {
+    if (editors["backgroundEffect"]) {
+      editors["backgroundEffect"].destroy();
+      delete editors["backgroundEffect"];
+    }
+
+    if (EFFECTENGINE_ENABLED) {
+      // Populate "effect" enumuration with available effects from the server
+      globalThis.schema.backgroundEffect.properties.effect.enum = availableEffectNamess;
+      globalThis.schema.backgroundEffect.properties.effect.options.enum_titles = availableEffectNamess;
+    } else {
+      // Remove "effect" type if effect engine is not enabled
+      globalThis.schema.backgroundEffect.properties.type.enum.splice(1, 1);
+      globalThis.schema.backgroundEffect.properties.type.options.enum_titles.splice(1, 1);
+      globalThis.schema.backgroundEffect.properties.type.default = "color";
+      delete globalThis.schema.backgroundEffect.properties.effect;
+    }
+
+    createEditor(editors, 'backgroundEffect', 'backgroundEffect', handleBackgroundEffectChange, {
+      bindDefaultChange: true,
+      bindSubmit: false,
+      submitButtonId: 'btn_submit_backgroundEffect'
+    });
+
+    $('#btn_submit_backgroundEffect').off().on('click', function () {
+      const value = editors["backgroundEffect"].getValue();
+      if (value.backgroundEffect.effect === undefined) {
+        value.backgroundEffect.effect = globalThis.serverConfig.backgroundEffect.effect;
+      }
+      requestWriteConfig(value);
+    });
+  }
+
+  function setupEffectsEditor() {
+    const disabledEffects = globalThis.serverConfig.effects.disable || [];
+
+    const allEffects = [
+      ...new Set([
+        ...availableEffectNamess,
+        ...disabledEffects
+      ])
+    ].sort((a, b) => a.localeCompare(b));
+
+    globalThis.schema['effects'].properties.configuredEffects.properties.effects.items.enum = allEffects;
+    globalThis.serverConfig.effects.configuredEffects.effects = allEffects;
+
+    //if (EFFECTENGINE_ENABLED && storedAccess != 'default') {
+    if (EFFECTENGINE_ENABLED) {
+      if (editors["effects"]) {
+        editors["effects"].destroy();
+        delete editors["effects"];
+      }
+
+      createEditor(editors, 'effects', 'effects', '', {
+        bindDefaultChange: true,
+        bindSubmit: true
+      });
+    }
+  }
+
+  function setupEditors() {
+    setupEffectsEditor();
+    setupForegroundEffectEditor();
+    setupBackgroundEffectEditor();
+  }
+
+  function handleForegroundEffectChange(editor) {
+    editor.on('change', function () {
+      onForegroundEffectEditorChange(editor);
+    });
+  }
+
+  function handleBackgroundEffectChange(editor) {
+    editor.on('change', function () {
+      onBackgroundEffectEditorChange(editor);
+    });
+  }
+
+  function onForegroundEffectEditorChange(editor) {
+    if (!editor.ready) {
+      return;
+    }
+
+    const foregroundEffectEnable = editor.getEditor("root.foregroundEffect.enable").getValue();
+    if (foregroundEffectEnable) {
+      $('#foregroundEffectHelpPanelId').show();
+    } else {
       $('#foregroundEffectHelpPanelId').hide();
     }
-
-    foregroundEffect_editor.validate().length || window.readOnlyMode ? $('#btn_submit_foregroundEffect').prop('disabled', true) : $('#btn_submit_foregroundEffect').prop('disabled', false);
-  });
-
-  backgroundEffect_editor.on('change', function () {
-    var backgroundEffectEnable = backgroundEffect_editor.getEditor("root.backgroundEffect.enable").getValue();
-    if (backgroundEffectEnable) {
-      showInputOptionsForKey(backgroundEffect_editor, "backgroundEffect", "enable", true);
-      $('#backgroundEffectHelpPanelId').show();
-
-    } else {
-      showInputOptionsForKey(backgroundEffect_editor, "backgroundEffect", "enable", false);
-      $('#backgroundEffectHelpPanelId').hide();
-    }
-
-    backgroundEffect_editor.validate().length || window.readOnlyMode ? $('#btn_submit_backgroundEffect').prop('disabled', true) : $('#btn_submit_backgroundEffect').prop('disabled', false);
-  });
-
-  $('#btn_submit_foregroundEffect').off().on('click', function () {
-    var value = foregroundEffect_editor.getValue();
-    if (typeof value.foregroundEffect.effect == 'undefined')
-      value.foregroundEffect.effect = window.serverConfig.foregroundEffect.effect;
-    requestWriteConfig(value);
-  });
-
-  $('#btn_submit_backgroundEffect').off().on('click', function () {
-    var value = backgroundEffect_editor.getValue();
-    if (typeof value.backgroundEffect.effect == 'undefined')
-      value.backgroundEffect.effect = window.serverConfig.backgroundEffect.effect;
-    requestWriteConfig(value);
-  });
-
-  //create introduction
-  if (window.showOptHelp) {
-    if (EFFECTENGINE_ENABLED) {
-      createHint("intro", $.i18n('conf_effect_path_intro'), "editor_container_effects");
-    }
-    createHint("intro", $.i18n('conf_effect_fgeff_intro'), "editor_container_foregroundEffect");
-    createHint("intro", $.i18n('conf_effect_bgeff_intro'), "editor_container_backgroundEffect");
   }
 
-  function updateEffectlist() {
-    var newEffects = window.serverInfo.effects;
-    if (newEffects.length != oldEffects.length) {
-      $('#root_foregroundEffect_effect').html('');
-      var usrEffArr = [];
-      var sysEffArr = [];
+  function onBackgroundEffectEditorChange(editor) {
+    if (!editor.ready) {
+      return;
+    }
 
-      for (var i = 0; i < newEffects.length; i++) {
-        var effectName = newEffects[i].name;
-        if (!/^\:/.test(newEffects[i].file))
-          usrEffArr.push(effectName);
-        else
-          sysEffArr.push(effectName);
-      }
-      $('#root_foregroundEffect_effect').append(createSel(usrEffArr, $.i18n('remote_optgroup_usreffets')));
-      $('#root_foregroundEffect_effect').append(createSel(sysEffArr, $.i18n('remote_optgroup_syseffets')));
-      $('#root_backgroundEffect_effect').html($('#root_foregroundEffect_effect').html());
-      oldEffects = newEffects;
-
-      $('#root_foregroundEffect_effect').val(confFgEff);
-      $('#root_backgroundEffect_effect').val(confBgEff);
+    const backgroundEffectEnable = editor.getEditor("root.backgroundEffect.enable").getValue();
+    if (backgroundEffectEnable) {
+      $('#backgroundEffectHelpPanelId').show();
+    } else {
+      $('#backgroundEffectHelpPanelId').hide();
     }
   }
 
   //interval update
-  $(window.hyperion).on("cmd-effects-update", function (event) {
-    window.serverInfo.effects = event.response.data.effects
-    updateEffectlist();
+  $(globalThis.hyperion).on("cmd-effects-update", function (event) {
+    globalThis.serverInfo.effects = event.response.data.effects
+
+    availableEffectNames = globalThis.serverInfo.effects.map(e => e.name);
+    setupEditors();
   });
 
-  removeOverlay();
 });
 

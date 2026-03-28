@@ -1,42 +1,80 @@
 {
-	"type": "object",
-	"title": "edt_conf_effp_heading_title",
-	"options": {
-		"titleHidden": true
-	},
-	"properties": {
-		"paths": {
-			"type": "array",
-			"title": "edt_conf_effp_paths_title",
-			"default": [
-				"$ROOT/custom-effects"
-			],
-			"items": {
-				"type": "string",
-				"title": "edt_conf_effp_paths_itemtitle"
-			},
-			"minItems": 1,
-			"propertyOrder": 1,
-			"options": {
-				"infoText": "edt_conf_effp_paths_expl"
-			}
-		},
-		"disable": {
-			"type": "array",
-			"title": "edt_conf_effp_disable_title",
-			"default": [
-				""
-			],
-			"items": {
-				"type": "string",
-				"title": "edt_conf_effp_disable_itemtitle"
-			},
-			"required": true,
-			"propertyOrder": 2,
-			"options": {
-				"infoText": "edt_conf_effp_disable_expl"
-			}
-		}
-	},
-	"additionalProperties": false
+  "type": "object",
+  "title": "edt_conf_effp_heading_title",
+  "options": {
+    "titleHidden": true
+  },
+  "properties": {
+    "configuredEffects": {
+      "type": "object",
+      "options": {
+        "hidden": true
+      },
+      "properties": {
+        "effects": {
+          "type": "array",
+          "format": "seletc",
+          "title": "edt_conf_enum_effects",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "title": "edt_conf_enum_effect",
+            "options": {
+              "titleHidden": true
+            }
+          }
+        }
+      }
+    },
+    "paths": {
+      "type": "array",
+      "uniqueItems": true,
+      "title": "edt_conf_effp_paths_title",
+      "default": [
+        "$ROOT/custom-effects"
+      ],
+      "items": {
+        "type": "string",
+        "title": "edt_conf_effp_paths_itemtitle",
+        "options": {
+          "titleHidden": true
+        }
+      },
+      "minItems": 1,
+      "propertyOrder": 1,
+      "options": {
+        "infoText": "edt_conf_effp_paths_expl"
+      }
+    },
+    "disable": {
+      "type": "array",
+      "uniqueItems": true,
+      "title": "edt_conf_effp_disable_title",
+      "default": [
+        ""
+      ],
+      "items": {
+        "type": "string",
+        "title": "edt_conf_effp_disable_itemtitle",
+        "format": "select",
+        "options": {
+          "titleHidden": true
+        },
+        "watch": {
+          "effectList": "root.effects.configuredEffects.effects"
+        },
+        "enumSource": [
+          {
+            "source": "effectList"
+          }
+        ]
+      },
+      "required": true,
+      "propertyOrder": 2,
+      "options": {
+        "infoText": "edt_conf_effp_disable_expl"
+      }
+    }
+  },
+  "additionalProperties": false
 }

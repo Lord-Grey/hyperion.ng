@@ -9,6 +9,7 @@
       "type": "boolean",
       "format": "checkbox",
       "title": "edt_conf_general_enable_title",
+      "required": true,
       "default": true,
       "options": {
         "infoText": "edt_conf_general_enable_expl"
@@ -23,13 +24,15 @@
         "effect"
       ],
       "default": "effect",
-      "required": true,
       "options": {
         "infoText": "edt_conf_fge_type_expl",
         "enum_titles": [
           "edt_conf_enum_color",
           "edt_conf_enum_effect"
-        ]
+        ],
+        "dependencies": {
+          "enable": true
+        }
       },
       "propertyOrder": 2
     },
@@ -38,25 +41,27 @@
       "title": "edt_conf_fge_color_title",
       "format": "color",
       "default": "#ff8a00",
-      "propertyOrder": 3,
       "options": {
         "infoText": "edt_conf_fge_color_expl",
         "dependencies": {
+          "enable": true,
           "type": "color"
         }
-      }
+      },
+      "propertyOrder": 3
     },
     "effect": {
       "type": "string",
       "format": "select",
       "title": "edt_conf_fge_effect_title",
-      "propertyOrder": 4,
       "options": {
         "infoText": "edt_conf_fge_effect_expl",
         "dependencies": {
+          "enable": true,
           "type": "effect"
         }
-      }
+      },
+      "propertyOrder": 4
     }
   },
   "additionalProperties": false
