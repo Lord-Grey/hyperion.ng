@@ -760,3 +760,7 @@ Hyperion Server OS:
 
   return info;
 }
+
+function getAvailableEffectNames() {
+  return globalThis.serverInfo.effects.map(e => e.name);
+}
