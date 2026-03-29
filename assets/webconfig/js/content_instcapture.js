@@ -1,257 +1,174 @@
 $(document).ready(function () {
   performTranslation();
 
-  var screenGrabberAvailable = (window.serverInfo.grabbers.screen.available.length !== 0);
-  var videoGrabberAvailable = (window.serverInfo.grabbers.video.available.length !== 0);
-  const audioGrabberAvailable = (window.serverInfo.grabbers.audio.available.length !== 0);
+  const isGrabberAvailable = {};
+  isGrabberAvailable["screen"] = (globalThis.serverInfo.grabbers.screen.available.length !== 0);
+  isGrabberAvailable["video"] = (globalThis.serverInfo.grabbers.video.available.length !== 0);
+  isGrabberAvailable["audio"] = (globalThis.serverInfo.grabbers.audio.available.length !== 0);
 
-  var BOBLIGHT_ENABLED = (jQuery.inArray("boblight", window.serverInfo.services) !== -1);
+  const BOBLIGHT_ENABLED = (jQuery.inArray("boblight", globalThis.serverInfo.services) !== -1);
 
-  // update instance listing
+  const editors = {}; // Store JSON editors in a structured way
+
+  initializeUI();
+  setupEditors();
   updateHyperionInstanceListing();
 
-  var conf_editor_instCapt = null;
-  var conf_editor_bobl = null;
+  removeOverlay();
 
-  // Instance Capture
-
-  if (window.showOptHelp) {
-    if (screenGrabberAvailable || videoGrabberAvailable || audioGrabberAvailable) {
-      $('#conf_cont').append(createRow('conf_cont_instCapt'));
-      $('#conf_cont_instCapt').append(createOptPanel('fa-camera', $.i18n("edt_conf_instCapture_heading_title"), 'editor_container_instCapt', 'btn_submit_instCapt', ''));
-      $('#conf_cont_instCapt').append(createHelpTable(window.schema.instCapture.properties, $.i18n("edt_conf_instCapture_heading_title")));
+  function initializeUI() {
+    if (globalThis.showOptHelp) {
+      if (isGrabberAvailable["screen"] || isGrabberAvailable["video"] || isGrabberAvailable["audio"]) {
+        createSection("instCapture", "edt_conf_instCapture_heading_title", globalThis.schema.instCapture.properties, "fa-camera", "conf_grabber_inst_grabber_config_info", "instCaptureHelpPanelId");
+      }
+      createSection("boblightserver", "edt_conf_bobls_heading_title", globalThis.schema.boblightServer.properties, "fa-sitemap", "conf_network_bobl_intro", "boblightServerHelpPanelId");
     }
-    //boblight
-    if (BOBLIGHT_ENABLED) {
-      $('#conf_cont').append(createRow('conf_cont_bobl'));
-      $('#conf_cont_bobl').append(createOptPanel('fa-sitemap', $.i18n("edt_conf_bobls_heading_title"), 'editor_container_boblightserver', 'btn_submit_boblightserver', ''));
-      $('#conf_cont_bobl').append(createHelpTable(window.schema.boblightServer.properties, $.i18n("edt_conf_bobls_heading_title"), "boblightServerHelpPanelId"));
-    }
-  }
-  else {
-    $('#conf_cont').addClass('row');
-    if (screenGrabberAvailable || videoGrabberAvailable || audioGrabberAvailable) {
-      $('#conf_cont').append(createOptPanel('fa-camera', $.i18n("edt_conf_instCapture_heading_title"), 'editor_container_instCapt', 'btn_submit_instCapt', ''));
-    }
-    if (BOBLIGHT_ENABLED) {
-      $('#conf_cont').append(createOptPanel('fa-sitemap', $.i18n("edt_conf_bobls_heading_title"), 'editor_container_boblightserver', 'btn_submit_boblightserver', ''));
+    else {
+      if (isGrabberAvailable["screen"] || isGrabberAvailable["video"] || isGrabberAvailable["audio"]) {
+        appendPanel("instCapture", "edt_conf_instCapture_heading_title", "fa-camera");
+      }
+      appendPanel("boblightserver", "edt_conf_bobls_heading_title", "fa-sitemap");
     }
   }
 
-  if (screenGrabberAvailable || videoGrabberAvailable || audioGrabberAvailable) {
+  function setupEditors() {
+    if (isGrabberAvailable["screen"] || isGrabberAvailable["video"] || isGrabberAvailable["audio"]) {
+      handleInstCaptureChange();
+    }
+
+    if (BOBLIGHT_ENABLED) {
+      handleBoblightChange();
+    }
+  }
+
+  function initScreenGrabberState() {
+    if (isGrabberAvailable["screen"]) {
+      if (globalThis.serverConfig.framegrabber.enable) {
+        editors["instCapture"].getEditor("root.instCapture.systemGrabberDevice").setValue(globalThis.serverConfig.framegrabber.available_devices);
+        editors["instCapture"].getEditor("root.instCapture.systemGrabberDevice").disable();
+      } else {
+        editors["instCapture"].getEditor("root.instCapture.systemEnable").setValue(false);
+        editors["instCapture"].getEditor("root.instCapture.systemEnable").disable();
+      }
+    }
+  }
+
+  function initVideoGrabberState() {
+    if (isGrabberAvailable["video"]) {
+      if (globalThis.serverConfig.grabberV4L2.enable) {
+        editors["instCapture"].getEditor("root.instCapture.v4lGrabberDevice").setValue(globalThis.serverConfig.grabberV4L2.available_devices);
+        editors["instCapture"].getEditor("root.instCapture.v4lGrabberDevice").disable();
+      } else {
+        editors["instCapture"].getEditor("root.instCapture.v4lEnable").setValue(false);
+        editors["instCapture"].getEditor("root.instCapture.v4lEnable").disable();
+      }
+    }
+  }
+
+  function initAudioGrabberState() {
+    if (isGrabberAvailable["audio"]) {
+      if (globalThis.serverConfig.grabberAudio.enable) {
+        editors["instCapture"].getEditor("root.instCapture.audioGrabberDevice").setValue(globalThis.serverConfig.grabberAudio.available_devices);
+        editors["instCapture"].getEditor("root.instCapture.audioGrabberDevice").disable();
+      } else {
+        editors["instCapture"].getEditor("root.instCapture.audioEnable").setValue(false);
+        editors["instCapture"].getEditor("root.instCapture.audioEnable").disable();
+      }
+    }
+  }
+
+  function handleInstCaptureChange() {
+
+    //Hide fields if grabber type is not available
+    for (const grabberType of ["screen", "video", "audio"]) {
+      for (const elementToHide of ["Enable", "GrabberDevice", "Priority"]) {
+
+        // ToDO: Update schema and database with consistent naming (video instead of V4L and screen instead of system) to avoid this workaround
+        let grabberTypeElement = grabberType;
+        if (grabberType === "screen") {
+          grabberTypeElement = "system";
+        } else if (grabberType === "video") {
+          grabberTypeElement = "v4l";
+        }
+        globalThis.schema.instCapture.properties[grabberTypeElement + elementToHide].options["hidden"] = !isGrabberAvailable[grabberType];
+      }
+    }
+
+    for (const grabberType of ["screen", "video", "audio"]) {
+      for (const elementToHide of ["InactiveTimeout"]) {
+        globalThis.schema.instCapture.properties[grabberType + elementToHide].options["hidden"] = !isGrabberAvailable[grabberType];
+      }
+    }
 
     // Instance Capture
-    conf_editor_instCapt = createJsonEditor('editor_container_instCapt', {
-      instCapture: window.schema.instCapture
-    }, true, true);
-
-    var grabber_config_info_html = '<div class="alert alert-info" style="margin-top:0px"><h4>' + $.i18n('dashboard_infobox_label_title') + '</h4 >';
-    grabber_config_info_html += '<span>' + $.i18n('conf_grabber_inst_grabber_config_info') + '</span>';
-    grabber_config_info_html += '<a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem(\'MenuItemGrabber\')" style="text-decoration:none;cursor:pointer"></a>';
-    grabber_config_info_html += '</div>';
-    $('#editor_container_instCapt').append(grabber_config_info_html);
-
-    conf_editor_instCapt.on('ready', function () {
-
-      if (screenGrabberAvailable) {
-        if (!window.serverConfig.framegrabber.enable) {
-          conf_editor_instCapt.getEditor("root.instCapture.systemEnable").setValue(false);
-          conf_editor_instCapt.getEditor("root.instCapture.systemEnable").disable();
-        }
-        else {
-          conf_editor_instCapt.getEditor("root.instCapture.systemEnable").setValue(window.serverConfig.instCapture.systemEnable);
-        }
-      } else {
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "systemEnable", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "systemGrabberDevice", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "systemPriority", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "screenInactiveTimeout", false);
-      }
-
-      if (videoGrabberAvailable) {
-        if (!window.serverConfig.grabberV4L2.enable) {
-          conf_editor_instCapt.getEditor("root.instCapture.v4lEnable").setValue(false);
-          conf_editor_instCapt.getEditor("root.instCapture.v4lEnable").disable();
-        }
-        else {
-          conf_editor_instCapt.getEditor("root.instCapture.v4lEnable").setValue(window.serverConfig.instCapture.v4lEnable);
-
-        }
-      } else {
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "v4lGrabberDevice", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "v4lEnable", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "v4lPriority", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "videoInactiveTimeout", false);
-      }
-
-      if (audioGrabberAvailable) {
-        if (!window.serverConfig.grabberAudio.enable) {
-          conf_editor_instCapt.getEditor("root.instCapture.audioEnable").setValue(false);
-          conf_editor_instCapt.getEditor("root.instCapture.audioEnable").disable();
-        }
-        else {
-          conf_editor_instCapt.getEditor("root.instCapture.audioEnable").setValue(window.serverConfig.instCapture.audioEnable);
-
-        }
-      } else {
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "audioGrabberDevice", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "audioEnable", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "audioPriority", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "audioInactiveTimeout", false);
-      }
-
-      if (audioGrabberAvailable) {
-        if (!window.serverConfig.grabberAudio.enable) {
-          conf_editor_instCapt.getEditor("root.instCapture.audioEnable").setValue(false);
-          conf_editor_instCapt.getEditor("root.instCapture.audioEnable").disable();
-        }
-        else {
-          conf_editor_instCapt.getEditor("root.instCapture.audioEnable").setValue(window.serverConfig.instCapture.audioEnable);
-
-        }
-      } else {
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "audioGrabberDevice", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "audioEnable", false);
-        showInputOptionForItem(conf_editor_instCapt, "instCapture", "audioPriority", false);
-      }
-
+    createEditor(editors, 'instCapture', 'instCapture', '', {
+      bindDefaultChange: false,
+      bindSubmit: true
     });
 
-    conf_editor_instCapt.on('change', function () {
+    const grabber_config_info_html = '<div class="alert alert-info"><h4>' + $.i18n('dashboard_infobox_label_title') + '</h4 >'
+      + '<span>' + $.i18n('conf_grabber_inst_grabber_config_info') + '</span>'
+      + '<a class="fa fa-cog fa-fw" onclick="SwitchToMenuItem(\'MenuItemGrabber\')" style="text-decoration:none;cursor:pointer"></a>'
+      + '</div>';
+    $('#editor_container_instCapture').append(grabber_config_info_html);
 
-      if (!conf_editor_instCapt.validate().length) {
-        if (!window.serverConfig.framegrabber.enable &&
-          !window.serverConfig.grabberV4L2.enable &&
-          !window.serverConfig.grabberAudio.enable) {
-          $('#btn_submit_instCapt').prop('disabled', true);
-        } else {
-          window.readOnlyMode ? $('#btn_submit_instCapt').prop('disabled', true) : $('#btn_submit_instCapt').prop('disabled', false);
-        }
-      }
-      else {
-        $('#btn_submit_instCapt').prop('disabled', true);
-      }
+
+    editors["instCapture"].on('ready', function () {
+      initScreenGrabberState();
+      initVideoGrabberState();
+      initAudioGrabberState();
     });
 
-    conf_editor_instCapt.watch('root.instCapture.systemEnable', () => {
+    editors["instCapture"].watch('root.instCapture.systemEnable', () => {
+      if (!editors["instCapture"].ready) return;
 
-      var screenEnable = conf_editor_instCapt.getEditor("root.instCapture.systemEnable").getValue();
+      const screenEnable = editors["instCapture"].getEditor("root.instCapture.systemEnable").getValue();
       if (screenEnable) {
-        conf_editor_instCapt.getEditor("root.instCapture.systemGrabberDevice").setValue(window.serverConfig.framegrabber.available_devices);
-        conf_editor_instCapt.getEditor("root.instCapture.systemGrabberDevice").disable();
-        showInputOptions("instCapture", ["systemGrabberDevice"], true);
-        showInputOptions("instCapture", ["systemPriority", "screenInactiveTimeout"], true);
-
-      } else {
-        showInputOptions("instCapture", ["systemGrabberDevice"], false);
-        showInputOptions("instCapture", ["systemPriority", "screenInactiveTimeout"], false);
+        editors["instCapture"].getEditor("root.instCapture.systemGrabberDevice").setValue(globalThis.serverConfig.framegrabber.available_devices);
+        editors["instCapture"].getEditor("root.instCapture.systemGrabberDevice").disable();
       }
-
     });
 
-    conf_editor_instCapt.watch('root.instCapture.v4lEnable', () => {
-      var videoEnable = conf_editor_instCapt.getEditor("root.instCapture.v4lEnable").getValue();
+    editors["instCapture"].watch('root.instCapture.videoEnable', () => {
+      if (!editors["instCapture"].ready) return;
+
+      const videoEnable = editors["instCapture"].getEditor("root.instCapture.videoEnable").getValue();
       if (videoEnable) {
-        conf_editor_instCapt.getEditor("root.instCapture.v4lGrabberDevice").setValue(window.serverConfig.grabberV4L2.available_devices);
-        conf_editor_instCapt.getEditor("root.instCapture.v4lGrabberDevice").disable();
-        showInputOptions("instCapture", ["v4lGrabberDevice"], true);
-        showInputOptions("instCapture", ["v4lPriority", "videoInactiveTimeout"], true);
-      }
-      else {
-        if (!window.serverConfig.grabberV4L2.enable) {
-          conf_editor_instCapt.getEditor("root.instCapture.v4lEnable").disable();
-        }
-        showInputOptions("instCapture", ["v4lGrabberDevice"], false);
-        showInputOptions("instCapture", ["v4lPriority", "videoInactiveTimeout"], false);
+        editors["instCapture"].getEditor("root.instCapture.videoGrabberDevice").setValue(globalThis.serverConfig.grabberV4L2.available_devices);
+        editors["instCapture"].getEditor("root.instCapture.videoGrabberDevice").disable();
       }
     });
 
-    conf_editor_instCapt.watch('root.instCapture.audioEnable', () => {
-      const audioEnable = conf_editor_instCapt.getEditor("root.instCapture.audioEnable").getValue();
+    editors["instCapture"].watch('root.instCapture.audioEnable', () => {
+      if (!editors["instCapture"].ready) return;
+
+      const audioEnable = editors["instCapture"].getEditor("root.instCapture.audioEnable").getValue();
       if (audioEnable) {
-        conf_editor_instCapt.getEditor("root.instCapture.audioGrabberDevice").setValue(window.serverConfig.grabberAudio.available_devices);
-        conf_editor_instCapt.getEditor("root.instCapture.audioGrabberDevice").disable();
-        showInputOptions("instCapture", ["audioGrabberDevice"], true);
-        showInputOptions("instCapture", ["audioPriority", "audioInactiveTimeout"], true);
+        editors["instCapture"].getEditor("root.instCapture.audioGrabberDevice").setValue(globalThis.serverConfig.grabberAudio.available_devices);
+        editors["instCapture"].getEditor("root.instCapture.audioGrabberDevice").disable();
       }
-      else {
-        if (!window.serverConfig.grabberAudio.enable) {
-          conf_editor_instCapt.getEditor("root.instCapture.audioEnable").disable();
-        }
-        showInputOptions("instCapture", ["audioGrabberDevice"], false);
-        showInputOptions("instCapture", ["audioPriority", "audioInactiveTimeout"], false);
-      }
-    });
-
-    conf_editor_instCapt.watch('root.instCapture.audioEnable', () => {
-      const audioEnable = conf_editor_instCapt.getEditor("root.instCapture.audioEnable").getValue();
-      if (audioEnable) {
-        conf_editor_instCapt.getEditor("root.instCapture.audioGrabberDevice").setValue(window.serverConfig.grabberAudio.available_devices);
-        conf_editor_instCapt.getEditor("root.instCapture.audioGrabberDevice").disable();
-        showInputOptions("instCapture", ["audioGrabberDevice"], true);
-        showInputOptions("instCapture", ["audioPriority"], true);
-      }
-      else {
-        if (!window.serverConfig.grabberAudio.enable) {
-          conf_editor_instCapt.getEditor("root.instCapture.audioEnable").disable();
-        }
-        showInputOptions("instCapture", ["audioGrabberDevice"], false);
-        showInputOptions("instCapture", ["audioPriority"], false);
-      }
-    });
-
-    $('#btn_submit_instCapt').off().on('click', function () {
-      requestWriteConfig(conf_editor_instCapt.getValue());
     });
   }
 
   //boblight
-  if (BOBLIGHT_ENABLED) {
-    conf_editor_bobl = createJsonEditor('editor_container_boblightserver', {
-      boblightServer: window.schema.boblightServer
-    }, true, true);
-
-    conf_editor_bobl.on('ready', function () {
-      var boblightServerEnable = conf_editor_bobl.getEditor("root.boblightServer.enable").getValue();
-      if (!boblightServerEnable) {
-        showInputOptionsForKey(conf_editor_bobl, "boblightServer", "enable", false);
-        $('#boblightServerHelpPanelId').hide();
-      }
-    });
-
-    conf_editor_bobl.on('change', function () {
-      conf_editor_bobl.validate().length || window.readOnlyMode ? $('#btn_submit_boblightserver').prop('disabled', true) : $('#btn_submit_boblightserver').prop('disabled', false);
-    });
-
-    conf_editor_bobl.watch('root.boblightServer.enable', () => {
-      var boblightServerEnable = conf_editor_bobl.getEditor("root.boblightServer.enable").getValue();
-      if (boblightServerEnable) {
-        //Make port instance specific, if port is still the default one (avoids overlap of used ports)
-        var port = conf_editor_bobl.getEditor("root.boblightServer.port").getValue();
-        if (port === conf_editor_bobl.schema.properties.boblightServer.properties.port.default) {
-          port += parseInt(window.currentHyperionInstance);
-        }
-        conf_editor_bobl.getEditor("root.boblightServer.port").setValue(port);
-
-        showInputOptionsForKey(conf_editor_bobl, "boblightServer", "enable", true);
-        $('#boblightServerHelpPanelId').show();
-      } else {
-        showInputOptionsForKey(conf_editor_bobl, "boblightServer", "enable", false);
-        $('#boblightServerHelpPanelId').hide();
-      }
-    });
-
-    $('#btn_submit_boblightserver').off().on('click', function () {
-      requestWriteConfig(conf_editor_bobl.getValue());
+  function handleBoblightChange() {
+    createEditor(editors, 'boblightserver', 'boblightServer', '', {
+      bindDefaultChange: true,
+      bindSubmit: true
     });
   }
 
-  //create introduction
-  if (window.showOptHelp) {
-    if (BOBLIGHT_ENABLED) {
-      createHint("intro", $.i18n('conf_network_bobl_intro'), "editor_container_boblightserver");
+  editors["boblightserver"].watch('root.boblightServer.enable', () => {
+    if (!editors["boblightserver"].ready) return;
+
+    const boblightServerEnable = editors["boblightserver"].getEditor("root.boblightServer.enable").getValue();
+    if (boblightServerEnable) {
+      //Make port instance specific, if port is still the default one (avoids overlap of used ports)
+      let port = editors["boblightserver"].getEditor("root.boblightServer.port").getValue();
+      if (port === editors["boblightserver"].schema.properties.boblightServer.properties.port.default) {
+        port += Number.parseInt(globalThis.currentHyperionInstance);
+      }
+      editors["boblightserver"].getEditor("root.boblightServer.port").setValue(port);
     }
-  }
-
-  removeOverlay();
+  });
 });
