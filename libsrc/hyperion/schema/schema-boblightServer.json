@@ -24,7 +24,10 @@
 			"maximum": 65535,
 			"propertyOrder": 2,
 			"options": {
-				"infoText": "edt_conf_general_port_expl"
+				"infoText": "edt_conf_general_port_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		},
 		"priority": {
@@ -35,7 +38,10 @@
 			"default": 128,
 			"propertyOrder": 3,
 			"options": {
-				"infoText": "edt_conf_general_priority_expl"
+				"infoText": "edt_conf_general_priority_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		}
 	},

@@ -33,11 +33,11 @@ $(document).ready(function () {
 
   function setupEditors() {
     if (isGrabberAvailable["screen"] || isGrabberAvailable["video"] || isGrabberAvailable["audio"]) {
-      handleInstCaptureChange();
+      setupInstCaptureEditor();
     }
 
     if (BOBLIGHT_ENABLED) {
-      handleBoblightChange();
+      setupBoblightEditor();
     }
   }
 
@@ -77,7 +77,7 @@ $(document).ready(function () {
     }
   }
 
-  function handleInstCaptureChange() {
+  function setupInstCaptureEditor() {
 
     //Hide fields if grabber type is not available
     for (const grabberType of ["screen", "video", "audio"]) {
@@ -120,8 +120,6 @@ $(document).ready(function () {
     });
 
     editors["instCapture"].watch('root.instCapture.systemEnable', () => {
-      if (!editors["instCapture"].ready) return;
-
       const screenEnable = editors["instCapture"].getEditor("root.instCapture.systemEnable").getValue();
       if (screenEnable) {
         editors["instCapture"].getEditor("root.instCapture.systemGrabberDevice").setValue(globalThis.serverConfig.framegrabber.available_devices);
@@ -130,8 +128,6 @@ $(document).ready(function () {
     });
 
     editors["instCapture"].watch('root.instCapture.videoEnable', () => {
-      if (!editors["instCapture"].ready) return;
-
       const videoEnable = editors["instCapture"].getEditor("root.instCapture.videoEnable").getValue();
       if (videoEnable) {
         editors["instCapture"].getEditor("root.instCapture.videoGrabberDevice").setValue(globalThis.serverConfig.grabberV4L2.available_devices);
@@ -140,8 +136,6 @@ $(document).ready(function () {
     });
 
     editors["instCapture"].watch('root.instCapture.audioEnable', () => {
-      if (!editors["instCapture"].ready) return;
-
       const audioEnable = editors["instCapture"].getEditor("root.instCapture.audioEnable").getValue();
       if (audioEnable) {
         editors["instCapture"].getEditor("root.instCapture.audioGrabberDevice").setValue(globalThis.serverConfig.grabberAudio.available_devices);
@@ -150,25 +144,28 @@ $(document).ready(function () {
     });
   }
 
-  //boblight
-  function handleBoblightChange() {
+  function setupBoblightEditor() {
     createEditor(editors, 'boblightserver', 'boblightServer', '', {
       bindDefaultChange: true,
       bindSubmit: true
     });
-  }
 
-  editors["boblightserver"].watch('root.boblightServer.enable', () => {
-    if (!editors["boblightserver"].ready) return;
-
-    const boblightServerEnable = editors["boblightserver"].getEditor("root.boblightServer.enable").getValue();
-    if (boblightServerEnable) {
-      //Make port instance specific, if port is still the default one (avoids overlap of used ports)
-      let port = editors["boblightserver"].getEditor("root.boblightServer.port").getValue();
-      if (port === editors["boblightserver"].schema.properties.boblightServer.properties.port.default) {
-        port += Number.parseInt(globalThis.currentHyperionInstance);
+    editors["boblightserver"].watch('root.boblightServer.enable', () => {
+      const boblightServerEnable = editors["boblightserver"].getEditor("root.boblightServer.enable").getValue();
+      if (boblightServerEnable) {
+        $('#boblightServerHelpPanelId').show();
+      } else {
+        $('#boblightServerHelpPanelId').hide();
       }
-      editors["boblightserver"].getEditor("root.boblightServer.port").setValue(port);
-    }
-  });
+
+      if (boblightServerEnable) {
+        //Make port instance specific, if port is still the default one (avoids overlap of used ports)
+        let port = editors["boblightserver"].getEditor("root.boblightServer.port").getValue();
+        if (port === editors["boblightserver"].schema.properties.boblightServer.properties.port.default) {
+          port += Number.parseInt(globalThis.currentHyperionInstance);
+        }
+        editors["boblightserver"].getEditor("root.boblightServer.port").setValue(port);
+      }
+    });
+  }
 });
