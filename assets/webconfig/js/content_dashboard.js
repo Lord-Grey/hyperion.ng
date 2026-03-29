@@ -1,46 +1,65 @@
 $(document).ready(function () {
-  performTranslation();
+    performTranslation();
 
-  function updateInstanceComponents() {
+    addIntro();    
+    updateDashboard();
 
-    let instanceRunningStatus = isInstanceRunning(globalThis.currentHyperionInstance);
-    let isInstanceEnabled = false;
-    const components = globalThis.comps;
+    removeOverlay();
 
-    if (instanceRunningStatus) {
-      isInstanceEnabled = components.some(obj => obj.name === "ALL" && obj.enabled);
+    $(globalThis.hyperion).off("components-updated", updateDashboard).on("components-updated", updateDashboard);
+});
+
+function addIntro() {
+    if (globalThis.showOptHelp) {
+        createHintH("intro", $.i18n('dashboard_label_intro'), "dash_intro");
     }
+}
 
-    let instBtn = `
-  <div class="form-check form-switch form-switch-md">
-    <input class="form-check-input" type="checkbox" role="switch" id="instanceButton"
-      ${isInstanceEnabled ? "checked" : ""}
-      ${instanceRunningStatus ? "" : "disabled" } switch>
-  </div>
-`;
+function isServiceAvailable(serviceName) {
+    return globalThis.serverInfo?.services?.includes(serviceName);
+}
 
-    // Remove existing instance elements
-    // $("div[class*='currentInstance']").remove();
+function getEnabledDisabledText(isEnabled) {
+    return isEnabled ? $.i18n('general_enabled') : $.i18n('general_disabled');
+}
 
-    // Start constructing the HTML for instances
-    let instances_html = `
+function shouldSkipDashboardComponent(componentName) {
+    return componentName === "ALL" ||
+        (componentName === "FORWARDER" && globalThis.currentHyperionInstance !== globalThis.serverConfig.forwarder.instance) ||
+        (componentName === "GRABBER" && !globalThis.serverConfig.framegrabber.enable) ||
+        (componentName === "V4L" && !globalThis.serverConfig.grabberV4L2.enable) ||
+        (componentName === "AUDIO" && !globalThis.serverConfig.grabberAudio.enable);
+}
+
+function createSwitchHtml(id, isChecked, isDisabled) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'form-check form-switch form-switch-md';
+
+    const input = document.createElement('input');
+    input.className = 'form-check-input';
+    input.type = 'checkbox';
+    input.role = 'switch';
+    input.id = id;
+    input.defaultChecked = isChecked;
+    input.disabled = isDisabled;
+    input.setAttribute('switch', '');
+
+    wrapper.appendChild(input);
+    return wrapper.outerHTML;
+}
+
+function createInstanceHeaderHtml(instanceButtonHtml) {
+    return `
     <div class="card card-default">
       <div class="card-header card-instance">
         <div class="dropdown">
-          <a id="active_instance_dropdown"
-             class="dropdown-toggle"
-             data-bs-toggle="dropdown"
-             href="#"
-             style="text-decoration:none; display:flex; align-items:center;">
-            <div id="btn_hypinstanceswitch" style="white-space:nowrap;">
-              <span class="mdi mdi-lightbulb-group" style="margin-right:5px;"></span>
-            </div>
+          <button class="btn dropdown-toggle bg-transparent border-0 p-0 text-start" id="active_instance_dropdown"
+            type="button" data-bs-toggle="dropdown" aria-expanded="false"
+            style="display:flex;align-items:center;color:inherit;box-shadow:none;">
+            <span class="mdi mdi-lightbulb-group" style="margin-right:5px;"></span>
             <div id="active_instance_friendly_name"></div>
-          </a>
-          <ul id="hyp_inst_listing"
-              class="dropdown-menu"
-              style="cursor:pointer;">
-          </ul>
+          </button>
+          <ul class="dropdown-menu" id="hyp_inst_listing" style="cursor:pointer;"></ul>
         </div>
       </div>
       <div class="card-body">
@@ -52,14 +71,16 @@ $(document).ready(function () {
                 <span>${$.i18n('dashboard_componentbox_label_status')}</span>
               </th>
               <th style="width:1px; text-align:right;">
-                ${instBtn}
+                ${instanceButtonHtml}
               </th>
-              </tr>
+            </tr>
           </thead>
-      </table>              
+        </table>
 `;
+}
 
-    instances_html += `
+function createDeviceInfoHtml() {
+    return `
   <table class="table borderless">
     <tbody>
       <tr>
@@ -75,8 +96,8 @@ $(document).ready(function () {
         <td>${$.i18n('conf_leds_contr_label_contrtype')}</td>
         <td style="text-align:right; padding-right:0">
           <span>${globalThis.serverConfig.device.type}</span>
-          <a class="fa fa-cog fa-fw" 
-             onclick="SwitchToMenuItem('MenuItemInstLeds')" 
+          <a class="fa fa-cog fa-fw"
+             onclick="SwitchToMenuItem('MenuItemInstLeds')"
              style="text-decoration:none; cursor:pointer">
           </a>
         </td>
@@ -84,197 +105,190 @@ $(document).ready(function () {
     </tbody>
   </table>
 `;
-    // If the current instance is running, add components table
-    if (instanceRunningStatus) {
-      instances_html += `
-      <table class="table borderless">
-        <thead>
-          <tr>
-              <th colspan="3">
-              <i class="fa fa-eye fa-fw"></i>
-              <span>${$.i18n('dashboard_componentbox_label_title')}</span>
-            </th>
-          </tr>
-        </thead>
-    `;
+}
 
-      // Initialize components table body
-      let instance_components = "";
+function createDashboardComponentRow(componentName, isEnabled) {
+    const tr = document.createElement('tr');
 
-      for (const element of components) {
-        const componentName = element.name;
+    const tdEmpty = document.createElement('td');
 
-        // Skip unwanted components
-        if (componentName === "ALL" ||
-          (componentName === "FORWARDER" && globalThis.currentHyperionInstance !== globalThis.serverConfig.forwarder.instance) ||
-          (componentName === "GRABBER" && !globalThis.serverConfig.framegrabber.enable) ||
-          (componentName === "V4L" && !globalThis.serverConfig.grabberV4L2.enable) ||
-          (componentName === "AUDIO" && !globalThis.serverConfig.grabberAudio.enable)) {
-          continue;
-        }
+    const tdLabel = document.createElement('td');
+    tdLabel.style.verticalAlign = 'middle';
+    tdLabel.textContent = $.i18n(`general_comp_${componentName}`);
 
-        // Determine if the component is enabled
-        const comp_enabled = element.enabled ? "checked" : "";
-        const general_comp = `general_comp_${componentName}`;
+    const tdSwitch = document.createElement('td');
+    tdSwitch.style.width = '1px';
+    tdSwitch.style.textAlign = 'right';
+    tdSwitch.innerHTML = createSwitchHtml(`general_comp_${componentName}`, isEnabled, false);
 
-        // Create the toggle switch for the component
-        const componentBtn = `
-        <div class="form-check form-switch form-switch-md">
-          <input class="form-check-input" type="checkbox" role="switch"
-            id="${general_comp}" ${comp_enabled} switch>
-        </div>
-        `;
+    tr.appendChild(tdEmpty);
+    tr.appendChild(tdLabel);
+    tr.appendChild(tdSwitch);
+    return tr.outerHTML;
+}
 
-        // Add row for the component
-        instance_components += `
+function createDashboardComponentsTable(components) {
+    const componentRows = components
+        .filter((element) => !shouldSkipDashboardComponent(element.name))
+        .map((element) => createDashboardComponentRow(element.name, element.enabled))
+        .join('');
+
+    return `
+    <table class="table borderless">
+      <thead>
         <tr>
-          <td></td>
-          <td style="vertical-align:middle">${$.i18n('general_comp_' + componentName)}</td>
-          <td style="width:1px; text-align:right"> ${componentBtn}</td>
-        </tr>`
-        ;
-      }
+          <th colspan="3">
+            <i class="fa fa-eye fa-fw"></i>
+            <span>${$.i18n('dashboard_componentbox_label_title')}</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>${componentRows}</tbody>
+    </table>
+  `;
+}
 
-      // Close components table
-      instances_html += `
-        <tbody>${instance_components}</tbody>
-      </table>
-      `;
+function buildInstanceDashboardHtml(instanceRunningStatus, isInstanceEnabled, components) {
+    const instanceButtonHtml = createSwitchHtml('instanceButton', isInstanceEnabled, !instanceRunningStatus);
+    let html = createInstanceHeaderHtml(instanceButtonHtml);
+    html += createDeviceInfoHtml();
+
+    if (instanceRunningStatus) {
+        html += createDashboardComponentsTable(components);
     }
+    return html;
+}
 
-    // Close the container divs
-    instances_html += `
-  </div>
-</div>
-`;
-
-    // Update instances HTML to the DOM
-    $('#dash_instances').html(instances_html);
-
-    // Wire up instance toggle
-    $('#instanceButton').on('change', function () {
-      requestSetComponentState('ALL', $(this).prop('checked'));
+function bindInstanceComponentEvents(instanceRunningStatus, isInstanceEnabled, components) {
+    $('#instanceButton').off('change').on('change', function () {
+        requestSetComponentState('ALL', $(this).prop('checked'));
     });
 
-    if (instanceRunningStatus) {
-      for (const element of components) {
-        const componentName = element.name;
-        if (componentName !== "ALL") {
-          $("#general_comp_" + componentName).prop("disabled", !isInstanceEnabled);
-
-          $("#general_comp_" + componentName).on('change', function () {
-            const isChecked = $(this).prop('checked');
-            requestSetComponentState(componentName, isChecked);
-          });
-        }
-      }
+    if (!instanceRunningStatus) {
+        return;
     }
 
+    components
+        .filter((element) => !shouldSkipDashboardComponent(element.name))
+        .forEach((element) => {
+            const componentName = element.name;
+            const selector = `#general_comp_${componentName}`;
+
+            $(selector).prop("disabled", !isInstanceEnabled);
+            $(selector).off('change').on('change', function () {
+                requestSetComponentState(componentName, $(this).prop('checked'));
+            });
+        });
+}
+
+function updateInstanceComponents() {
+    const instanceRunningStatus = isInstanceRunning(globalThis.currentHyperionInstance);
+    const components = globalThis.comps;
+    const isInstanceEnabled = instanceRunningStatus && components.some((obj) => obj.name === "ALL" && obj.enabled);
+
+    const instancesHtml = buildInstanceDashboardHtml(instanceRunningStatus, isInstanceEnabled, components);
+    $('#dash_instances').html(instancesHtml);
+
+    bindInstanceComponentEvents(instanceRunningStatus, isInstanceEnabled, components);
     updateHyperionInstanceListing();
     updateUiOnInstance(globalThis.currentHyperionInstance);
-  }
+}
 
-  function updateGlobalComponents() {
-
-    // add more info
-    const screenGrabberAvailable = (globalThis.serverInfo.grabbers.screen.available.length !== 0);
-    const videoGrabberAvailable = (globalThis.serverInfo.grabbers.video.available.length !== 0);
-    const audioGrabberAvailable = (globalThis.serverInfo.grabbers.audio.available.length !== 0);
-
-    if (screenGrabberAvailable || videoGrabberAvailable || audioGrabberAvailable) {
-
-      if (screenGrabberAvailable) {
-        const screenGrabber = globalThis.serverConfig.framegrabber.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
-        $('#dash_screen_grabber').html(screenGrabber);
-      } else {
-        $("#dash_screen_grabber_row").hide();
-      }
-
-      if (videoGrabberAvailable) {
-        const videoGrabber = globalThis.serverConfig.grabberV4L2.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
-        $('#dash_video_grabber').html(videoGrabber);
-      } else {
-        $("#dash_video_grabber_row").hide();
-      }
-
-      if (audioGrabberAvailable) {
-        const audioGrabber = globalThis.serverConfig.grabberAudio.enable ? $.i18n('general_enabled') : $.i18n('general_disabled');
-        $('#dash_audio_grabber').html(audioGrabber);
-      } else {
-        $("#dash_audio_grabber_row").hide();
-      }
+function updateCaptureRow(available, enabled, valueSelector, rowSelector) {
+    if (available) {
+        $(valueSelector).html(getEnabledDisabledText(enabled));
     } else {
-      $("#dash_capture_hw").hide();
+        $(rowSelector).hide();
+    }
+}
+
+function updateCaptureHardwareSection() {
+    const screenGrabberAvailable = globalThis.serverInfo.grabbers.screen.available.length !== 0;
+    const videoGrabberAvailable = globalThis.serverInfo.grabbers.video.available.length !== 0;
+    const audioGrabberAvailable = globalThis.serverInfo.grabbers.audio.available.length !== 0;
+
+    if (!screenGrabberAvailable && !videoGrabberAvailable && !audioGrabberAvailable) {
+        $("#dash_capture_hw").hide();
+        return;
     }
 
-    if (jQuery.inArray("flatbuffer", globalThis.serverInfo.services) !== -1) {
-      const fbPort = globalThis.serverConfig.flatbufServer.enable ? globalThis.serverConfig.flatbufServer.port : $.i18n('general_disabled');
-      $('#dash_fbPort').html(fbPort);
+    updateCaptureRow(screenGrabberAvailable, globalThis.serverConfig.framegrabber.enable, '#dash_screen_grabber', '#dash_screen_grabber_row');
+    updateCaptureRow(videoGrabberAvailable, globalThis.serverConfig.grabberV4L2.enable, '#dash_video_grabber', '#dash_video_grabber_row');
+    updateCaptureRow(audioGrabberAvailable, globalThis.serverConfig.grabberAudio.enable, '#dash_audio_grabber', '#dash_audio_grabber_row');
+}
+
+function updateServicePort(serviceName, isEnabled, portValue, valueSelector, rowSelector) {
+    if (isServiceAvailable(serviceName)) {
+        $(valueSelector).html(isEnabled ? portValue : $.i18n('general_disabled'));
     } else {
-      $("#dash_ports_flat_row").hide();
+        $(rowSelector).hide();
+    }
+}
+
+function updatePortsSection() {
+    updateServicePort("flatbuffer", globalThis.serverConfig.flatbufServer.enable, globalThis.serverConfig.flatbufServer.port, '#dash_fbPort', '#dash_ports_flat_row');
+    updateServicePort("protobuffer", globalThis.serverConfig.protoServer.enable, globalThis.serverConfig.protoServer.port, '#dash_pbPort', '#dash_ports_proto_row');
+
+    if (isServiceAvailable("boblight") && globalThis.serverConfig.boblightServer) {
+        const boblightPort = globalThis.serverConfig.boblightServer.enable ? globalThis.serverConfig.boblightServer.port : $.i18n('general_disabled');
+        $('#dash_boblightPort').html(boblightPort);
+    } else {
+        $("#dash_ports_boblight_row").hide();
     }
 
-    if (jQuery.inArray("protobuffer", globalThis.serverInfo.services) !== -1) {
-      const pbPort = globalThis.serverConfig.protoServer.enable ? globalThis.serverConfig.protoServer.port : $.i18n('general_disabled');
-      $('#dash_pbPort').html(pbPort);
+    $('#dash_jsonPort').html(globalThis.serverConfig.jsonServer.port);
+    $('#dash_wsPorts').html(`${globalThis.serverConfig.webConfig.port} | ${globalThis.serverConfig.webConfig.sslPort}`);
+}
+
+function updateVersionInfoMessage() {
+    const container = document.getElementById('versioninforesult');
+    if (!container) { return; }
+    container.innerHTML = '';
+
+    const alertDiv = document.createElement('div');
+    alertDiv.role = 'alert';
+    alertDiv.style.margin = '0px';
+
+    if (semverLite.gt(globalThis.latestVersion.tag_name, globalThis.currentVersion)) {
+        alertDiv.className = 'alert alert-warning';
+        const link = document.createElement('a');
+        link.target = '_blank';
+        link.href = globalThis.latestVersion.html_url;
+        link.className = 'alert-link';
+        link.textContent = $.i18n('dashboard_infobox_message_updatewarning', globalThis.latestVersion.tag_name);
+        alertDiv.appendChild(link);
     } else {
-      $("#dash_ports_proto_row").hide();
+        alertDiv.className = 'alert alert-info';
+        alertDiv.textContent = $.i18n('dashboard_infobox_message_updatesuccess');
     }
 
-    if (jQuery.inArray("boblight", globalThis.serverInfo.services) !== -1 && globalThis.serverConfig.boblightServer) {
-      const boblightPort = globalThis.serverConfig.boblightServer.enable ? globalThis.serverConfig.boblightServer.port : $.i18n('general_disabled');
-      $('#dash_boblightPort').html(boblightPort);
-    } else {
-      $("#dash_ports_boblight_row").hide();
-    }
+    container.appendChild(alertDiv);
+}
 
-    const jsonPort = globalThis.serverConfig.jsonServer.port;
-    $('#dash_jsonPort').html(jsonPort);
-    const wsPorts = globalThis.serverConfig.webConfig.port + ' | ' + globalThis.serverConfig.webConfig.sslPort;
-    $('#dash_wsPorts').html(wsPorts);
-
-
+function updateVersionSection() {
     $('#dash_currv').html(globalThis.currentVersion);
     $('#dash_watchedversionbranch').html(globalThis.serverConfig.general.watchedVersionBranch);
 
     getReleases(function (callback) {
-      if (callback) {
-        $('#dash_latev').html(globalThis.latestVersion.tag_name);
-
-        if (semverLite.gt(globalThis.latestVersion.tag_name, globalThis.currentVersion)) {
-          $('#versioninforesult').html(
-            `<div class="alert alert-warning" role="alert" style="margin:0px">
-           <a target="_blank" href="${globalThis.latestVersion.html_url}" class="alert-link">
-             ${$.i18n('dashboard_infobox_message_updatewarning', globalThis.latestVersion.tag_name)}
-           </a>
-         </div>`
-          );
-        } else {
-          $('#versioninforesult').html(
-            `<div class="alert alert-info" role="alert" style="margin:0px">
-           ${$.i18n('dashboard_infobox_message_updatesuccess')}
-         </div>`
-          );
+        if (!callback) {
+            return;
         }
-      }
-    });
-  }
-  function updateDashboard() {
 
-    //Only show an instance, if minimum one configured
+        $('#dash_latev').html(globalThis.latestVersion.tag_name);
+        updateVersionInfoMessage();
+    });
+}
+
+function updateGlobalComponents() {
+    updateCaptureHardwareSection();
+    updatePortsSection();
+    updateVersionSection();
+}
+
+function updateDashboard() {
     if (globalThis.serverInfo.instance.length !== 0) {
-      updateInstanceComponents();
+        updateInstanceComponents();
     }
     updateGlobalComponents();
-  }
+}
 
-  updateDashboard();
-
-  $(globalThis.hyperion).on("components-updated", updateDashboard);
-
-  if (globalThis.showOptHelp) {
-    createHintH("intro", $.i18n('dashboard_label_intro'), "dash_intro");
-  }
-
-  removeOverlay();
-});
