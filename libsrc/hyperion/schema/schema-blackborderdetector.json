@@ -21,7 +21,10 @@
 			"append": "edt_append_percent",
 			"propertyOrder": 2,
 			"options": {
-				"infoText": "edt_conf_bb_threshold_expl"
+				"infoText": "edt_conf_bb_threshold_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		},
 		"unknownFrameCnt": {
@@ -32,7 +35,10 @@
 			"access": "expert",
 			"propertyOrder": 3,
 			"options": {
-				"infoText": "edt_conf_bb_unknownFrameCnt_expl"
+				"infoText": "edt_conf_bb_unknownFrameCnt_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		},
 		"borderFrameCnt": {
@@ -43,7 +49,10 @@
 			"access": "expert",
 			"propertyOrder": 4,
 			"options": {
-				"infoText": "edt_conf_bb_borderFrameCnt_expl"
+				"infoText": "edt_conf_bb_borderFrameCnt_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		},
 		"maxInconsistentCnt": {
@@ -54,7 +63,10 @@
 			"access": "expert",
 			"propertyOrder": 5,
 			"options": {
-				"infoText": "edt_conf_bb_maxInconsistentCnt_expl"
+				"infoText": "edt_conf_bb_maxInconsistentCnt_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		},
 		"blurRemoveCnt": {
@@ -65,7 +77,10 @@
 			"access": "expert",
 			"propertyOrder": 6,
 			"options": {
-				"infoText": "edt_conf_bb_blurRemoveCnt_expl"
+				"infoText": "edt_conf_bb_blurRemoveCnt_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		},
 		"mode": {
@@ -86,7 +101,10 @@
 					"edt_conf_enum_bbosd",
 					"edt_conf_enum_bbletterbox"
 				],
-				"infoText": "edt_conf_bb_mode_expl"
+				"infoText": "edt_conf_bb_mode_expl",
+				"dependencies": {
+					"enable": true
+				}
 			},
 			"propertyOrder": 7
 		}

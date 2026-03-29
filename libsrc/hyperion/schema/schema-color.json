@@ -75,6 +75,7 @@
 		},
 		"channelAdjustment": {
 			"type": "array",
+			"format": "tabs-top",
 			"title": "edt_conf_color_channelAdjustment_header_title",
 			"minItems": 1,
 			"required": true,

@@ -1,23 +1,29 @@
 <div class="container-fluid">
-	<div class="row">
-		<div class="col-lg-12">
-			<h3 class="page-header"><i class="fa fa-photo fa-fw"></i><span  data-i18n="main_menu_colors_conf_token">Image Processing</span></h3>
-
-      <div class="card card-default" style="border:0;">
-        <div class="card-header card-instance">
-          <div class="dropdown">
-            <a id="active_instance_dropdown" class="dropdown-toggle" data-bs-toggle="dropdown" href="#" style="text-decoration:none;display:flex;align-items:center;">
-              <span class="mdi mdi-lightbulb-group" style="margin-right:5px;"></span>
-              <div id="active_instance_friendly_name"></div>
-            </a>
-            <ul id="hyp_inst_listing" class="dropdown-menu" style="cursor:pointer;"></ul>
-          </div>
+  <h3 class="page-header"><i class="fa fa-photo fa-fw"></i><span data-i18n="main_menu_colors_conf_token">Image
+      Processing</span>
+  </h3>
+  <div class="row">
+    <!-- Instance(s) -->
+    <div class="row gy-2"></div>
+    <div class="card card-default" style="border:0;">
+      <div class="card-header card-instance">
+        <div class="dropdown">
+          <button class="btn dropdown-toggle bg-transparent border-0 p-0 text-start" id="active_instance_dropdown"
+            type="button" data-bs-toggle="dropdown" aria-expanded="false"
+            style="display:flex;align-items:center;color:inherit;box-shadow:none;">
+            <span class="mdi mdi-lightbulb-group" style="margin-right:5px;"></span>
+            <div id="active_instance_friendly_name"></div>
+          </button>
+          <ul class="dropdown-menu" id="hyp_inst_listing" style="cursor:pointer;"></ul>
         </div>
       </div>
-
-      <div id="conf_cont"></div>
-		</div>
-	</div>
+    </div>
+    <!-- Configuration cards -->
+    <div class="row">
+      <div class="row gy-2" id="conf_cont"></div>
+    </div>
+  </div>
+</div>
 </div>
 
 <script src="/js/content_colors.js"></script>

@@ -29,7 +29,10 @@
 					"edt_conf_enum_linear",
 					"edt_conf_enum_decay"
 				],
-				"infoText": "edt_conf_smooth_type_expl"
+				"infoText": "edt_conf_smooth_type_expl",
+				"dependencies": {
+					"enable": true
+				}
 			},
 			"propertyOrder": 2
 		},
@@ -42,7 +45,10 @@
 			"append": "edt_append_ms",
 			"propertyOrder": 3,
 			"options": {
-				"infoText": "edt_conf_smooth_time_ms_expl"
+				"infoText": "edt_conf_smooth_time_ms_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		},
 		"updateFrequency": {
@@ -54,7 +60,10 @@
 			"append": "edt_append_hz",
 			"propertyOrder": 4,
 			"options": {
-				"infoText": "edt_conf_smooth_updateFrequency_expl"
+				"infoText": "edt_conf_smooth_updateFrequency_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		},
 		"interpolationRate": {
@@ -67,6 +76,7 @@
 			"propertyOrder": 5,
 			"options": {
 				"dependencies": {
+					"enable": true,
 					"type": "decay"
 				},
 				"infoText": "edt_conf_smooth_interpolationRate_expl"
@@ -81,6 +91,7 @@
 			"propertyOrder": 7,
 			"options": {
 				"dependencies": {
+					"enable": true,
 					"type": "decay"
 				},
 				"infoText": "edt_conf_smooth_decay_expl"
@@ -94,6 +105,7 @@
 			"propertyOrder": 8,
 			"options": {
 				"dependencies": {
+					"enable": true,
 					"type": "decay"
 				},
 				"infoText": "edt_conf_smooth_dithering_expl"
@@ -108,7 +120,10 @@
 			"append": "edt_append_frames",
 			"propertyOrder": 9,
 			"options": {
-				"infoText": "edt_conf_smooth_updateDelay_expl"
+				"infoText": "edt_conf_smooth_updateDelay_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		}
 	},
