@@ -30,6 +30,12 @@ $(document).ready(function () {
     }
   }
 
+  function setupEditors() {
+    setupEffectsEditor();
+    setupForegroundEffectEditor();
+    setupBackgroundEffectEditor();
+  }
+
   function setupForegroundEffectEditor() {
     if (editors["foregroundEffect"]) {
       editors["foregroundEffect"].destroy();
@@ -48,10 +54,19 @@ $(document).ready(function () {
       delete globalThis.schema.foregroundEffect.properties.effect;
     }
 
-    createEditor(editors, 'foregroundEffect', 'foregroundEffect', handleForegroundEffectChange, {
+    createEditor(editors, 'foregroundEffect', 'foregroundEffect', '', {
       bindDefaultChange: true,
       bindSubmit: false,
       submitButtonId: 'btn_submit_foregroundEffect'
+    });
+
+    editors["foregroundEffect"].watch('root.foregroundEffect.enable', () => {
+      const foregroundEffectEnable = editors["foregroundEffect"].getEditor("root.foregroundEffect.enable").getValue();
+      if (foregroundEffectEnable) {
+        $('#foregroundEffectHelpPanelId').show();
+      } else {
+        $('#foregroundEffectHelpPanelId').hide();
+      }
     });
 
     $('#btn_submit_foregroundEffect').off().on('click', function () {
@@ -81,10 +96,19 @@ $(document).ready(function () {
       delete globalThis.schema.backgroundEffect.properties.effect;
     }
 
-    createEditor(editors, 'backgroundEffect', 'backgroundEffect', handleBackgroundEffectChange, {
+    createEditor(editors, 'backgroundEffect', 'backgroundEffect', '', {
       bindDefaultChange: true,
       bindSubmit: false,
       submitButtonId: 'btn_submit_backgroundEffect'
+    });
+
+    editors["backgroundEffect"].watch('root.backgroundEffect.enable', () => {
+      const backgroundEffectEnable = editors["backgroundEffect"].getEditor("root.backgroundEffect.enable").getValue();
+      if (backgroundEffectEnable) {
+        $('#backgroundEffectHelpPanelId').show();
+      } else {
+        $('#backgroundEffectHelpPanelId').hide();
+      }
     });
 
     $('#btn_submit_backgroundEffect').off().on('click', function () {
@@ -122,50 +146,6 @@ $(document).ready(function () {
     }
   }
 
-  function setupEditors() {
-    setupEffectsEditor();
-    setupForegroundEffectEditor();
-    setupBackgroundEffectEditor();
-  }
-
-  function handleForegroundEffectChange(editor) {
-    editor.on('change', function () {
-      onForegroundEffectEditorChange(editor);
-    });
-  }
-
-  function handleBackgroundEffectChange(editor) {
-    editor.on('change', function () {
-      onBackgroundEffectEditorChange(editor);
-    });
-  }
-
-  function onForegroundEffectEditorChange(editor) {
-    if (!editor.ready) {
-      return;
-    }
-
-    const foregroundEffectEnable = editor.getEditor("root.foregroundEffect.enable").getValue();
-    if (foregroundEffectEnable) {
-      $('#foregroundEffectHelpPanelId').show();
-    } else {
-      $('#foregroundEffectHelpPanelId').hide();
-    }
-  }
-
-  function onBackgroundEffectEditorChange(editor) {
-    if (!editor.ready) {
-      return;
-    }
-
-    const backgroundEffectEnable = editor.getEditor("root.backgroundEffect.enable").getValue();
-    if (backgroundEffectEnable) {
-      $('#backgroundEffectHelpPanelId').show();
-    } else {
-      $('#backgroundEffectHelpPanelId').hide();
-    }
-  }
-
   // Update available effect names when receiving an update from the server
   $(globalThis.hyperion).on("cmd-effects-update", function (event) {
     globalThis.serverInfo.effects = event.response.data.effects
@@ -175,4 +155,3 @@ $(document).ready(function () {
   });
 
 });
-
