@@ -560,14 +560,6 @@ if(ENABLE_PROTOBUF_SERVER)
 			set(protobuf_BUILD_PROTOC_BINARIES OFF CACHE BOOL "Build protobuf libraries and protoc compiler")
 		endif()
 
-		# Apply patches to Protobuf
-		execute_process(
-			COMMAND git apply "${CMAKE_CURRENT_SOURCE_DIR}/patch/protobuf/atomic.diff"
-			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/protobuf"
-			OUTPUT_QUIET
-			ERROR_QUIET
-		)
-
 		# Add Protobuf directory to the build
 		add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/protobuf")
 
