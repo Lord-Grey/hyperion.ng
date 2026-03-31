@@ -52,7 +52,7 @@
     },
     "effect": {
       "type": "string",
-      "format": "select",
+      "format": "choices",
       "title": "edt_conf_fge_effect_title",
       "options": {
         "infoText": "edt_conf_fge_effect_expl",

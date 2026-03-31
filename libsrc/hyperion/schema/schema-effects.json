@@ -56,7 +56,7 @@
       "items": {
         "type": "string",
         "title": "edt_conf_effp_disable_itemtitle",
-        "format": "select",
+        "format": "choices",
         "options": {
           "titleHidden": true
         },
