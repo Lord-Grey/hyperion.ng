@@ -1,3 +1,27 @@
+function ensureHyperionThemeRegistered() {
+  const defaults = globalThis.JSONEditor?.defaults;
+  if (!defaults?.themes) {
+    return 'bootstrap45';
+  }
+
+  if (!defaults.themes.hyperion) {
+    const BaseTheme = defaults.themes.bootstrap5 || defaults.themes.html;
+    if (!BaseTheme) {
+      return defaults.theme || 'html';
+    }
+
+    const HyperionThemeFactory = globalThis.createHyperionTheme;
+    const HyperionTheme = (typeof HyperionThemeFactory === 'function')
+      ? HyperionThemeFactory(BaseTheme)
+      : class HyperionTheme extends BaseTheme {
+      };
+
+    defaults.themes.hyperion = HyperionTheme;
+  }
+
+  return 'hyperion';
+}
+
 const getObjectProperty = (obj, path) => path.split(".").reduce((o, key) => o?.[key] === undefined ? undefined : o[key], obj);
 
 const setObjectProperty = (object, path, value) => {
@@ -176,7 +200,7 @@ function createJsonEditor(container, schema, setconfig, useCard, arrayre = undef
 
   let editor = new JSONEditor(document.getElementById(container),
     {
-      theme: 'bootstrap5',
+      theme: ensureHyperionThemeRegistered(),
       iconlib: "fontawesome4",
       disable_collapse: true,
       form_name_root: 'root',
@@ -231,8 +255,14 @@ function createEditor(editors, container, schemaKey, changeHandler, options = {}
 
   if (bindDefaultChange) {
     editor.on('change', function () {
-      const isValid = editor.validate().length === 0 && !globalThis.readOnlyMode;
+
+      const errors = editor.validate();
+      const isValid = errors.length === 0 && !globalThis.readOnlyMode;
       $(`#${submitButtonId}`).prop('disabled', !isValid);
+
+      if (!isValid) {
+        console.warn(`Validation errors in ${container} editor:`, errors);
+      }
     });
   }
 
