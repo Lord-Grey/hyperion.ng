@@ -9,6 +9,8 @@ $(document).ready(function () {
 
   initializeUI();
   setupEditors();
+  initializeUI();
+  setupEditors();
   updateHyperionInstanceListing();
 
   removeOverlay();

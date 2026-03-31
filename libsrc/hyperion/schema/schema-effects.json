@@ -13,7 +13,7 @@
       "properties": {
         "effects": {
           "type": "array",
-          "format": "seletc",
+          "format": "select",
           "title": "edt_conf_enum_effects",
           "uniqueItems": true,
           "items": {
