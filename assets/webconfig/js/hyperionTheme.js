@@ -72,7 +72,7 @@
 					return control;
 				}
 
-				inputParent.insertBefore(inputGroup, nextSibling);
+				nextSibling.before(inputGroup);
 				return control;
 			}
 		};
