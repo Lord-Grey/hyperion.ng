@@ -1,16 +1,36 @@
 $(document).ready(function () {
   performTranslation();
 
-  let conf_editor = null;
+  const editors = {};
 
-  $('#conf_cont').append(createOptPanel('fa-wrench', $.i18n("edt_conf_webConfig_heading_title"), 'editor_container', 'btn_submit', 'card-system'));
-  if (window.showOptHelp) {
-    $('#conf_cont').append(createHelpTable(window.schema.webConfig.properties, $.i18n("edt_conf_webConfig_heading_title")));
+  initializeUI();
+  setupWebConfigEditor();
+
+  removeOverlay();
+
+  function initializeUI() {
+    if (globalThis.showOptHelp) {
+      createSection("webConfig", "edt_conf_webConfig_heading_title", globalThis.schema.webConfig.properties, "fa-wrench", "conf_webconfig_label_intro", "webConfigHelpPanelId");
+    }
+    else {
+      appendPanel("webConfig", "edt_conf_webConfig_heading_title", "fa-wrench");
+    }
   }
 
-  conf_editor = createJsonEditor('editor_container', {
-    webConfig: window.schema.webConfig
-  }, true, true);
+  function setupWebConfigEditor() {
+    createEditor(editors, 'webConfig', 'webConfig', '', {
+      bindDefaultChange: true,
+      bindSubmit: false,
+      submitButtonId: 'btn_submit_container'
+    });
+
+    $('#btn_submit_container').off().on('click', function () {
+      const val = editors["webConfig"].getValue();
+      globalThis.fastReconnect = true;
+      globalThis.jsonPort = val.webConfig.port;
+      requestWriteConfig(val);
+    });
+  }
 
   // Validate for conflicting ports
   JSONEditor.defaults.custom_validators.push(function (schema, value, path) {
@@ -29,9 +49,9 @@ $(document).ready(function () {
 
       const isWebConfigPort = conflictKey.startsWith("webConfig");
       if (isWebConfigPort) {
-        conflictPort = conf_editor?.getEditor(`root.${conflictKey.replace("_", ".")}`)?.getValue();
+        conflictPort = editors["webConfig"]?.getEditor(`root.${conflictKey.replace("_", ".")}`)?.getValue();
       } else {
-        conflictPort = window.serverConfig?.[conflictKey]?.port;
+        conflictPort = globalThis.serverConfig?.[conflictKey]?.port;
       }
 
       if (conflictPort != null && value === conflictPort) {
@@ -55,20 +75,4 @@ $(document).ready(function () {
     return errors;
   });
 
-  conf_editor.on('change', function () {
-    conf_editor.validate().length || window.readOnlyMode ? $('#btn_submit').prop('disabled', true) : $('#btn_submit').prop('disabled', false);
-  });
-
-  $('#btn_submit').off().on('click', function () {
-    // store the last webui port for correct reconnect url (connection_lost.html)
-    const val = conf_editor.getValue();
-    window.fastReconnect = true;
-    window.jsonPort = val.webConfig.port;
-    requestWriteConfig(val);
-  });
-
-  if (window.showOptHelp)
-    createHint("intro", $.i18n('conf_webconfig_label_intro'), "editor_container");
-
-  removeOverlay();
 });
