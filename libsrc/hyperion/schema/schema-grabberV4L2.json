@@ -92,6 +92,7 @@
 		},
 		"width": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_fg_width_title",
 			"default": 0,
 			"minimum": 0,
@@ -106,6 +107,7 @@
 		},
 		"height": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_fg_height_title",
 			"default": 0,
 			"minimum": 0,
@@ -129,7 +131,9 @@
 		},
 		"fps": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_enum_custom",
+			"step": 5,
 			"default": 15,
 			"minimum": 0,
 			"append": "fps",
@@ -142,6 +146,7 @@
 		},
 		"fpsSoftwareDecimation": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_v4l2_fpsSoftwareDecimation_title",
 			"minimum": 0,
 			"maximum": 60,
@@ -178,6 +183,7 @@
 		},
 		"sizeDecimation": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_v4l2_sizeDecimation_title",
 			"minimum": 1,
 			"maximum": 30,
@@ -190,6 +196,7 @@
 		},
 		"hardware_brightness": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_v4l2_hardware_brightness_title",
 			"default": 0,
 			"required": true,
@@ -201,6 +208,7 @@
 		},
 		"hardware_contrast": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_v4l2_hardware_contrast_title",
 			"default": 0,
 			"required": true,
@@ -212,6 +220,7 @@
 		},
 		"hardware_saturation": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_v4l2_hardware_saturation_title",
 			"default": 0,
 			"required": true,
@@ -223,6 +232,7 @@
 		},
 		"hardware_hue": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_v4l2_hardware_hue_title",
 			"default": 0,
 			"required": true,
@@ -234,6 +244,7 @@
 		},
 		"cropLeft": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_v4l2_cropLeft_title",
 			"minimum": 0,
 			"default": 0,
@@ -246,6 +257,7 @@
 		},
 		"cropRight": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_v4l2_cropRight_title",
 			"minimum": 0,
 			"default": 0,
@@ -258,6 +270,7 @@
 		},
 		"cropTop": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_v4l2_cropTop_title",
 			"minimum": 0,
 			"default": 0,
@@ -270,6 +283,7 @@
 		},
 		"cropBottom": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_v4l2_cropBottom_title",
 			"minimum": 0,
 			"default": 0,
@@ -294,6 +308,7 @@
 		},
 		"redSignalThreshold": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_v4l2_redSignalThreshold_title",
 			"minimum": 0,
 			"maximum": 100,
@@ -311,6 +326,7 @@
 		},
 		"greenSignalThreshold": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_v4l2_greenSignalThreshold_title",
 			"minimum": 0,
 			"maximum": 100,
@@ -328,6 +344,7 @@
 		},
 		"blueSignalThreshold": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_v4l2_blueSignalThreshold_title",
 			"minimum": 0,
 			"maximum": 100,
@@ -345,6 +362,7 @@
 		},
 		"noSignalCounterThreshold": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_v4l2_noSignalCounterThreshold_title",
 			"minimum": 1,
 			"maximum": 1000,
@@ -361,6 +379,7 @@
 		},
 		"sDVOffsetMin": {
 			"type": "number",
+			"format": "range",
 			"title": "edt_conf_v4l2_sDVOffsetMin_title",
 			"minimum": 0.0,
 			"maximum": 1.0,
@@ -378,6 +397,7 @@
 		},
 		"sDVOffsetMax": {
 			"type": "number",
+			"format": "range",
 			"title": "edt_conf_v4l2_sDVOffsetMax_title",
 			"minimum": 0.0,
 			"maximum": 1.0,
@@ -395,6 +415,7 @@
 		},
 		"sDHOffsetMin": {
 			"type": "number",
+			"format": "range",
 			"title": "edt_conf_v4l2_sDHOffsetMin_title",
 			"minimum": 0.0,
 			"maximum": 1.0,
@@ -412,6 +433,7 @@
 		},
 		"sDHOffsetMax": {
 			"type": "number",
+			"format": "range",
 			"title": "edt_conf_v4l2_sDHOffsetMax_title",
 			"minimum": 0.0,
 			"maximum": 1.0,

@@ -22,6 +22,53 @@ function ensureHyperionThemeRegistered() {
   return 'hyperion';
 }
 
+function ensureHyperionAppendSupportInstalled() {
+  const JE = globalThis.JSONEditor;
+  if (!JE?.defaults?.editors) return;
+
+  // install only once
+  if (JE.defaults.__hyperion_append_installed) return;
+  JE.defaults.__hyperion_append_installed = true;
+
+  // Wrap the base editor hook (works for string/number/integer/etc editors that call it)
+  const proto = JE.AbstractEditor?.prototype;
+  if (!proto) return;
+
+  const originalAfterInputReady = proto.afterInputReady;
+  proto.afterInputReady = function (input) {
+    // call original behavior first
+    if (typeof originalAfterInputReady === 'function') {
+      originalAfterInputReady.call(this, input);
+    }
+
+    if (!input || !this.schema) return;
+
+    const appendKey = this.schema.append;
+    if (!appendKey) return;
+
+    // translate using JSONEditor translateProperty (you already set it)
+    let appendText = appendKey;
+    try {
+      // many versions expose this.translate
+      if (typeof this.translate === 'function') {
+        appendText = this.translate(appendKey);
+      } else if (this.jsoneditor && typeof this.jsoneditor.translate === 'function') {
+        appendText = this.jsoneditor.translate(appendKey);
+      } else if (globalThis.JSONEditor?.defaults?.translateProperty) {
+        appendText = globalThis.JSONEditor.defaults.translateProperty(appendKey);
+      } else if (typeof $ !== 'undefined' && typeof $.i18n === 'function') {
+        appendText = $.i18n(appendKey);
+      }
+    } catch {
+      // fallback to raw key if translation fails
+      appendText = appendKey;
+    }
+
+    // Attach to the input so the theme can render it without schema lookups
+    input.dataset.jeAppend = appendText;
+  };
+}
+
 const getObjectProperty = (obj, path) => path.split(".").reduce((o, key) => o?.[key] === undefined ? undefined : o[key], obj);
 
 const setObjectProperty = (object, path, value) => {
@@ -35,6 +82,43 @@ const setObjectProperty = (object, path, value) => {
   const key = parts[limit];
   object[key] = value;
 };
+
+function countNumericDecimals(value) {
+  const str = String(value);
+  if (str.includes('e-')) {
+    return Number.parseInt(str.split('e-')[1], 10) || 0;
+  }
+
+  const dotIndex = str.indexOf('.');
+  return dotIndex === -1 ? 0 : str.length - dotIndex - 1;
+}
+
+function createPrecisionNormalizer(...values) {
+  const precision = Math.max(...values.map((value) => countNumericDecimals(value)));
+  const scale = 10 ** Math.min(precision, 12);
+
+  const normalize = (val, fallback = 0) => {
+    if (!Number.isFinite(val)) return Number(fallback);
+    if (scale <= 1) return Math.round(val);
+    return Math.round((val + Number.EPSILON) * scale) / scale;
+  };
+
+  return { scale, normalize };
+}
+
+function resolveEditorAppendText(editor, appendKey) {
+  let text = appendKey;
+
+  if (typeof editor.translate === 'function') {
+    text = editor.translate(appendKey);
+  }
+
+  if (!text || text === appendKey) {
+    text = editor.translateProperty(appendKey);
+  }
+
+  return text || appendKey;
+}
 
 function getLongPropertiesPath(path) {
   if (path) {
@@ -174,20 +258,380 @@ function validateUUIDSchema(schema, value, path) {
   return []
 }
 
-function createJsonEditor(container, schema, setconfig, useCard, arrayre = undefined) {
-  $('#' + container).off();
-  $('#' + container).html("");
+function ensureJsonEditorDefaultsConfigured() {
+  const JE = globalThis.JSONEditor;
+  if (!JE?.defaults?.editors) {
+    return false;
+  }
 
-  if (arrayre === undefined)
-    arrayre = true;
+  if (JE.defaults.__hyperion_defaults_configured) {
+    return true;
+  }
 
-  JSONEditor.defaults.translateProperty = function (key, variables) {
+  JE.defaults.__hyperion_defaults_configured = true;
+
+  JE.defaults.translateProperty = function (key, variables) {
     let text;
     if (key !== null) {
       text = $.i18n(key, variables);
     }
     return text;
   };
+
+  const createAppendEditor = (BaseEditor, { integer }) => class extends BaseEditor {
+    build() {
+      super.build();
+
+      if (this.input) {
+        this.input.type = 'number';
+        if (integer) {
+          this.input.step = '1';
+        } else if (this.schema?.step !== undefined) {
+          this.input.step = String(this.schema.step);
+        }
+      }
+
+      if (!this.schema?.append || !this.input?.parentNode) {
+        return;
+      }
+
+      const appendText = resolveEditorAppendText(this, this.schema.append);
+
+      const parent = this.input.parentNode;
+      if (parent.classList.contains('input-group')) {
+        if (!parent.querySelector('.je-form-input-append')) {
+          const appendEl = document.createElement('span');
+          appendEl.classList.add('input-group-text', 'je-form-input-append');
+          appendEl.textContent = appendText;
+          parent.appendChild(appendEl);
+        }
+        return;
+      }
+
+      const group = document.createElement('div');
+      group.classList.add('input-group');
+
+      parent.replaceChild(group, this.input);
+      group.appendChild(this.input);
+
+      const appendEl = document.createElement('span');
+      appendEl.classList.add('input-group-text', 'je-form-input-append');
+      appendEl.textContent = appendText;
+      group.appendChild(appendEl);
+    }
+  };
+
+  JE.defaults.editors.integerWithAppend = createAppendEditor(JE.defaults.editors.integer, { integer: true });
+  JE.defaults.editors.numberWithAppend = createAppendEditor(JE.defaults.editors.number, { integer: false });
+
+  JE.defaults.resolvers.unshift(function (schema) {
+    if ((schema?.type === 'number' || schema?.type === 'integer') && schema?.append) {
+      return schema.type === 'integer' ? 'integerWithAppend' : 'numberWithAppend';
+    }
+    return undefined;
+  });
+
+  const createStepperEditor = (BaseEditor, { integer, withAppend }) => class extends BaseEditor {
+
+    build() {
+      super.build();
+
+      const parent = this.input.parentNode;
+
+      // --- wrapper ---
+      const group = document.createElement('div');
+      group.classList.add('input-group');
+
+      parent.replaceChild(group, this.input);
+
+      // --- buttons ---
+      const btnMinus = document.createElement('button');
+      btnMinus.type = 'button';
+      btnMinus.classList.add('btn', 'btn-outline-secondary', 'btn-sm');
+      btnMinus.textContent = '−';
+
+      const btnPlus = document.createElement('button');
+      btnPlus.type = 'button';
+      btnPlus.classList.add('btn', 'btn-outline-secondary', 'btn-sm');
+      btnPlus.textContent = '+';
+
+      // --- input styling ---
+      this.input.classList.add('form-control', 'form-control-sm', 'text-center');
+      this.input.type = 'number';
+
+      // --- append label ---
+      let appendEl = null;
+      if (withAppend && this.schema.append) {
+        appendEl = document.createElement('span');
+        appendEl.classList.add('input-group-text');
+        appendEl.textContent = resolveEditorAppendText(this, this.schema.append);
+      }
+
+      // --- assemble ---
+      group.appendChild(btnMinus);
+      group.appendChild(this.input);
+      if (appendEl) group.appendChild(appendEl);
+      group.appendChild(btnPlus);
+
+      // --- config ---
+      const stepRaw = this.schema.step ?? 1;
+      const parsedStep = Number(stepRaw);
+      const step = Number.isFinite(parsedStep) && parsedStep !== 0 ? parsedStep : 1;
+      const min = this.schema.minimum;
+      const max = this.schema.maximum;
+      const { normalize } = createPrecisionNormalizer(stepRaw, min ?? 0, max ?? 0);
+
+      this.input.step = integer ? '1' : String(step);
+
+      const clamp = (val) => {
+        if (typeof min === 'number' && val < min) val = min;
+        if (typeof max === 'number' && val > max) val = max;
+        return val;
+      };
+
+      // --- update helper ---
+      const updateValue = (newVal) => {
+        newVal = normalize(clamp(newVal), min ?? 0);
+        if (integer) {
+          newVal = Math.round(newVal);
+        }
+        this.setValue(newVal);
+        this.onChange(true);
+      };
+
+      const getCurrentValue = () => {
+        const current = Number(this.getValue());
+        return Number.isFinite(current) ? current : 0;
+      };
+
+      // --- button events ---
+      btnMinus.addEventListener('click', () => {
+        const val = getCurrentValue();
+        updateValue(val - step);
+      });
+
+      btnPlus.addEventListener('click', () => {
+        const val = getCurrentValue();
+        updateValue(val + step);
+      });
+
+      // --- keyboard support ---
+      this.input.addEventListener('keydown', (e) => {
+        const val = getCurrentValue();
+
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          updateValue(val + step);
+        }
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          updateValue(val - step);
+        }
+      });
+    }
+
+    sanitize(value) {
+      if (value === '' || value === null || value === undefined) return value;
+      return integer ? Number.parseInt(String(value), 10) : Number(value);
+    }
+
+  };
+
+  JE.defaults.editors.integerStepper = createStepperEditor(JE.defaults.editors.integer, { integer: true, withAppend: false });
+  JE.defaults.editors.numberStepper = createStepperEditor(JE.defaults.editors.number, { integer: false, withAppend: false });
+  JE.defaults.editors.integerStepperWithAppend = createStepperEditor(JE.defaults.editors.integer, { integer: true, withAppend: true });
+  JE.defaults.editors.numberStepperWithAppend = createStepperEditor(JE.defaults.editors.number, { integer: false, withAppend: true });
+
+  JE.defaults.resolvers.unshift(function (schema) {
+    if ((schema?.type === 'integer' || schema?.type === 'number') && schema?.format === 'stepper') {
+      if (schema?.append) {
+        return schema.type === 'integer' ? 'integerStepperWithAppend' : 'numberStepperWithAppend';
+      }
+      return schema.type === 'integer' ? 'integerStepper' : 'numberStepper';
+    }
+    return undefined;
+  });
+
+  const createRangeWithAppendEditor = (BaseEditor, { integer }) => class extends BaseEditor {
+
+    build() {
+      super.build();
+
+      const parent = this.input.parentNode;
+      const min = this.schema.minimum ?? 0;
+      const max = this.schema.maximum ?? 100;
+
+      const stepRaw = this.schema.step ?? 1;
+      const parsedStep = Number(stepRaw);
+      const step = Number.isFinite(parsedStep) && parsedStep !== 0 ? parsedStep : 1;
+      const { scale, normalize } = createPrecisionNormalizer(stepRaw, min, max);
+      const minScaled = Math.round(Number(min) * scale);
+      const maxScaled = Math.round(Number(max) * scale);
+      const stepScaled = Math.max(1, Math.round(step * scale));
+
+      const clamp = (val) => {
+        if (val < min) val = min;
+        if (val > max) val = max;
+        return val;
+      };
+
+      const snapToStep = (val) => {
+        const clamped = normalize(clamp(val), min);
+        const valueScaled = Math.round(clamped * scale);
+
+        if (valueScaled <= minScaled) {
+          return Number(min);
+        }
+
+        if (valueScaled >= maxScaled) {
+          return Number(max);
+        }
+
+        // Snap on a 0-based grid so step progression follows 0, step, 2*step, ...
+        // then clamp to the configured [min, max] range.
+        const snappedScaled = Math.round(valueScaled / stepScaled) * stepScaled;
+        return normalize(clamp(snappedScaled / scale), min);
+      };
+
+      // --- range slider ---
+      const range = document.createElement('input');
+      range.type = 'range';
+      range.classList.add('form-range', 'w-100', 'm-0');
+      range.min = String(min);
+      range.max = String(max);
+      range.step = 'any';
+
+      const rangeWrap = document.createElement('div');
+      rangeWrap.classList.add('w-100');
+      rangeWrap.appendChild(range);
+
+      // --- number input styling ---
+      this.input.classList.add('form-control', 'form-control-sm', 'text-center');
+      this.input.style.maxWidth = '80px';
+      this.input.style.minWidth = '60px';
+      this.input.style.flex = '0 0 auto';
+      this.input.type = 'number';
+      this.input.step = integer ? '1' : String(step);
+
+
+      // --- optional append label text ---
+      let appendText = null;
+      if (this.schema.append) {
+        appendText = resolveEditorAppendText(this, this.schema.append);
+      }
+
+      // --- layout: two rows [value][unit?] + [full-width slider] ---
+      const container = document.createElement('div');
+      container.classList.add('w-100', 'd-flex', 'flex-column', 'gap-1');
+
+      parent.replaceChild(container, this.input);
+
+      if (appendText) {
+        const outputEl = parent.querySelector('output');
+        if (outputEl) {
+          const existingAppend = parent.querySelector('.je-range-output-append');
+          if (existingAppend) existingAppend.remove();
+          const outputAppend = document.createElement('span');
+          outputAppend.classList.add('je-range-output-append', 'ms-1');
+          outputAppend.textContent = appendText;
+          outputEl.after(outputAppend);
+        }
+      }
+
+      container.appendChild(rangeWrap);
+
+      // store ref for setValue sync
+      this._rangeInput = range;
+
+      // --- helpers ---
+      const getCurrentValue = () => {
+        const v = Number(this.getValue());
+        return Number.isFinite(v) ? v : Number(min);
+      };
+
+      const updateValue = (newVal) => {
+        newVal = snapToStep(newVal);
+        range.value = String(newVal);
+        this.setValue(newVal);
+        this.onChange(true);
+      };
+
+      // range slider → value
+      range.addEventListener('input', () => {
+        updateValue(Number(range.value));
+      });
+
+      // range slider keyboard → value
+      range.addEventListener('keydown', (e) => {
+        const current = getCurrentValue();
+
+        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          updateValue(current + step);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          updateValue(current - step);
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          updateValue(min);
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          updateValue(max);
+        }
+      });
+
+      // sync initial range position
+      range.value = String(getCurrentValue());
+    }
+
+    setValue(value, initial, from_template) {
+      super.setValue(value, initial, from_template);
+      if (this._rangeInput) {
+        const v = Number(this.getValue());
+        if (Number.isFinite(v)) {
+          this._rangeInput.value = String(v);
+        }
+      }
+    }
+
+    sanitize(value) {
+      if (value === '' || value === null || value === undefined) return value;
+      return integer ? Number.parseInt(String(value), 10) : Number(value);
+    }
+
+  };
+
+  JE.defaults.editors.integerRangeWithAppend = createRangeWithAppendEditor(JE.defaults.editors.integer, { integer: true });
+  JE.defaults.editors.numberRangeWithAppend = createRangeWithAppendEditor(JE.defaults.editors.number, { integer: false });
+
+  // registered last → runs first among Hyperion resolvers
+  JE.defaults.resolvers.unshift(function (schema) {
+    if (
+      (schema.type === "integer" || schema.type === "number") &&
+      (schema.format === "range" || schema.format === "slider")
+    ) {
+      return schema.type === 'integer' ? 'integerRangeWithAppend' : 'numberRangeWithAppend';
+    }
+    return undefined;
+  });
+
+  return true;
+}
+
+function createJsonEditor(container, schema, setconfig, useCard, arrayre = undefined) {
+  const JE = globalThis.JSONEditor;
+  if (!JE) {
+    throw new Error('JSONEditor failed to load before createJsonEditor()');
+  }
+
+  ensureJsonEditorDefaultsConfigured();
+
+  $('#' + container).off();
+  $('#' + container).html("");
+
+  if (arrayre === undefined)
+    arrayre = true;
 
   const startval = setconfig && globalThis.serverConfig
     ? Object.keys(schema).reduce((values, key) => {
@@ -198,9 +642,10 @@ function createJsonEditor(container, schema, setconfig, useCard, arrayre = undef
     }, {})
     : undefined;
 
-  let editor = new JSONEditor(document.getElementById(container),
+  let editor = new JE(document.getElementById(container),
     {
-      theme: ensureHyperionThemeRegistered(),
+      //theme: ensureHyperionThemeRegistered(),
+      theme: 'bootstrap5',
       iconlib: "fontawesome4",
       disable_collapse: true,
       form_name_root: 'root',
@@ -566,7 +1011,17 @@ function validateHostFormat(schema, value, path, errors) {
 
 // Add custom host validation to JSON Editor
 function addJsonEditorHostValidation() {
-  JSONEditor.defaults.custom_validators.push(function (schema, value, path) {
+  if (!ensureJsonEditorDefaultsConfigured()) {
+    return;
+  }
+
+  if (globalThis.JSONEditor.defaults.__hyperion_host_validation_installed) {
+    return;
+  }
+
+  globalThis.JSONEditor.defaults.__hyperion_host_validation_installed = true;
+
+  globalThis.JSONEditor.defaults.custom_validators.push(function (schema, value, path) {
     const errors = [];
 
     if (!jQuery.isEmptyObject(value)) {

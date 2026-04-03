@@ -18,6 +18,7 @@
 		},
 		"port": {
 			"type": "integer",
+			"format": "range",
 			"required": true,
 			"title": "edt_conf_general_port_title",
 			"minimum": 1024,
@@ -29,6 +30,7 @@
 		},
 		"timeout": {
 			"type": "integer",
+			"format": "number",
 			"required": true,
 			"title": "edt_conf_protoServer_timeout_title",
 			"append": "edt_append_s",

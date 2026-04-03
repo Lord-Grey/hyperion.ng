@@ -67,6 +67,7 @@
 			"properties": {
 				"multiplier": {
 					"type": "number",
+					"format": "number",
 					"title": "edt_conf_audio_effect_multiplier_title",
 					"default": 1,
 					"minimum": 0,
@@ -80,9 +81,11 @@
 				},
 				"tolerance": {
 					"type": "number",
+					"format": "range",
 					"title": "edt_conf_audio_effect_tolerance_title",
 					"default": 5,
 					"minimum": 0,
+					"maximum": 100,
 					"step": 1,
 					"append": "edt_append_percent",
 					"required": true,
@@ -118,9 +121,11 @@
 				},
 				"warnValue": {
 					"type": "number",
+					"format": "range",
 					"title": "edt_conf_audio_effect_warnvalue_title",
 					"default": 80,
 					"minimum": 0,
+					"maximum": 100,
 					"step": 1,
 					"append": "edt_append_percent",
 					"required": true,
@@ -144,9 +149,11 @@
 				},
 				"safeValue": {
 					"type": "number",
+					"format": "range",
 					"title": "edt_conf_audio_effect_safevalue_title",
 					"default": 45,
 					"minimum": 0,
+					"maximum": 100,
 					"step": 1,
 					"append": "edt_append_percent",
 					"required": true,

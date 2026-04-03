@@ -14,9 +14,11 @@
 		},
 		"threshold": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_bb_threshold_title",
 			"minimum": 0,
 			"maximum": 100,
+			"step": 1,
 			"default": 5,
 			"append": "edt_append_percent",
 			"propertyOrder": 2,
@@ -29,8 +31,10 @@
 		},
 		"unknownFrameCnt": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_bb_unknownFrameCnt_title",
 			"minimum": 0,
+			"step": 50,
 			"default": 600,
 			"access": "expert",
 			"propertyOrder": 3,
@@ -43,8 +47,10 @@
 		},
 		"borderFrameCnt": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_bb_borderFrameCnt_title",
 			"minimum": 0,
+			"step": 1,
 			"default": 50,
 			"access": "expert",
 			"propertyOrder": 4,
@@ -57,8 +63,10 @@
 		},
 		"maxInconsistentCnt": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_bb_maxInconsistentCnt_title",
 			"minimum": 0,
+			"step": 1,
 			"default": 10,
 			"access": "expert",
 			"propertyOrder": 5,
@@ -71,8 +79,10 @@
 		},
 		"blurRemoveCnt": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_bb_blurRemoveCnt_title",
 			"minimum": 0,
+			"step": 1,
 			"default": 1,
 			"access": "expert",
 			"propertyOrder": 6,
@@ -93,7 +103,6 @@
 				"letterbox"
 			],
 			"default": "default",
-			"required": true,
 			"options": {
 				"enum_titles": [
 					"edt_conf_enum_bbdefault",

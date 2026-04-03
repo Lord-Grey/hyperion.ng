@@ -161,8 +161,10 @@ $(document).ready(function () {
       if (boblightServerEnable) {
         //Make port instance specific, if port is still the default one (avoids overlap of used ports)
         let port = editors["boblightserver"].getEditor("root.boblightServer.port").getValue();
-        if (port === editors["boblightserver"].schema.properties.boblightServer.properties.port.default) {
-          port += Number.parseInt(globalThis.currentHyperionInstance);
+        if (port === undefined) {
+          port = editors["boblightserver"].schema.properties.boblightServer.properties.port.default;
+        } else if (port === editors["boblightserver"].schema.properties.boblightServer.properties.port.default) {
+          port += Integer.parseInt(globalThis.currentHyperionInstance);
         }
         editors["boblightserver"].getEditor("root.boblightServer.port").setValue(port);
       }

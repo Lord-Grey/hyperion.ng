@@ -36,7 +36,7 @@
 		"accuracyLevel": {
 			"type": "integer",
 			"title": "edt_conf_color_accuracyLevel_title",
-			"required": true,
+			"required": false,
 			"minimum": 1,
 			"maximum": 4,
 			"default": 2,
@@ -184,12 +184,13 @@
 					},
 					"saturationGain": {
 						"type": "number",
+						"format": "range",
 						"title": "edt_conf_color_saturationGain_title",
 						"required": true,
 						"minimum": 0.0,
 						"maximum": 10.0,
-						"default": 1.0,
 						"step": 0.1,
+						"default": 1.0,
 						"propertyOrder": 11,
 						"options": {
 							"infoText": "edt_conf_color_saturationGain_expl"
@@ -197,10 +198,12 @@
 					},
 					"backlightThreshold": {
 						"type": "integer",
+						"format": "range",
 						"title": "edt_conf_color_backlightThreshold_title",
 						"required": true,
 						"minimum": 0,
 						"maximum": 100,
+						"step": 1,
 						"default": 0,
 						"append": "edt_append_percent",
 						"propertyOrder": 12,
@@ -221,10 +224,12 @@
 					},
 					"brightness": {
 						"type": "integer",
+						"format": "range",
 						"title": "edt_conf_color_brightness_title",
 						"required": true,
 						"minimum": 0,
 						"maximum": 100,
+						"step": 1,
 						"default": 100,
 						"append": "edt_append_percent",
 						"propertyOrder": 14,
@@ -234,10 +239,12 @@
 					},
 					"brightnessCompensation": {
 						"type": "integer",
+						"format": "range",
 						"title": "edt_conf_color_brightnessComp_title",
 						"required": true,
 						"minimum": 0,
 						"maximum": 100,
+						"step": 1,
 						"default": 0,
 						"append": "edt_append_percent",
 						"propertyOrder": 15,
@@ -247,12 +254,13 @@
 					},
 					"brightnessGain": {
 						"type": "number",
+						"format": "range",
 						"title": "edt_conf_color_brightnessGain_title",
 						"required": true,
 						"minimum": 0.1,
 						"maximum": 10.0,
-						"default": 1.0,
 						"step": 0.1,
+						"default": 1.0,
 						"propertyOrder": 16,
 						"options": {
 							"infoText": "edt_conf_color_brightnessGain_expl"
@@ -260,12 +268,13 @@
 					},
 					"temperature": {
 						"type": "integer",
+						"format": "range",
 						"title": "edt_conf_color_temperature_title",
 						"required": true,
 						"minimum": 1000,
 						"maximum": 40000,
-						"default": 6600,
 						"step": 100,
+						"default": 6600,
 						"append": "edt_append_kelvin",
 						"propertyOrder": 17,
 						"options": {
@@ -274,12 +283,13 @@
 					},
 					"gammaRed": {
 						"type": "number",
+						"format": "range",
 						"title": "edt_conf_color_gammaRed_title",
 						"required": true,
 						"minimum": 0.1,
 						"maximum": 100.0,
+						"step": 0.05,
 						"default": 2.2,
-						"step": 0.1,
 						"propertyOrder": 18,
 						"options": {
 							"infoText": "edt_conf_color_gammaRed_expl"
@@ -287,12 +297,13 @@
 					},
 					"gammaGreen": {
 						"type": "number",
+						"format": "range",
 						"title": "edt_conf_color_gammaGreen_title",
 						"required": true,
 						"minimum": 0.1,
 						"maximum": 100.0,
+						"step": 0.05,
 						"default": 2.2,
-						"step": 0.1,
 						"propertyOrder": 19,
 						"options": {
 							"infoText": "edt_conf_color_gammaGreen_expl"
@@ -300,12 +311,13 @@
 					},
 					"gammaBlue": {
 						"type": "number",
+						"format": "range",
 						"title": "edt_conf_color_gammaBlue_title",
 						"required": true,
 						"minimum": 0.1,
 						"maximum": 100.0,
+						"step": 0.05,
 						"default": 2.2,
-						"step": 0.1,
 						"propertyOrder": 20,
 						"options": {
 							"infoText": "edt_conf_color_gammaBlue_expl"

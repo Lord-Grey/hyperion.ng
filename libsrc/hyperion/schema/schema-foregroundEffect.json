@@ -65,6 +65,7 @@
 		},
 		"duration_ms": {
 			"type": "integer",
+			"format": "number",
 			"title": "edt_conf_fge_duration_ms_title",
 			"default": 3000,
 			"minimum": 100,

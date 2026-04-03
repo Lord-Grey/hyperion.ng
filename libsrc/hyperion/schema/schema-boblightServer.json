@@ -17,7 +17,7 @@
 		},
 		"port": {
 			"type": "integer",
-			"required": true,
+			"format": "range",
 			"title": "edt_conf_general_port_title",
 			"default": 19333,
 			"minimum": 1024,
@@ -32,6 +32,7 @@
 		},
 		"priority": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_general_priority_title",
 			"minimum": 2,
 			"maximum": 253,
