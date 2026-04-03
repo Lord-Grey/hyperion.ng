@@ -16,6 +16,7 @@
 		},
 		"port": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_webConfig_port_title",
 			"minimum": 80,
 			"maximum": 65535,
@@ -27,6 +28,7 @@
 		},
 		"sslPort": {
 			"type": "integer",
+			"format": "range",
 			"title": "edt_conf_webConfig_sslPort_title",
 			"required": true,
 			"minimum": 80,
