@@ -1,27 +1,3 @@
-function ensureHyperionThemeRegistered() {
-  const defaults = globalThis.JSONEditor?.defaults;
-  if (!defaults?.themes) {
-    return 'bootstrap45';
-  }
-
-  if (!defaults.themes.hyperion) {
-    const BaseTheme = defaults.themes.bootstrap5 || defaults.themes.html;
-    if (!BaseTheme) {
-      return defaults.theme || 'html';
-    }
-
-    const HyperionThemeFactory = globalThis.createHyperionTheme;
-    const HyperionTheme = (typeof HyperionThemeFactory === 'function')
-      ? HyperionThemeFactory(BaseTheme)
-      : class HyperionTheme extends BaseTheme {
-      };
-
-    defaults.themes.hyperion = HyperionTheme;
-  }
-
-  return 'hyperion';
-}
-
 function ensureHyperionAppendSupportInstalled() {
   const JE = globalThis.JSONEditor;
   if (!JE?.defaults?.editors) return;
@@ -644,7 +620,6 @@ function createJsonEditor(container, schema, setconfig, useCard, arrayre = undef
 
   let editor = new JE(document.getElementById(container),
     {
-      //theme: ensureHyperionThemeRegistered(),
       theme: 'bootstrap5',
       iconlib: "fontawesome4",
       disable_collapse: true,
