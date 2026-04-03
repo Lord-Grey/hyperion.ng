@@ -704,8 +704,176 @@ function createEditor(editors, container, schemaKey, changeHandler, options = {}
 }
 
 // Update the selection for JSON Editor
+function sanitizeSelectionValues(values) {
+  return Array.isArray(values) ? values.filter((v) => v != null) : [];
+}
+
+function createSelectionSchemaEntry(key, addElements, originalProperties) {
+  const schemaEntry = {
+    key,
+    type: "string",
+    enum: [],
+    options: { enum_titles: [], infoText: "", dependencies: {} },
+    propertyOrder: 1,
+    ...addElements,
+  };
+
+  if (!schemaEntry.options) {
+    schemaEntry.options = { enum_titles: [], infoText: "", dependencies: {} };
+  }
+
+  if (!originalProperties) {
+    return schemaEntry;
+  }
+
+  const { title, options: originalOptions, propertyOrder } = originalProperties;
+  schemaEntry.title = title || schemaEntry.title;
+  schemaEntry.options.infoText = originalOptions?.infoText || schemaEntry.options.infoText;
+  schemaEntry.options.dependencies = originalOptions?.dependencies || schemaEntry.options.dependencies;
+  schemaEntry.propertyOrder = propertyOrder || schemaEntry.propertyOrder;
+
+  return schemaEntry;
+}
+
+function applyCustomSelectionValues(schemaEntry, enumVals, titleVals, customText, addCustomAsFirst) {
+  const updatedTitles = titleVals.length === 0 ? [...enumVals] : titleVals;
+  const customPosition = addCustomAsFirst ? "unshift" : "push";
+
+  enumVals[customPosition]("CUSTOM");
+  updatedTitles[customPosition](customText);
+
+  if (schemaEntry.options.infoText) {
+    schemaEntry.options.infoText += "_custom";
+  }
+
+  return { enumVals, titleVals: updatedTitles };
+}
+
+function applySelectSelectionValues(enumVals, titleVals) {
+  enumVals.unshift("SELECT");
+  titleVals.unshift("edt_conf_enum_please_select");
+}
+
+function alignSelectionTitles(enumVals, titleVals) {
+  if (titleVals.length > 0 && titleVals.length < enumVals.length) {
+    return [...titleVals, ...enumVals.slice(titleVals.length)];
+  }
+
+  if (titleVals.length > enumVals.length) {
+    return titleVals.slice(0, enumVals.length);
+  }
+
+  return titleVals;
+}
+
+function resolveJsonEditorSelectionValue(previousValue, newDefaultVal, enumValues, addSelect) {
+  if (typeof previousValue === "string" && enumValues.includes(previousValue)) {
+    return previousValue;
+  }
+
+  if (typeof newDefaultVal === "string" && enumValues.includes(newDefaultVal)) {
+    return newDefaultVal;
+  }
+
+  if (addSelect && enumValues.includes("SELECT")) {
+    return "SELECT";
+  }
+
+  return enumValues.length > 0 ? enumValues[0] : undefined;
+}
+
+function reapplySelectionWatchers(rootEditor, watchPath, originalWatchFunctions) {
+  if (!originalWatchFunctions) {
+    return;
+  }
+
+  originalWatchFunctions.forEach((element) => rootEditor.watch(watchPath, element));
+}
+
+function createMultiSelectionSchemaEntry(key, addElements, originalProperties) {
+  const schemaEntry = {
+    key,
+    type: "array",
+    items: {
+      type: "string",
+      enum: [],
+      options: { enum_titles: [] }
+    },
+    options: { infoText: "" },
+    default: [],
+    propertyOrder: 1,
+    ...addElements,
+  };
+
+  if (!schemaEntry.items) {
+    schemaEntry.items = { type: "string", enum: [], options: { enum_titles: [] } };
+  }
+
+  if (!schemaEntry.items.options) {
+    schemaEntry.items.options = { enum_titles: [] };
+  }
+
+  if (!Array.isArray(schemaEntry.items.enum)) {
+    schemaEntry.items.enum = [];
+  }
+
+  if (!Array.isArray(schemaEntry.items.options.enum_titles)) {
+    schemaEntry.items.options.enum_titles = [];
+  }
+
+  if (!schemaEntry.options) {
+    schemaEntry.options = { infoText: "" };
+  }
+
+  if (!Array.isArray(schemaEntry.default)) {
+    schemaEntry.default = [];
+  }
+
+  if (!originalProperties) {
+    return schemaEntry;
+  }
+
+  const { title, format, options: originalOptions, propertyOrder } = originalProperties;
+  schemaEntry.title = title || schemaEntry.title;
+  schemaEntry.format = format || schemaEntry.format;
+  schemaEntry.options.infoText = originalOptions?.infoText || schemaEntry.options.infoText;
+  schemaEntry.propertyOrder = propertyOrder || schemaEntry.propertyOrder;
+
+  return schemaEntry;
+}
+
+function resolveJsonEditorMultiSelectionValues(previousValue, newDefaultVal, enumValues, hasExplicitDefault) {
+  const normalizeArrayValues = (value) => {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .filter((val) => val != null && (typeof val === "string" || typeof val === "number" || typeof val === "boolean"))
+      .map(String)
+      .filter((val) => enumValues.includes(val));
+  };
+
+  const preservedValues = normalizeArrayValues(previousValue);
+  if (preservedValues.length > 0) {
+    return preservedValues;
+  }
+
+  if (hasExplicitDefault) {
+    return normalizeArrayValues(newDefaultVal);
+  }
+
+  const fallbackDefault = normalizeArrayValues(newDefaultVal);
+  if (fallbackDefault.length > 0) {
+    return fallbackDefault;
+  }
+
+  return [];
+}
+
 function updateJsonEditorSelection(rootEditor, path, options) {
   let { key, addElements = {}, newEnumVals = [], newTitleVals = [], newDefaultVal = undefined, addSelect = false, addCustom = false, addCustomAsFirst = false, customText = "edt_conf_enum_custom" } = options;
+  const watchPath = path + "." + key;
 
   // Coerce a primitive scalar to string; return undefined for null/undefined/object
   const toEnumString = (value) => {
@@ -715,8 +883,8 @@ function updateJsonEditorSelection(rootEditor, path, options) {
   };
 
   // Callers are responsible for passing string arrays; ensure clean arrays
-  newEnumVals = Array.isArray(newEnumVals) ? newEnumVals.filter(v => v != null) : [];
-  newTitleVals = Array.isArray(newTitleVals) ? newTitleVals.filter(v => v != null) : [];
+  newEnumVals = sanitizeSelectionValues(newEnumVals);
+  newTitleVals = sanitizeSelectionValues(newTitleVals);
 
   // Fall back to enum values as titles if no title values were provided
   if (newTitleVals.length === 0 && newEnumVals.length > 0) {
@@ -724,67 +892,38 @@ function updateJsonEditorSelection(rootEditor, path, options) {
   }
 
   // previousValue and newDefaultVal may come from JSONEditor internals or raw API data — normalize
-  const previousValue = toEnumString(rootEditor.getEditor(path + "." + key)?.getValue());
+  const previousValue = toEnumString(rootEditor.getEditor(watchPath)?.getValue());
   newDefaultVal = toEnumString(newDefaultVal);
 
   const editor = rootEditor.getEditor(path);
   const originalProperties = editor.schema.properties[key];
-  const originalWatchFunctions = rootEditor?.watchlist?.[path + "." + key];
+  const originalWatchFunctions = rootEditor?.watchlist?.[watchPath];
 
   // Unwatch the existing path
-  rootEditor.unwatch(path + "." + key);
+  rootEditor.unwatch(watchPath);
 
-  const newSchema = {
-    [key]: {
-      key,
-      type: "string",
-      enum: [],
-      options: { enum_titles: [], infoText: "", dependencies: {} },
-      propertyOrder: 1,
-      ...addElements, // Merge custom elements directly into schema
-    }
-  };
-
-  // Retain original properties if available
-  if (originalProperties) {
-    const { title, options: originalOptions, propertyOrder } = originalProperties;
-    newSchema[key].title = title || newSchema[key].title;
-    newSchema[key].options.infoText = originalOptions?.infoText || newSchema[key].options.infoText;
-    newSchema[key].options.dependencies = originalOptions?.dependencies || newSchema[key].options.dependencies;
-    newSchema[key].propertyOrder = propertyOrder || newSchema[key].propertyOrder;
-  }
+  const schemaEntry = createSelectionSchemaEntry(key, addElements, originalProperties);
 
   // Handle custom values
   if (addCustom) {
-    if (newTitleVals.length === 0) newTitleVals = [...newEnumVals];
-
-    const customPosition = addCustomAsFirst ? "unshift" : "push";
-    newEnumVals[customPosition]("CUSTOM");
-    newTitleVals[customPosition](customText);
-
-    // Append custom infoText if exists
-    if (newSchema[key].options.infoText) {
-      newSchema[key].options.infoText += "_custom";
-    }
+    const updatedValues = applyCustomSelectionValues(schemaEntry, newEnumVals, newTitleVals, customText, addCustomAsFirst);
+    newEnumVals = updatedValues.enumVals;
+    newTitleVals = updatedValues.titleVals;
   }
 
   // Handle Select options
   if (addSelect) {
-    newEnumVals.unshift("SELECT");
-    newTitleVals.unshift("edt_conf_enum_please_select");
+    applySelectSelectionValues(newEnumVals, newTitleVals);
     newDefaultVal = "SELECT";
   }
 
   // Set new values
-  if (newEnumVals) newSchema[key].enum = newEnumVals;
-  if (newTitleVals.length > 0 && newTitleVals.length < newSchema[key].enum.length) {
-    newTitleVals = [...newTitleVals, ...newSchema[key].enum.slice(newTitleVals.length)];
-  }
-  if (newTitleVals.length > newSchema[key].enum.length) {
-    newTitleVals = newTitleVals.slice(0, newSchema[key].enum.length);
-  }
-  if (newTitleVals) newSchema[key].options.enum_titles = newTitleVals;
-  if (newDefaultVal) newSchema[key].default = newDefaultVal;
+  schemaEntry.enum = newEnumVals;
+  newTitleVals = alignSelectionTitles(schemaEntry.enum, newTitleVals);
+  schemaEntry.options.enum_titles = newTitleVals;
+  if (newDefaultVal) schemaEntry.default = newDefaultVal;
+
+  const newSchema = { [key]: schemaEntry };
 
   // Update the editor schema
   editor.original_schema.properties[key] = originalProperties;
@@ -798,105 +937,54 @@ function updateJsonEditorSelection(rootEditor, path, options) {
   delete editor.cached_editors[key];
   editor.addObjectProperty(key);
 
-  const updatedEditor = rootEditor.getEditor(path + "." + key);
+  const updatedEditor = rootEditor.getEditor(watchPath);
   const enumValues = Array.isArray(newSchema[key].enum) ? newSchema[key].enum : [];
-  let resolvedValue;
-
-  if (typeof previousValue === "string" && enumValues.includes(previousValue)) {
-    resolvedValue = previousValue;
-  } else if (typeof newDefaultVal === "string" && enumValues.includes(newDefaultVal)) {
-    resolvedValue = newDefaultVal;
-  } else if (addSelect && enumValues.includes("SELECT")) {
-    resolvedValue = "SELECT";
-  } else if (enumValues.length > 0) {
-    resolvedValue = enumValues[0];
-  }
+  const resolvedValue = resolveJsonEditorSelectionValue(previousValue, newDefaultVal, enumValues, addSelect);
 
   if (updatedEditor && resolvedValue !== undefined) {
     updatedEditor.setValue(resolvedValue);
   }
 
   // Reapply original watch functions
-  if (originalWatchFunctions) {
-    originalWatchFunctions.forEach(element => rootEditor.watch(path + "." + key, element));
-  }
+  reapplySelectionWatchers(rootEditor, watchPath, originalWatchFunctions);
 
   // Notify watchers
-  rootEditor.notifyWatchers(path + "." + key);
-}
-
-
-// Handle custom values logic for enum and title values
-function handleCustomValues(newEnumVals, newTitleVals, customText, addCustomAsFirst) {
-  if (newTitleVals.length === 0) {
-    newTitleVals = [...newEnumVals];
-  }
-
-  if (!customText) {
-    customText = "edt_conf_enum_custom";
-  }
-
-  if (addCustomAsFirst) {
-    newEnumVals.unshift("CUSTOM");
-    newTitleVals.unshift(customText);
-  } else {
-    newEnumVals.push("CUSTOM");
-    newTitleVals.push(customText);
-  }
-
-  // Add infoText for custom options
-  if (newSchema[key].options.infoText) {
-    const customInfoText = newSchema[key].options.infoText + "_custom";
-    newSchema[key].options.infoText = customInfoText;
-  }
+  rootEditor.notifyWatchers(watchPath);
 }
 
 // Update the JSON Editor for multi-selection fields
 function updateJsonEditorMultiSelection(rootEditor, path, options) {
-  const {
+  let {
     key,
     addElements = {},
     newEnumVals = [],
     newTitleVals = [],
     newDefaultVal = undefined
   } = options;
+  const watchPath = path + "." + key;
+  const hasExplicitDefault = Object.hasOwn(options, "newDefaultVal");
+
+  newEnumVals = sanitizeSelectionValues(newEnumVals).map(String);
+  newTitleVals = sanitizeSelectionValues(newTitleVals).map(String);
+
+  if (newTitleVals.length === 0 && newEnumVals.length > 0) {
+    newTitleVals = [...newEnumVals];
+  }
 
   const editor = rootEditor.getEditor(path);
   const originalProperties = editor.schema.properties[key];
-  const originalWatchFunctions = rootEditor.watchlist[path + "." + key];
+  const originalWatchFunctions = rootEditor?.watchlist?.[watchPath];
+  const previousValue = rootEditor.getEditor(watchPath)?.getValue();
 
   // Unwatch the existing path
-  rootEditor.unwatch(path + "." + key);
+  rootEditor.unwatch(watchPath);
 
-  const newSchema = {
-    [key]: {
-      type: "array",
-      format: "select",
-      items: {
-        type: "string",
-        enum: [],
-        options: { enum_titles: [] }
-      },
-      options: { infoText: "" },
-      default: [],
-      propertyOrder: 1
-    }
-  };
+  const schemaEntry = createMultiSelectionSchemaEntry(key, addElements, originalProperties);
+  schemaEntry.items.enum = newEnumVals;
+  schemaEntry.items.options.enum_titles = alignSelectionTitles(schemaEntry.items.enum, newTitleVals);
+  schemaEntry.default = resolveJsonEditorMultiSelectionValues(previousValue, newDefaultVal, schemaEntry.items.enum, hasExplicitDefault);
 
-  // Overwrite default properties with additional elements
-  Object.assign(newSchema[key], addElements);
-
-  // Retain original properties
-  if (originalProperties) {
-    if (originalProperties.title) newSchema[key].title = originalProperties.title;
-    if (originalProperties?.options?.infoText) newSchema[key].options.infoText = originalProperties.options.infoText;
-    if (originalProperties.propertyOrder) newSchema[key].propertyOrder = originalProperties.propertyOrder;
-  }
-
-  // Set new enum and title values
-  if (newEnumVals) newSchema[key].items.enum = newEnumVals;
-  if (newTitleVals) newSchema[key].items.options.enum_titles = newTitleVals;
-  if (newDefaultVal) newSchema[key].default = newDefaultVal;
+  const newSchema = { [key]: schemaEntry };
 
   // Update the editor schema
   editor.original_schema.properties[key] = originalProperties;
@@ -910,42 +998,62 @@ function updateJsonEditorMultiSelection(rootEditor, path, options) {
   delete editor.cached_editors[key];
   editor.addObjectProperty(key);
 
-  // Reapply original watch functions
-  if (originalWatchFunctions) {
-    originalWatchFunctions.forEach((element) => {
-      rootEditor.watch(path + "." + key, element);
-    });
+  const updatedEditor = rootEditor.getEditor(watchPath);
+  if (updatedEditor) {
+    updatedEditor.setValue(newSchema[key].default);
   }
 
+  // Reapply original watch functions
+  reapplySelectionWatchers(rootEditor, watchPath, originalWatchFunctions);
+
   // Notify watchers
-  rootEditor.notifyWatchers(path + "." + key);
+  rootEditor.notifyWatchers(watchPath);
+}
+
+function createRangeSchemaEntry(originalProperties, rangeOptions) {
+  const { minimum, maximum, defaultValue, step, clear } = rangeOptions || {};
+  const schemaEntry = { ...originalProperties };
+
+  if (clear) {
+    delete schemaEntry.minimum;
+    delete schemaEntry.maximum;
+    delete schemaEntry.default;
+    delete schemaEntry.step;
+  }
+
+  if (minimum !== undefined) {
+    schemaEntry.minimum = minimum;
+  }
+
+  if (maximum !== undefined) {
+    schemaEntry.maximum = maximum;
+  }
+
+  if (defaultValue !== undefined) {
+    schemaEntry.default = defaultValue;
+  }
+
+  if (step !== undefined) {
+    schemaEntry.step = step;
+  }
+
+  return schemaEntry;
+}
+
+function resolveJsonEditorRangeValue(currentValue, defaultValue) {
+  return defaultValue === undefined ? currentValue : defaultValue;
 }
 
 // Update JSON Editor Range with min, max, and step values
 function updateJsonEditorRange(rootEditor, path, key, rangeOptions) {
+  const watchPath = path + "." + key;
   const editor = rootEditor.getEditor(path);
-  const currentValue = rootEditor.getEditor(path + "." + key).getValue();
+  const currentValue = rootEditor.getEditor(watchPath).getValue();
   const originalProperties = editor.schema.properties[key];
-  const { minimum, maximum, defaultValue, step, clear } = rangeOptions || {};
+  const { defaultValue } = rangeOptions || {};
 
-  // Initialize the new schema with original properties
-  const newSchema = { [key]: { ...originalProperties } };
-
-  // Clear range-related properties if needed
-  if (clear) {
-    delete newSchema[key].minimum;
-    delete newSchema[key].maximum;
-    delete newSchema[key].default;
-    delete newSchema[key].step;
-  }
-
-  // Set the range values
-  if (minimum !== undefined) newSchema[key].minimum = minimum;
-  if (maximum !== undefined) newSchema[key].maximum = maximum;
-  if (defaultValue !== undefined) {
-    newSchema[key].default = defaultValue;
-  }
-  if (step !== undefined) newSchema[key].step = step;
+  const schemaEntry = createRangeSchemaEntry(originalProperties, rangeOptions);
+  const newSchema = { [key]: schemaEntry };
 
   // Update the editor schema
   editor.original_schema.properties[key] = originalProperties;
@@ -959,11 +1067,9 @@ function updateJsonEditorRange(rootEditor, path, key, rangeOptions) {
   delete editor.cached_editors[key];
   editor.addObjectProperty(key);
 
-  // restore the current value, if no default value given
-  if (defaultValue === undefined) {
-    rootEditor.getEditor(path + "." + key).setValue(currentValue);
-  } else {
-    rootEditor.getEditor(path + "." + key).setValue(defaultValue);
+  const updatedEditor = rootEditor.getEditor(watchPath);
+  if (updatedEditor) {
+    updatedEditor.setValue(resolveJsonEditorRangeValue(currentValue, defaultValue));
   }
 }
 
