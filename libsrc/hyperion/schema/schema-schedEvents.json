@@ -44,7 +44,10 @@
 				"additionalProperties": false
 			},
 			"options": {
-				"infoText": "edt_conf_sched_actions_header_expl"
+				"infoText": "edt_conf_sched_actions_header_expl",
+				"dependencies": {
+					"enable": true
+				}
 			}
 		}
 	},

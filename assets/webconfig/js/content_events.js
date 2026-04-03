@@ -1,53 +1,51 @@
+function findDuplicateEventsIndices(data) {
+  const eventIndices = {};
+  data.forEach((item, index) => {
+    const event = item.event;
+    if (eventIndices[event]) {
+      eventIndices[event].push(index);
+    } else {
+      eventIndices[event] = [index];
+    }
+  });
+
+  return Object.values(eventIndices).filter(indices => indices.length > 1);
+}
+
 $(document).ready(function () {
   performTranslation();
 
-  let isGuiMode = window.sysInfo.hyperion.isGuiMode;
-  const CEC_ENABLED = (jQuery.inArray("cec", window.serverInfo.services) !== -1);
+  const isGuiMode = globalThis.sysInfo.hyperion.isGuiMode;
+  const CEC_ENABLED = (jQuery.inArray("cec", globalThis.serverInfo.services) !== -1);
 
-  let conf_editor_osEvents = null;
-  let conf_editor_cecEvents = null;
-  let conf_editor_schedEvents = null;
+  const editors = {}; // Store JSON editors in a structured way
 
-  if (window.showOptHelp) {
-    //Operating System Events
-    $('#conf_cont').append(createRow('conf_cont_os_events'));
-    $('#conf_cont_os_events').append(createOptPanel('fa-laptop', $.i18n("conf_os_events_heading_title"), 'editor_container_os_events', 'btn_submit_os_events', 'card-system'));
-    $('#conf_cont_os_events').append(createHelpTable(window.schema.osEvents.properties, $.i18n("conf_os_events_heading_title")));
+  initializeUI();
+  setupOsEventsEditor();
+  setupSchedEventsEditor();
+  setupCecEventsEditor();
 
-    //Scheduled Events
-    $('#conf_cont').append(createRow('conf_cont_sched_events'));
-    $('#conf_cont_sched_events').append(createOptPanel('fa-laptop', $.i18n("conf_sched_events_heading_title"), 'editor_container_sched_events', 'btn_submit_sched_events', 'card-system'));
-    $('#conf_cont_sched_events').append(createHelpTable(window.schema.schedEvents.properties, $.i18n("conf_sched_events_heading_title")));
+  removeOverlay();
 
-
-    //CEC Events
-    if (CEC_ENABLED) {
-      $('#conf_cont').append(createRow('conf_cont_event_cec'));
-      $('#conf_cont_event_cec').append(createOptPanel('fa-tv', $.i18n("conf_cec_events_heading_title"), 'editor_container_cec_events', 'btn_submit_cec_events', 'card-system'));
-      $('#conf_cont_event_cec').append(createHelpTable(window.schema.cecEvents.properties, $.i18n("conf_cec_events_heading_title"), "cecEventsHelpPanelId"));
-    }
-  }
-  else {
-    $('#conf_cont').addClass('row');
-    $('#conf_cont').append(createOptPanel('fa-laptop', $.i18n("conf_os_events_heading_title"), 'editor_container_os_events', 'btn_submit_os_events'));
-    $('#conf_cont').append(createOptPanel('fa-laptop', $.i18n("conf_sched_events_heading_title"), 'editor_container_sched_events', 'btn_submit_sched_events'));
-    if (CEC_ENABLED) {
-      $('#conf_cont').append(createOptPanel('fa-tv', $.i18n("conf_cec_events_heading_title"), 'editor_container_cec_events', 'btn_submit_cec_events'));
-    }
-  }
-
-  function findDuplicateEventsIndices(data) {
-    const eventIndices = {};
-    data.forEach((item, index) => {
-      const event = item.event;
-      if (!eventIndices[event]) {
-        eventIndices[event] = [index];
-      } else {
-        eventIndices[event].push(index);
+  function initializeUI() {
+    if (globalThis.showOptHelp) {
+      if (isGuiMode) {
+        createSection("os_events", "conf_os_events_heading_title", globalThis.schema.osEvents.properties, "fa-laptop", "conf_os_events_intro", "osEventsHelpPanelId");
       }
-    });
-
-    return Object.values(eventIndices).filter(indices => indices.length > 1);
+      createSection("sched_events", "conf_sched_events_heading_title", globalThis.schema.schedEvents.properties, "fa-laptop", "conf_sched_events_intro", "schedEventsHelpPanelId");
+      if (CEC_ENABLED) {
+        createSection("cec_events", "conf_cec_events_heading_title", globalThis.schema.cecEvents.properties, "fa-tv", "conf_cec_events_intro", "cecEventsHelpPanelId");
+      }
+    }
+    else {
+      if (isGuiMode) {
+        appendPanel("os_events", "conf_os_events_heading_title", "fa-laptop");
+      }
+      appendPanel("sched_events", "conf_sched_events_heading_title", "fa-laptop");
+      if (CEC_ENABLED) {
+        appendPanel("cec_events", "conf_cec_events_heading_title", "fa-tv");
+      }
+    }
   }
 
   JSONEditor.defaults.custom_validators.push(function (schema, value, path) {
@@ -72,93 +70,51 @@ $(document).ready(function () {
     return errors;
   });
 
-  //Operating System Events
-  conf_editor_osEvents = createJsonEditor('editor_container_os_events', {
-    osEvents: window.schema.osEvents
-  }, true, true);
-
-  conf_editor_osEvents.on('ready', function () {
-    if (!isGuiMode) {
-      showInputOptionsForKey(conf_editor_osEvents, "osEvents", "suspendEnable", false);
+  function setupOsEventsEditor() {
+    if (isGuiMode) {
+      createEditor(editors, 'os_events', 'osEvents', '', {
+        bindDefaultChange: true,
+        bindSubmit: true,
+        submitButtonId: 'btn_submit_os_events'
+      });
     }
-  });
+  }
 
-  conf_editor_osEvents.on('change', function () {
-    conf_editor_osEvents.validate().length || window.readOnlyMode ? $('#btn_submit_os_events').prop('disabled', true) : $('#btn_submit_os_events').prop('disabled', false);
-  });
+  function setupSchedEventsEditor() {
+    createEditor(editors, 'sched_events', 'schedEvents', '', {
+      bindDefaultChange: true,
+      bindSubmit: true,
+      submitButtonId: 'btn_submit_sched_events'
+    });
 
-  $('#btn_submit_os_events').off().on('click', function () {
-    requestWriteConfig(conf_editor_osEvents.getValue());
-  });
+    editors["sched_events"].watch('root.schedEvents.enable', () => {
+      const schedEventsEnable = editors["sched_events"].getEditor("root.schedEvents.enable").getValue();
+      if (schedEventsEnable) {
+        $('#schedEventsHelpPanelId').show();
+      } else {
+        $('#schedEventsHelpPanelId').hide();
+      }
+    });
+  }
 
-  //Scheduled Events
-  conf_editor_schedEvents = createJsonEditor('editor_container_sched_events', {
-    schedEvents: window.schema.schedEvents
-  }, true, true);
-
-  conf_editor_schedEvents.on('change', function () {
-
-    const schedEventsEnable = conf_editor_schedEvents.getEditor("root.schedEvents.enable").getValue();
-
-    if (schedEventsEnable) {
-      showInputOptionsForKey(conf_editor_schedEvents, "schedEvents", "enable", true);
-      $('#schedEventsHelpPanelId').show();
-    } else {
-      showInputOptionsForKey(conf_editor_schedEvents, "schedEvents", "enable", false);
-      $('#schedEventsHelpPanelId').hide();
+  function setupCecEventsEditor() {
+    if (CEC_ENABLED) {
+      createEditor(editors, 'cec_events', 'cecEvents', '', {
+        bindDefaultChange: true,
+        bindSubmit: true,
+        submitButtonId: 'btn_submit_cec_events'
+      });
     }
 
-    conf_editor_schedEvents.validate().length || window.readOnlyMode ? $('#btn_submit_sched_events').prop('disabled', true) : $('#btn_submit_sched_events').prop('disabled', false);
-  });
-
-  $('#btn_submit_sched_events').off().on('click', function () {
-
-    const saveOptions = conf_editor_schedEvents.getValue();
-    // Workaround, as otherwise values are not reflected correctly
-    saveOptions.schedEvents.enable = conf_editor_schedEvents.getEditor("root.schedEvents.enable").getValue();
-    saveOptions.schedEvents.actions = conf_editor_schedEvents.getEditor("root.schedEvents.actions").getValue();
-    requestWriteConfig(saveOptions);
-  });
-
-  //CEC Events
-  if (CEC_ENABLED) {
-    conf_editor_cecEvents = createJsonEditor('editor_container_cec_events', {
-      cecEvents: window.schema.cecEvents
-    }, true, true);
-
-    conf_editor_cecEvents.on('change', function () {
-
-      const cecEventsEnable = conf_editor_cecEvents.getEditor("root.cecEvents.enable").getValue();
-
+    editors["cec_events"].watch('root.cecEvents.enable', () => {
+      const cecEventsEnable = editors["cec_events"].getEditor("root.cecEvents.enable").getValue();
       if (cecEventsEnable) {
-        showInputOptionsForKey(conf_editor_cecEvents, "cecEvents", "enable", true);
         $('#cecEventsHelpPanelId').show();
       } else {
-        showInputOptionsForKey(conf_editor_cecEvents, "cecEvents", "enable", false);
         $('#cecEventsHelpPanelId').hide();
       }
-
-      conf_editor_cecEvents.validate().length || window.readOnlyMode ? $('#btn_submit_cec_events').prop('disabled', true) : $('#btn_submit_cec_events').prop('disabled', false);
-    });
-
-    $('#btn_submit_cec_events').off().on('click', function () {
-
-      const saveOptions = conf_editor_cecEvents.getValue();
-      // Workaround, as otherwise values are not reflected correctly	 
-      saveOptions.cecEvents.enable = conf_editor_cecEvents.getEditor("root.cecEvents.enable").getValue();
-      saveOptions.cecEvents.actions = conf_editor_cecEvents.getEditor("root.cecEvents.actions").getValue();
-      requestWriteConfig(saveOptions);
     });
   }
-
-  //create introduction
-  if (window.showOptHelp) {
-    createHint("intro", $.i18n('conf_os_events_intro'), "editor_container_os_events");
-    if (CEC_ENABLED) {
-      createHint("intro", $.i18n('conf_cec_events_intro'), "editor_container_cec_events");
-    }
-  }
-
-  removeOverlay();
+  
 });
 
