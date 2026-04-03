@@ -10,10 +10,10 @@ $(document).ready(function () {
 
   function initializeUI() {
     if (globalThis.showOptHelp) {
-      createSection("webConfig", "edt_conf_webConfig_heading_title", globalThis.schema.webConfig.properties, "fa-wrench", "conf_webconfig_label_intro", "webConfigHelpPanelId");
+      createSystemSection("webConfig", "edt_conf_webConfig_heading_title", globalThis.schema.webConfig.properties, "fa-wrench", "conf_webconfig_label_intro", "webConfigHelpPanelId");
     }
     else {
-      appendPanel("webConfig", "edt_conf_webConfig_heading_title", "fa-wrench");
+      appendSystemPanel("webConfig", "edt_conf_webConfig_heading_title", "fa-wrench");
     }
   }
 

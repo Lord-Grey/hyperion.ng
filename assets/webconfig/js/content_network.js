@@ -21,19 +21,19 @@ $(document).ready(function () {
 
   function initializeUI() {
     if (globalThis.showOptHelp) {
-      createSection("network", "edt_conf_network_heading_title", globalThis.schema.network.properties,'fa-sitemap', "conf_network_network_intro", "networkHelpPanelId");
+      createSystemSection("network", "edt_conf_network_heading_title", globalThis.schema.network.properties, 'fa-sitemap', "conf_network_network_intro", "networkHelpPanelId");
       createTokenSection();
-      createSection("jsonServer", "edt_conf_jsonServer_heading_title", globalThis.schema.jsonServer.properties,'fa-sitemap', "conf_network_jsonServer_intro", "jsonServerHelpPanelId");
-      if (isFlatbufEnabled) createSection("flatbufServer", "edt_conf_flatbufServer_heading_title", globalThis.schema.flatbufServer.properties, 'fa-sitemap', "conf_network_flatbufServer_intro", "flatbufServerHelpPanelId");
-      if (isProtoBufEnabled) createSection("protoServer", "edt_conf_protoServer_heading_title", globalThis.schema.protoServer.properties, 'fa-sitemap', "conf_network_protoServer_intro", "protoServerHelpPanelId");
-      if (isForwarderEnabled && storedAccess !== 'default') createSection("forwarder", "edt_conf_forwarder_heading_title", globalThis.schema.forwarder.properties, 'fa-sitemap', "conf_network_forwarder_intro", "forwarderHelpPanelId");
+      createSystemSection("jsonServer", "edt_conf_jsonServer_heading_title", globalThis.schema.jsonServer.properties, 'fa-sitemap', "conf_network_jsonServer_intro", "jsonServerHelpPanelId");
+      if (isFlatbufEnabled) createSystemSection("flatbufServer", "edt_conf_flatbufServer_heading_title", globalThis.schema.flatbufServer.properties, 'fa-sitemap', "conf_network_flatbufServer_intro", "flatbufServerHelpPanelId");
+      if (isProtoBufEnabled) createSystemSection("protoServer", "edt_conf_protoServer_heading_title", globalThis.schema.protoServer.properties, 'fa-sitemap', "conf_network_protoServer_intro", "protoServerHelpPanelId");
+      if (isForwarderEnabled && storedAccess !== 'default') createSystemSection("forwarder", "edt_conf_forwarder_heading_title", globalThis.schema.forwarder.properties, 'fa-sitemap', "conf_network_forwarder_intro", "forwarderHelpPanelId");
     } else {
-      appendPanel("network", "edt_conf_network_heading_title", 'fa-sitemap');
+      appendSystemPanel("network", "edt_conf_network_heading_title", 'fa-sitemap');
       createTokenSection();
-      appendPanel("jsonServer", "edt_conf_jsonServer_heading_title", 'fa-sitemap');
-      if (isFlatbufEnabled) appendPanel("flatbufServer", "edt_conf_flatbufServer_heading_title", 'fa-sitemap');
-      if (isProtoBufEnabled) appendPanel("protoServer", "edt_conf_protoServer_heading_title", 'fa-sitemap');
-      if (isForwarderEnabled) appendPanel("forwarder", "edt_conf_forwarder_heading_title", 'fa-sitemap');
+      appendSystemPanel("jsonServer", "edt_conf_jsonServer_heading_title", 'fa-sitemap');
+      if (isFlatbufEnabled) appendSystemPanel("flatbufServer", "edt_conf_flatbufServer_heading_title", 'fa-sitemap');
+      if (isProtoBufEnabled) appendSystemPanel("protoServer", "edt_conf_protoServer_heading_title", 'fa-sitemap');
+      if (isForwarderEnabled) appendSystemPanel("forwarder", "edt_conf_forwarder_heading_title", 'fa-sitemap');
     }
   }
 
@@ -102,21 +102,21 @@ $(document).ready(function () {
       } else {
         showInputOptionsForKey(editor, "forwarder", "enable", false);
       }
+
+            ["jsonapi", "flatbuffer"].forEach(function (type) {
+        editor.watch(`root.forwarder.${type}select`, () => {
+          if (!editor.ready) return;
+          updateForwarderServiceSections(type);
+        });
+        editor.watch(`root.forwarder.${type}`, () => {
+          if (!editor.ready) return;
+          onChangeForwarderServiceSections(type);
+        });
+      });
     });
 
     editor.on('change', () => {
       onForwarderEditorChange(editor);
-    });
-
-    ["jsonapi", "flatbuffer"].forEach(function (type) {
-      editor.watch(`root.forwarder.${type}select`, () => {
-        if (!editor.ready) return;
-        updateForwarderServiceSections(type);
-      });
-      editor.watch(`root.forwarder.${type}`, () => {
-        if (!editor.ready) return;
-        onChangeForwarderServiceSections(type);
-      });
     });
 
     editor.watch('root.forwarder.enable', () => {
@@ -145,14 +145,39 @@ $(document).ready(function () {
     editor.watch('root.forwarder.instanceList', () => {
       if (!editor.ready) return;
       const instanceId = editor.getEditor("root.forwarder.instanceList").getValue();
-      if (!["NONE", "SELECT", "", undefined].includes(instanceId)) {
+      if (["NONE", "SELECT", "", undefined].includes(instanceId)) {
+        editor.getEditor("root.forwarder.instance").setValue(-1);
+      }
+      else {
         editor.getEditor("root.forwarder.instance").setValue(Number.parseInt(instanceId, 10));
       }
+
     });
   }
 
   const onForwarderEditorChange = (editor) => {
     toggleHelpPanel(editor, "forwarder", "forwarderHelpPanelId");
+
+    console.log("Forwarder editor changed, current value:", editor.getValue());
+
+    if (editor.validate().length === 0) {
+
+      const forwarderConfig = editor.getValue()?.forwarder || {};
+      const jsonApiServices = forwarderConfig.jsonapi || [];
+      const flatbufferServices = forwarderConfig.flatbuffer || [];
+      const isEnabled = forwarderConfig.enable;
+
+      console.log("Forwarder JSON API services:", jsonApiServices);
+      console.log("Forwarder Flatbuffer services:", flatbufferServices);
+      console.log("Forwarder enabled:",  forwarderConfig.enable); 
+
+      if (((jsonApiServices.length > 0 || flatbufferServices.length > 0) && isEnabled) || !isEnabled) {
+        $(`#btn_submit_${"forwarder"}`).prop('disabled', false);
+        return;
+      }
+    }
+
+    $(`#btn_submit_${"forwarder"}`).prop('disabled', true);
   };
 
   // Validate for conflicting ports
@@ -194,16 +219,16 @@ $(document).ready(function () {
           message: $.i18n('edt_conf_network_port_validation_error', errorText)
         });
       }
-
     });
 
     return errors;
   });
 
-
   function onChangeForwarderServiceSections(type) {
     const editor = editors["forwarder"].getEditor(`root.forwarder.${type}`);
     const configuredServices = structuredClone(editor?.getValue('items'));
+
+    console.log(`Current configured ${type} services:`, configuredServices);
 
     configuredServices.forEach((serviceConfig, i) => {
       const itemEditor = editors["forwarder"].getEditor(`root.forwarder.${type}.${i}`);
@@ -270,14 +295,16 @@ $(document).ready(function () {
       }
     }
 
-    const addSchemaElements = { "uniqueItems": true };
-
     const isServiceAvailable = enumVals.length > 0;
-    if (!isServiceAvailable) {
-      enumVals.push("NONE");
-      enumTitleVals.push($.i18n('edt_conf_forwarder_remote_service_discovered_none'));
-      enumDefaultVals.push("NONE");
-    }
+    const addSchemaElements = {
+      "uniqueItems": true, "options": {
+        "choices": {
+          placeholder: true,
+          placeholderValue: isServiceAvailable ? $.i18n('edt_conf_enum_please_select') : $.i18n('edt_conf_forwarder_remote_service_discovered_none'),
+          searchChoices: false
+        }
+      }
+    };
 
     updateJsonEditorMultiSelection(editors["forwarder"], 'root.forwarder', {
       key: selectionElement,

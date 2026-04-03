@@ -461,7 +461,7 @@ function showInfoDialog(type, header = "", message = "", details = []) {
 
   const modalSelector = type == "renInst" || type == "changePassword" ? "#modal_dialog_rename" : "#modal_dialog";
   const modalElement = document.querySelector(modalSelector);
-  
+
   if (modalElement) {
     const modal = new bootstrap.Modal(modalElement, {
       backdrop: "static",
@@ -824,7 +824,7 @@ function createRow(id) {
   return el;
 }
 
-function createOptPanel(phicon, phead, bodyid, footerid, css, panelId) {
+function createOptPanel(phicon, phead, bodyid, footerid, css, panelId, type = 'card-default') {
   phead = '<i class="fa ' + phicon + ' fa-fw"></i>' + phead;
 
   let pfooter = document.createElement('button');
@@ -832,7 +832,7 @@ function createOptPanel(phicon, phead, bodyid, footerid, css, panelId) {
   pfooter.setAttribute("id", footerid);
   pfooter.innerHTML = '<i class="fa fa-fw fa-save"></i>' + $.i18n('general_button_savesettings');
 
-  return createPanel(phead, "", pfooter, bodyid, css, panelId);
+  return createPanel(phead, "", pfooter, bodyid, css, panelId, type);
 }
 
 function compareValues(varA, varB) {
@@ -857,7 +857,7 @@ function compareTwoValues(key1, key2, order = 'asc') {
       ? b[key1].toUpperCase() : b[key1];
 
     let comparison = compareValues(varA1, varB1);
-    
+
     if (comparison === 0) {
       if (!a.hasOwnProperty(key2) || !b.hasOwnProperty(key2)) {
         // property key2 doesn't exist on either object
@@ -871,7 +871,7 @@ function compareTwoValues(key1, key2, order = 'asc') {
 
       comparison = compareValues(varA2, varB2);
     }
-    
+
     return (order === 'desc') ? (comparison * -1) : comparison;
   };
 }
@@ -929,7 +929,7 @@ function createHelpTable(list, phead, panelId) {
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const tbody = document.createElement('tbody');
-  
+
   list = sortProperties(list);
 
   // Update the heading with an icon and the translation
@@ -1039,14 +1039,23 @@ function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-defa
   return createPanelInternal({ head, body, footer, bodyid, css, panelId, type, containerClass: 'col-lg-6' });
 }
 
-function createSection(id, titleKey, schemaProps, icon, introTitleKey, helpPanelId = null) {
+function resolvePanelStyle(panelStyle = 'card-default') {
+  if (!panelStyle || panelStyle === 'card-default') {
+    return { css: '', type: 'card-default' };
+  }
+
+  return { css: panelStyle, type: 'card-default' };
+}
+
+function createSection(id, titleKey, schemaProps, icon, introTitleKey, helpPanelId = null, panelType = 'card-default') {
   const containerId = `conf_cont_${id}`;
   const bodyContainerId = `editor_body_${id}`;
   const editorContainerId = `editor_container_${id}`;
+  const { css, type } = resolvePanelStyle(panelType);
   $('#conf_cont').append(createRow(containerId));
 
   $(`#${containerId}`)
-    .append(createOptPanel(icon, $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, 'card-system'))
+    .append(createOptPanel(icon, $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, css, undefined, type))
     .append(createHelpTable(schemaProps, $.i18n(titleKey), helpPanelId));
 
   if (globalThis.showOptHelp) {
@@ -1056,14 +1065,23 @@ function createSection(id, titleKey, schemaProps, icon, introTitleKey, helpPanel
   $(`#${bodyContainerId}`).append(`<div id="${editorContainerId}"></div>`);
 }
 
-function appendPanel(id, titleKey, icon) {
+function createSystemSection(id, titleKey, schemaProps, icon, introTitleKey, helpPanelId = null) {
+  return createSection(id, titleKey, schemaProps, icon, introTitleKey, helpPanelId, 'card-system');
+}
+
+function appendPanel(id, titleKey, icon, panelType = 'card-default') {
   const containerId = `conf_cont_${id}`;
   const bodyContainerId = `editor_body_${id}`;
+  const { css, type } = resolvePanelStyle(panelType);
   $('#conf_cont').append(createRow(containerId));
   $(`#${containerId}`)
-    .append(createOptPanel(icon, $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, 'card-system'));
+    .append(createOptPanel(icon, $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, css, undefined, type));
 
   $(`#${bodyContainerId}`).append(`<div id="editor_container_${id}"></div>`);
+}
+
+function appendSystemPanel(id, titleKey, icon) {
+  return appendPanel(id, titleKey, icon, 'card-system');
 }
 
 

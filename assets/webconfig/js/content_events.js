@@ -30,20 +30,20 @@ $(document).ready(function () {
   function initializeUI() {
     if (globalThis.showOptHelp) {
       if (isGuiMode) {
-        createSection("os_events", "conf_os_events_heading_title", globalThis.schema.osEvents.properties, "fa-laptop", "conf_os_events_intro", "osEventsHelpPanelId");
+        createSystemSection("os_events", "conf_os_events_heading_title", globalThis.schema.osEvents.properties, "fa-laptop", "conf_os_events_intro", "osEventsHelpPanelId");
       }
-      createSection("sched_events", "conf_sched_events_heading_title", globalThis.schema.schedEvents.properties, "fa-laptop", "conf_sched_events_intro", "schedEventsHelpPanelId");
+      createSystemSection("sched_events", "conf_sched_events_heading_title", globalThis.schema.schedEvents.properties, "fa-laptop", "conf_sched_events_intro", "schedEventsHelpPanelId");
       if (CEC_ENABLED) {
-        createSection("cec_events", "conf_cec_events_heading_title", globalThis.schema.cecEvents.properties, "fa-tv", "conf_cec_events_intro", "cecEventsHelpPanelId");
+        createSystemSection("cec_events", "conf_cec_events_heading_title", globalThis.schema.cecEvents.properties, "fa-tv", "conf_cec_events_intro", "cecEventsHelpPanelId");
       }
     }
     else {
       if (isGuiMode) {
-        appendPanel("os_events", "conf_os_events_heading_title", "fa-laptop");
+        appendSystemPanel("os_events", "conf_os_events_heading_title", "fa-laptop");
       }
-      appendPanel("sched_events", "conf_sched_events_heading_title", "fa-laptop");
+      appendSystemPanel("sched_events", "conf_sched_events_heading_title", "fa-laptop");
       if (CEC_ENABLED) {
-        appendPanel("cec_events", "conf_cec_events_heading_title", "fa-tv");
+        appendSystemPanel("cec_events", "conf_cec_events_heading_title", "fa-tv");
       }
     }
   }
@@ -115,6 +115,6 @@ $(document).ready(function () {
       }
     });
   }
-  
+
 });
 

@@ -20,6 +20,7 @@ body {
 
 /* fixed brand icon */
 @media (min-width: 768px) {
+
   #wrapper {
     padding-left: 10px;
     padding-bottom: 10px;
