@@ -19,44 +19,19 @@ $(document).ready(function () {
   removeOverlay();
 
   function initializeUI() {
-    createHintH('intro', $.i18n('conf_logging_label_intro'), 'log_header');
-    $('#conf_cont').append(createOptPanel('fa-reorder', $.i18n('edt_conf_log_heading_title'), 'editor_container_container', 'btn_submit_container', 'card-system'));
     if (globalThis.showOptHelp) {
-      $('#conf_cont').append(createHelpTable(globalThis.schema.logger.properties, $.i18n('edt_conf_log_heading_title')));
+      createSystemSection("logger", "edt_conf_log_heading_title", globalThis.schema.logger.properties, 'fa-reorder', "conf_logging_label_intro", "loggingHelpPanelId");
+    } else {
+      appendSystemPanel("logger", "edt_conf_log_heading_title", 'fa-reorder');
     }
-
     createLogContainer();
   }
 
   function setupEditors() {
-    createEditor(editors, 'container', 'logger', handleLoggingChange, {
-      bindDefaultChange: false,
-      bindSubmit: false,
-      submitButtonId: 'btn_submit_container'
+    createEditor(editors, 'logger', 'logger', '', {
+      bindDefaultChange: true,
+      bindSubmit: true
     });
-
-    $('#btn_submit_container').off().on('click', function () {
-
-      const displayedLogLevel = editors['container'].getEditor('root.logger.level').getValue();
-      const newLogLevel = { logger: {} };
-      newLogLevel.logger.level = displayedLogLevel;
-
-      requestWriteConfig(newLogLevel);
-    });
-  }
-
-  function handleLoggingChange(editor) {
-    editor.on('change', function () {
-      onLoggingEditorChange(editor);
-    });
-  }
-
-  function onLoggingEditorChange(editor) {
-    if (!editor.ready) {
-      return;
-    }
-    const hasErrors = editor.validate().length > 0;
-    $('#btn_submit_container').prop('disabled', hasErrors || globalThis.readOnlyMode);
   }
 
   function createLogContainer() {
@@ -153,7 +128,7 @@ $(document).ready(function () {
         });
 
         const currentLogLevel = globalThis.serverConfig.logger.level;
-        editors['container'].getEditor('root.logger.level').setValue(currentLogLevel);
+        editors['logger'].getEditor('root.logger.level').setValue(currentLogLevel);
         location.reload();
       }
 
