@@ -148,9 +148,11 @@
          "priority": 128
       },
       "color": {
-         "imageToLedMappingType": "multicolor_mean",
-         "reducedPixelSetFactorFactor": "0",
-         "accuracyLevel": 2,
+         "imageProcessing": {
+            "imageToLedMappingType": "multicolor_mean",
+            "reducedPixelSetFactorFactor": "0",
+            "accuracyLevel": 2
+         },
          "channelAdjustment": [
             {
                "id": "default",

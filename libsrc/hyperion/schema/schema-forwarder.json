@@ -42,9 +42,9 @@
 		},
 		"jsonapiselect": {
 			"type": "array",
-			"uniqueItems": true,
-			"format": "select",
+			"format": "choices",			
 			"title": "edt_conf_forwarder_json_services_discovered_title",
+			"uniqueItems": true,
 			"propertyOrder": 4,
 			"options": {
 				"infoText": "edt_conf_forwarder_json_services_discovered_expl"
@@ -122,9 +122,9 @@
 		},
 		"flatbufferselect": {
 			"type": "array",
-			"uniqueItems": true,
-			"format": "select",
+			"format": "choices",			
 			"title": "edt_conf_forwarder_flat_services_discovered_title",
+			"uniqueItems": true,
 			"propertyOrder": 6,
 			"options": {
 				"infoText": "edt_conf_forwarder_flat_services_discovered_expl"

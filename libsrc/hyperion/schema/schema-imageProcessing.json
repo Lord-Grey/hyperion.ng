@@ -1,0 +1,81 @@
+{
+	"type": "object",
+	"title": "edt_conf_imageProcessing_heading_title",
+	"options": {
+		"titleHidden": true
+	},
+	"properties": {
+		"imageToLedMappingType": {
+			"type": "string",
+			"format": "select",
+			"required": true,
+			"title": "edt_conf_color_imageToLedMappingType_title",
+			"enum": [
+				"multicolor_mean",
+				"multicolor_mean_squared",
+				"unicolor_mean",
+				"dominant_color",
+				"unicolor_dominant",
+				"dominant_color_advanced",
+				"unicolor_dominant_advanced"
+			],
+			"default": "multicolor_mean",
+			"options": {
+				"enum_titles": [
+					"edt_conf_enum_multicolor_mean",
+					"edt_conf_enum_multicolor_mean_squared",
+					"edt_conf_enum_unicolor_mean",
+					"edt_conf_enum_dominant_color",
+					"edt_conf_enum_unicolor_dominant",
+					"edt_conf_enum_dominant_color_advanced",
+					"edt_conf_enum_unicolor_dominant_advanced"
+				],
+				"infoText": "edt_conf_color_imageToLedMappingType_expl"
+			},
+			"propertyOrder": 1
+		},
+		"accuracyLevel": {
+			"type": "integer",
+			"format": "range",
+			"title": "edt_conf_color_accuracyLevel_title",
+			"required": false,
+			"minimum": 1,
+			"maximum": 4,
+			"default": 2,
+			"propertyOrder": 2,
+			"options": {
+				"dependencies": {
+					"imageToLedMappingType": [
+						"dominant_color_advanced",
+						"unicolor_dominant_advanced"
+					]
+				},
+				"infoText": "edt_conf_color_accuracyLevel_expl"
+			}
+		},
+		"reducedPixelSetFactorFactor": {
+			"type": "string",
+			"format": "select",
+			"required": true,
+			"title": "edt_conf_color_reducedPixelSetFactorFactor_title",
+			"enum": [
+				"0",
+				"1",
+				"2",
+				"3"
+			],
+			"default": "0",
+			"options": {
+				"enum_titles": [
+					"edt_conf_enum_disabled",
+					"edt_conf_enum_low",
+					"edt_conf_enum_medium",
+					"edt_conf_enum_high"
+				],
+				"infoText": "edt_conf_color_reducedPixelSetFactorFactor_expl"
+			},
+			"propertyOrder": 3
+		}
+	},
+	"additionalProperties": false
+}

@@ -70,11 +70,15 @@
 		 "required":true,
 		 "$ref":"schema-boblightServer.json"
 	  },
+	  "channelAdjustment":{
+		 "required":true,
+		 "$ref":"schema-channelAdjustment.json"
+	  },		  
 	  "color":{
 		 "required":true,
 		 "$ref":"schema-color.json"
 	  },
-	  "device":{
+  	  "device":{
 		 "required":true,
 		 "$ref":"schema-device.json"
 	  },
@@ -85,6 +89,10 @@
 	  "foregroundEffect":{
 		 "required":true,
 		 "$ref":"schema-foregroundEffect.json"
+	  },
+	  "imageProcessing":{
+		 "required":true,
+		 "$ref":"schema-imageProcessing.json"
 	  },
 	  "instCapture":{
 		 "required":true,

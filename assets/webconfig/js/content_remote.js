@@ -1,41 +1,37 @@
-$(document).ready(function () {
-
-  const DEFAULT_CPCOLOR = '#B500FF';
-  const BG_PRIORITY = 254;
-
+$(document).ready(() => {
   // Perform initial translation setup
   performTranslation();
 
+  const DEFAULT_CPCOLOR = '#B500FF';
+  const BG_PRIORITY = 254;
   // Check if the effect engine is enabled
-  const EFFECTENGINE_ENABLED = (jQuery.inArray("effectengine", window.serverInfo.services) !== -1);
+  const EFFECTENGINE_ENABLED = (jQuery.inArray("effectengine", globalThis.serverInfo.services) !== -1);
+
+  const editors = {}; // Store JSON editors in a structured way
+
 
   // Update the list of Hyperion instances
   updateHyperionInstanceListing();
 
+
   // Initialize variables
   let oldEffects = [];
-  const mappingList = window.serverSchema.properties.color.properties.imageToLedMappingType.enum;
+  const mappingList = globalThis.serverSchema.properties.color.properties.imageProcessing.properties.imageToLedMappingType.enum;
   let uiInputDuration_s = 0; // Endless
   let rgb = { r: 255, g: 0, b: 0 };
   let lastImgData = "";
   let lastFileName = "";
 
-  // Create initial HTML structure
+  // // Create initial HTML structure
   createTable('ssthead', 'sstbody', 'sstcont');
   $('.ssthead').html(createTableRow([$.i18n('remote_input_origin'), $.i18n('remote_input_owner'), $.i18n('remote_input_priority'), $.i18n('remote_input_status')], true, true));
-  createTable('crthead', 'crtbody', 'adjust_content', true);
 
-  // Create introduction hints if the help option is enabled
-  if (window.showOptHelp) {
-    createHint("intro", $.i18n('remote_color_intro', $.i18n('remote_losthint')), "color_intro");
-    createHint("intro", $.i18n('remote_input_intro', $.i18n('remote_losthint')), "sstcont");
-    createHint("intro", $.i18n('remote_adjustment_intro', $.i18n('remote_losthint')), "adjust_content");
-    createHint("intro", $.i18n('remote_components_intro', $.i18n('remote_losthint')), "comp_intro");
-    createHint("intro", $.i18n('remote_maptype_intro', $.i18n('remote_losthint')), "maptype_intro");
-    createHint("intro", $.i18n('remote_videoMode_intro', $.i18n('remote_losthint')), "videomode_intro");
-  }
+  setupColorEditor();
+  setupImageProcessingEditor();
+  setupChannelAdjustmentEditor();
 
-  // Hide color effect table and reset color button if current instance is not running
+
+    // Hide color effect table and reset color button if current instance is not running
   if (!isCurrentInstanceRunning()) {
     $("#color_effect_table").hide();
     $("#reset_color").hide();
@@ -43,310 +39,135 @@ $(document).ready(function () {
     return;
   }
 
+  // Create introduction hints if the help option is enabled
+  if (globalThis.showOptHelp) {
+    createHint("intro", $.i18n('remote_input_intro', $.i18n('remote_losthint')), "sstcont");
+    createHint("intro", $.i18n('remote_components_intro', $.i18n('remote_losthint')), "comp_intro");
+    createHint("intro", $.i18n('remote_videoMode_intro', $.i18n('remote_losthint')), "videomode_intro");
+  }
+
+  /// Color and Effect Management
+  function setupColorEditor() {
+
+    createSection('colorEffects', $.i18n("remote_color_label"), '', 'fa-wifi', 'remote_color_intro', {}, 'card-default', '');
+    const colorEffectsSubmitButton = document.getElementById('btn_submit_colorEffects');
+    if (colorEffectsSubmitButton) {
+      colorEffectsSubmitButton.dataset.i18n = 'remote_color_button_reset';
+      colorEffectsSubmitButton.setAttribute('type', 'button');
+      colorEffectsSubmitButton.innerHTML = `<i class="fa fa-fw fa-undo"></i>${$.i18n('remote_color_button_reset')}`;
+    }
+
+    let colorEffectsSchema = {
+      colorEffects: {
+        "type": "object",
+        "title": "edt_conf_bge_heading_title",
+        "options": {
+          "titleHidden": false
+        },
+        "properties": {
+          "color": {
+            "type": "string",
+            "title": "remote_color_label_color",
+            "format": "color",
+            "propertyOrder": 1
+          },
+          "effect": {
+            "type": "string",
+            "format": "choices",
+            "title": "remote_effects_label_effects",
+            "enum": getAvailableEffectNames(),
+            "options": {
+              "enum_titles": getAvailableEffectNames()
+            },
+            "propertyOrder": 2
+          },
+          "image": {
+            "type": "string",
+            "format": "file",
+            "title": "remote_effects_label_picture",
+            "propertyOrder": 3
+          },
+          "duration": {
+            "type": "integer",
+            "title": "remote_input_duration",
+            "default": 0,
+            "minimum": 0,
+            "append": "edt_append_s",
+            "propertyOrder": 4
+          }
+        }
+      }
+    };
+
+    const startval = {
+      colorEffects: {
+        color: "#ff0000",
+        effect: "",
+        image: "",
+        duration: 0
+      }
+    };
+
+    //console.log("Starting Color/Effects Editor with value: " + JSON.stringify(startval));
+    createEditor(editors, 'colorEffects', colorEffectsSchema, handleColorEffectsChange, {
+      bindDefaultChange: false,
+      bindSubmit: true,
+      onSubmit: resetColorEffectsEditor,
+      startval: startval
+    });
+  }
+
+  function resetColorEffectsEditor() {
+    if (editors['colorEffects'].ready) {
+      console.log("Resetting Color/Effects value: " + JSON.stringify(editors['colorEffects'].getValue()));
+    }
+  }
+
+  function handleColorEffectsChange(editor) {
+
+    editor.watch('root.colorEffects.color', () => {
+      if (!editor.ready) return;
+      const color = editor.getEditor("root.colorEffects.color").getValue();
+
+      debugMessage("Color changed to: " + JSON.stringify(color));
+    });
+
+    editor.watch('root.colorEffects.effect', () => {
+      if (!editor.ready) return;
+      const effect = editor.getEditor("root.colorEffects.effect").getValue();
+
+      debugMessage("Effect changed to: " + effect);
+    });
+
+    editor.watch('root.colorEffects.image', () => {
+      if (!editor.ready) return;
+      const image = editor.getEditor("root.colorEffects.image").getValue();
+
+      debugMessage("Image changed to: " + JSON.stringify(image));
+    });
+
+  }
+
+    // Function to send the selected color
+  function sendColor() {
+    requestSetColor(rgb.r, rgb.g, rgb.b, uiInputDuration_s);
+  }
+
   // Function to send the selected effect
   function sendEffect() {
     const effect = $("#effect_select").val();
     if (effect !== "__none__") {
       requestPriorityClear();
-      $(window.hyperion).one("cmd-clear", function () {
+      $(globalThis.hyperion).one("cmd-clear", function () {
         setTimeout(function () { requestPlayEffect(effect, uiInputDuration_s); }, 100);
       });
     }
   }
 
-  // Function to send the selected color
-  function sendColor() {
-    requestSetColor(rgb.r, rgb.g, rgb.b, uiInputDuration_s);
-  }
-
-  // Update the channel adjustments
-  function updateChannelAdjustments() {
-    if (!window.serverInfo.adjustment || window.serverInfo.adjustment.length === 0) return;
-
-    $('.crtbody').html("");
-    const sColor = sortProperties(window.serverSchema.properties.color.properties.channelAdjustment.items.properties);
-    const values = window.serverInfo.adjustment[0];
-
-    for (const key in sColor) {
-      if (sColor[key].key !== "id" && sColor[key].key !== "leds") {
-        const title = `<label for="cr_${sColor[key].key}">${$.i18n(sColor[key].title)}</label>`;
-        let property;
-        const value = values[sColor[key].key];
-
-        // Handle array type adjustments
-        if (sColor[key].type === "array") {
-          property = `<div id="cr_${sColor[key].key}" class="input-group colorpicker-component">
-                        <input type="text" class="form-control" />
-                        <span class="input-group-addon"><i></i></span>
-                      </div>`;
-          $('.crtbody').append(createTableRow([title, property], false, true));
-          createCP(`cr_${sColor[key].key}`, value, function (rgb, hex, e) {
-            const elementName = e.target.id.substr(e.target.id.indexOf("_") + 1);
-            requestAdjustment(elementName, [rgb.r,rgb.g,rgb.b]);
-          });
-        }
-        // Handle boolean type adjustments
-        else if (sColor[key].type === "boolean") {
-          property = `<div class="checkbox">
-                        <input id="cr_${sColor[key].key}" type="checkbox" ${value ? "checked" : ""}/>
-                        <label></label>
-                      </div>`;
-          $('.crtbody').append(createTableRow([title, property], false, true));
-
-          $('#cr_' + sColor[key].key).off().on('change', function (e) {
-            const elementName = e.target.id.substr(e.target.id.indexOf("_") + 1);
-            requestAdjustment(elementName, e.currentTarget.checked);
-          });
-        }
-        // Handle number type adjustments
-        else {
-          if (["brightness", "brightnessCompensation", "backlightThreshold", "saturationGain", "brightnessGain", "temperature"].includes(sColor[key].key)) {
-            property = `<input id="cr_${sColor[key].key}" type="number" class="form-control" 
-                          min="${sColor[key].minimum}" max="${sColor[key].maximum}" step="${sColor[key].step}" value="${value}" />`;
-            if (sColor[key].append && sColor[key].append !== "") {
-              property = `<div class="input-group">${property}<span class="input-group-addon">${$.i18n(sColor[key].append)}</span></div>`;
-            }
-          } else {
-            property = `<input id="cr_${sColor[key].key}" type="number" class="form-control" min="0.1" max="4.0" step="0.1" value="${value}" />`;
-          }
-
-          $('.crtbody').append(createTableRow([title, property], false, true));
-          $('#cr_' + sColor[key].key).off().on('change', function (e) {
-            const elementName = e.target.id.substr(e.target.id.indexOf("_") + 1);
-            const value = valValue(this.id, this.value, this.min, this.max);
-            requestAdjustment(elementName, value);
-          });
-        }
-      }
-    }
-  }
-
-  // Update input select options based on priorities
-  function updateInputSelect() {
-    // Clear existing elements
-    $('.sstbody').empty().html('');
-
-    const prios = window.serverInfo.priorities;
-    let clearAll = false;
-
-    if (prios.length === 0) {
-      $('.sstbody').append(`<tr><td colspan="4" class="text-center text-muted">${$.i18n('remote_input_no_sources')}</td></tr>`);
-      $('#auto_btn').empty();
-      return;
-    }
-
-    // Iterate over priorities
-    for (let i = 0; i < prios.length; i++) {
-      let origin = prios[i].origin ? prios[i].origin : "System";
-      const [originName, ip] = origin.split("@");
-      origin = originName;
-
-      let {
-        owner,
-        active,
-        visible,
-        priority,
-        componentId,
-        duration_ms 
-      } = prios[i];
-
-      const remoteInputDuration_s = duration_ms / 1000;
-      let value = "0,0,0";
-      let btnType = "default";
-      let btnText = $.i18n('remote_input_setsource_btn');
-      let btnState = "enabled";
-
-      if (active) btnType = "primary";
-      if (priority > BG_PRIORITY) continue;
-      if (priority < BG_PRIORITY && ["EFFECT", "COLOR", "IMAGE"].includes(componentId)) clearAll = true;
-
-      if (visible) {
-        btnState = "disabled";
-        btnType = "success";
-        btnText = $.i18n('remote_input_sourceactiv_btn');
-      }
-
-      if (ip) {
-        origin += `<br/><span style="font-size:80%; color:grey;">${$.i18n('remote_input_ip')} ${ip}</span>`;
-      }
-
-      if ("value" in prios[i]) value = prios[i].value.RGB;
-
-      // Determine owner description based on component ID
-      let ownerText = owner;
-
-      switch (componentId) {
-        case "EFFECT":
-          ownerText = $.i18n('remote_effects_label_effects') + " " + owner;
-          break;
-        case "COLOR":
-          ownerText = $.i18n('remote_color_label_color') + ' ' +
-            `<div style="width:18px; height:18px; border-radius:20px; margin-bottom:-4px; 
-                 border:1px grey solid; background-color: rgb(${value}); display:inline-block" 
-                 title="RGB: (${value})"></div>`;
-          break;
-        case "IMAGE":
-          ownerText = $.i18n('remote_effects_label_picture') + (owner ? `  ${owner}` : "");
-          break;
-        case "GRABBER":
-        case "V4L":
-        case "AUDIO":        
-          ownerText = `${$.i18n("general_comp_" + componentId)}: (${owner})`;
-          break;
-        case "AUDIO":
-          owner = $.i18n('general_comp_AUDIO') + ': (' + owner + ')';
-          break;
-        case "BOBLIGHTSERVER":
-        case "FLATBUFSERVER":
-        case "PROTOSERVER":       
-          ownerText = `${$.i18n("general_comp_" + componentId)}`;
-          break;
-      }
-
-      if (remoteInputDuration_s > 0 && !["GRABBER", "FLATBUFSERVER", "PROTOSERVER"].includes(componentId)) {
-          ownerText += `<br/><span style="font-size:80%; color:grey;">${$.i18n('remote_input_duration')} 
-                          ${remoteInputDuration_s.toFixed(0)}${$.i18n('edt_append_s')}</span>`;
-      }
-
-      if (!remoteInputDuration_s || remoteInputDuration_s > 0 ) {
-        // Create buttons
-        let btn = `<button id="srcBtn${i}" type="button" ${btnState} class="btn btn-${btnType} btn_input_selection" 
-                       onclick="requestSetSource(${priority});">${btnText}</button>`;
-
-        if (["EFFECT", "COLOR", "IMAGE"].includes(componentId) && priority < BG_PRIORITY) {
-          btn += `<button type="button" class="btn btn-sm btn-danger" style="margin-left:10px;" 
-                        onclick="requestPriorityClear(${priority});"><i class="fa fa-close"></i></button>`;
-        }
-
-        if (btnType !== 'default') {
-          $('.sstbody').append(createTableRow([origin, ownerText, priority, btn], false, true));
-        }
-      }
-    }
-
-    // Auto-select and Clear All buttons
-    const autoColor = window.serverInfo.priorities_autoselect ? "btn-success" : "btn-danger";
-    const autoState = window.serverInfo.priorities_autoselect ? "disabled" : "enabled";
-    const autoText = window.serverInfo.priorities_autoselect ? $.i18n('general_btn_on') : $.i18n('general_btn_off');
-    const callState = clearAll ? "enabled" : "disabled";
-
-    $('#auto_btn').html(`
-        <button id="srcBtnAuto" type="button" ${autoState} class="btn ${autoColor}" style="margin-right:5px; display:inline-block;" 
-        onclick="requestSetSource('auto');">${$.i18n('remote_input_label_autoselect')} (${autoText})</button>
-    `);
-
-    $('#auto_btn').append(`
-        <button type="button" ${callState} class="btn btn-danger" style="display:inline-block;" 
-        onclick="requestClearAll();">${$.i18n('remote_input_clearall')}</button>
-    `);
-
-    // Adjust button widths
-    let maxWidth = 100;
-    $('.btn_input_selection').each(function () {
-      if ($(this).innerWidth() > maxWidth) maxWidth = $(this).innerWidth();
-    });
-    $('.btn_input_selection').css("min-width", maxWidth + "px");
-  }
-
-
-  function updateLedMapping() {
-    const mapping = window.serverInfo.imageToLedMappingType;
-
-    // Clear existing mappings
-    $('#mappingsbutton').empty();
-
-    mappingList.forEach((mapType) => {
-      const btnStyle = (mapping === mapType) ? 'btn-success' : 'btn-primary';
-      const btnText = $.i18n(`remote_maptype_label_${mapType}`);
-
-      $('#mappingsbutton').append(`
-      <button type="button" id="lmBtn_${mapType}" 
-              class="btn ${btnStyle}" 
-              style="margin:3px;min-width:200px"
-              onclick="requestMappingType('${mapType}')">
-        ${btnText}
-      </button><br/>
-    `);
-    });
-  }
-
-  function initComponents() {
-    const components = window.comps;
-    const hyperionEnabled = components.some(comp => comp.name === "ALL" && comp.enabled);
-
-    components.forEach((comp) => {
-      // Skip if component is disabled or not relevant
-      if (shouldSkipComponent(comp)) return;
-
-      const compBtnId = `comp_btn_${comp.name}`;
-      const checkedStatus = comp.enabled ? "checked" : "";
-      const componentHtml = `
-      <div class="form-check form-switch" style="margin:3px">
-        <input class="form-check-input" role="switch" id="${compBtnId}" ${checkedStatus} type="checkbox"
-               data-name="${comp.name}">
-        <label class="form-check-label" for="${compBtnId}">${$.i18n('general_comp_' + comp.name)}</label>
-      </div>
-    `;
-
-      // Append component toggle button if not already created
-      if (!$(`#${compBtnId}`).length) {
-        $('#componentsbutton').append(componentHtml);
-        $(`#${compBtnId}`).prop('disabled', !hyperionEnabled);
-        $(`#${compBtnId}`).on("change", e => {
-          const compName = $(e.currentTarget).data("name");
-          requestSetComponentState(compName, e.currentTarget.checked);
-        });
-      }
-    });
-  }
-
-  function shouldSkipComponent(comp) {
-    // Define conditions to skip certain components
-    const skipConditions = {
-      "ALL": false,
-      "FORWARDER": window.currentHyperionInstance !== window.serverConfig.forwarder.instance,
-      "GRABBER": !window.serverConfig.framegrabber.enable,
-      "V4L": !window.serverConfig.grabberV4L2.enable,
-      "AUDIO": !window.serverConfig.grabberAudio.enable
-    };
-
-    return skipConditions[comp.name] || comp.name === "ALL";
-  }
-
-  function updateComponent(component) {
-    if (component.name === "ALL") {
-      updateAllComponents(component.enabled);
-    } else {
-      updateSingleComponent(component);
-    }
-  }
-
-  function updateAllComponents(enabled) {
-    window.comps.forEach((comp) => {
-      if (comp.name === "ALL") return;
-
-      const compBtnId = `comp_btn_${comp.name}`;
-
-      if (!enabled) {
-        $(`#${compBtnId}`).prop('checked', false).prop('disabled', true);
-      } else {
-        $(`#${compBtnId}`).prop('disabled', false);
-        updateSingleComponent(comp);
-      }
-    });
-  }
-
-  function updateSingleComponent(component) {
-    const compBtnId = `comp_btn_${component.name}`;
-
-    if (component.enabled !== $(`#${compBtnId}`).prop("checked")) {
-      $(`#${compBtnId}`).prop('checked', component.enabled);
-    }
-  }
-
+    /// Effect Management
   // Update Effect List
   function updateEffectlist() {
-    const newEffects = window.serverInfo.effects;
+    const newEffects = globalThis.serverInfo.effects;
 
     if (newEffects.length !== oldEffects.length) {
       $('#effect_select').html('<option value="__none__"></option>');
@@ -367,25 +188,7 @@ $(document).ready(function () {
     }
   }
 
-  // Update Video Mode
-  function updateVideoMode() {
-    const videoModes = ["2D", "3DSBS", "3DTAB"];
-    const currVideoMode = window.serverInfo.videomode;
-
-    $('#videomodebtns').empty();
-    videoModes.forEach(mode => {
-      const btnStyle = currVideoMode === mode ? 'btn-success' : 'btn-primary';
-      const buttonHtml = `<button type="button" id="vModeBtn_${mode}" class="btn ${btnStyle}" 
-                          style="margin:3px;min-width:200px" 
-                          onclick="requestVideoMode('${mode}')">
-                          ${$.i18n('remote_videoMode_' + mode)}
-                        </button><br/>`;
-
-      $('#videomodebtns').append(buttonHtml);
-    });
-  }
-
-  // Initialize Color Picker and Effects
+ // Initialize Color Picker and Effects
   function initColorPickerAndEffects() {
     let cpcolor = getStorage('rmcpcolor') || DEFAULT_CPCOLOR;
     if (cpcolor) rgb = hexToRgb(cpcolor);
@@ -468,14 +271,429 @@ $(document).ready(function () {
     });
   }
 
+
+  /// Image Processing Management
+  function setupImageProcessingEditor() {
+
+    createSection('imageProcessing', $.i18n("remote_maptype_label"), '', 'fa-wifi', 'remote_maptype_intro', {}, 'card-default', '');
+
+    const imageProcessingSubmitButton = document.getElementById('btn_submit_imageProcessing');
+    const imageProcessingDefaultsButtonId = 'btn_submit_imageProcessingDefaults';
+    if (imageProcessingSubmitButton && !document.getElementById(imageProcessingDefaultsButtonId)) {
+      const defaultsButton = document.createElement('button');
+      defaultsButton.className = 'btn btn-primary me-2';
+      defaultsButton.id = imageProcessingDefaultsButtonId;
+      defaultsButton.type = 'button';
+      defaultsButton.innerHTML = '<i class="fa fa-fw fa-undo"></i><span data-i18n="general_button_reset">' + $.i18n('general_button_reset') + '</span>';
+      defaultsButton.addEventListener('click', resetToImageProcessingConfig);
+      imageProcessingSubmitButton.parentNode.insertBefore(defaultsButton, imageProcessingSubmitButton);
+    }
+
+    const startval = {
+      imageProcessing: globalThis.serverConfig.color.imageProcessing
+        ? globalThis.serverConfig.color.imageProcessing
+        : {}
+    };
+
+    console.log("Starting ImageProcessing Editor with value: " + JSON.stringify(startval));
+    createEditor(editors, 'imageProcessing', 'imageProcessing', handleImageProcessingChange, {
+      bindDefaultChange: true,
+      bindSubmit: true,
+      onSubmit: saveImageProcessingConfig,
+      startval: startval
+    });
+  }
+
+  function resetToImageProcessingConfig() {
+    console.log("Setting Image Processing config values...");
+    editors['imageProcessing'].setValue({
+      imageProcessing: globalThis.serverConfig.color.imageProcessing
+        ? globalThis.serverConfig.color.imageProcessing
+        : {}
+    });
+  }
+
+  function saveImageProcessingConfig() {
+    if (editors['imageProcessing'].ready) {
+      console.log("Submitting ImageProcessing configuration: " + JSON.stringify(editors['imageProcessing'].getValue()));
+      // requestWriteConfig(editors['imageProcessing'].getValue());
+    }
+  }
+
+  function updateLedMapping() {
+    const mapping = globalThis.serverInfo.imageToLedMappingType;
+
+    // ToDo Update ImagePorcessing Editor with new mapping value
+    if (editors['imageProcessing']?.ready) {
+      const currentValue = editors['imageProcessing'].getValue().imageProcessing?.imageToLedMappingType;
+      if (currentValue !== mapping) {
+        editors['imageProcessing'].setValue({ imageProcessing: { imageToLedMappingType: mapping } });
+      }
+    }
+  }
+
+  /// Channel Adjustment Management
+  function setupChannelAdjustmentEditor() {
+
+    createSection('channelAdjustment', $.i18n("remote_adjustment_label"), '', 'fa-wifi', 'remote_adjustment_intro', {}, 'card-default', '');
+
+    const channelAdjustmentSubmitButton = document.getElementById('btn_submit_channelAdjustment');
+    const channelAdjustmentDefaultsButtonId = 'btn_submit_channelAdjustmentDefaults';
+    if (channelAdjustmentSubmitButton && !document.getElementById(channelAdjustmentDefaultsButtonId)) {
+      const defaultsButton = document.createElement('button');
+      defaultsButton.className = 'btn btn-primary me-2';
+      defaultsButton.id = channelAdjustmentDefaultsButtonId;
+      defaultsButton.type = 'button';
+      defaultsButton.innerHTML = '<i class="fa fa-fw fa-undo"></i><span data-i18n="general_button_reset">' + $.i18n('general_button_reset') + '</span>';
+      defaultsButton.addEventListener('click', resetToChannelAdjustmentConfig);
+      channelAdjustmentSubmitButton.parentNode.insertBefore(defaultsButton, channelAdjustmentSubmitButton);
+    }
+
+    let channelAdjustmenSchema = globalThis.schema.channelAdjustment;
+    channelAdjustmenSchema.properties.id = { options: { hidden: true } };
+    channelAdjustmenSchema.properties.leds = { options: { hidden: true } };
+    const startval = {
+      channelAdjustment: globalThis.serverConfig.color.channelAdjustment && globalThis.serverConfig.color.channelAdjustment.length > 0
+        ? globalThis.serverConfig.color.channelAdjustment[0]
+        : {}
+    };
+
+    console.log("Starting ChannelAdjustment Editor with value: " + JSON.stringify(startval));
+    createEditor(editors, 'channelAdjustment', 'channelAdjustment', handleChannelAdjustmentChange, {
+      bindDefaultChange: true,
+      bindSubmit: true,
+      onSubmit: saveChannelAdjustmentConfig,
+      startval: startval
+    });
+  }
+
+  function resetToChannelAdjustmentConfig() {
+    console.log("Setting Channel Adjustment config values...");
+    editors['channelAdjustment'].setValue({
+      channelAdjustment: globalThis.serverConfig.color.channelAdjustment && globalThis.serverConfig.color.channelAdjustment.length > 0
+        ? globalThis.serverConfig.color.channelAdjustment[0]
+        : {}
+    });
+  }
+
+  function saveChannelAdjustmentConfig() {
+    if (editors['channelAdjustment'].ready) {
+      console.log("Submitting ChannelAdjustment configuration: " + JSON.stringify(editors['channelAdjustment'].getValue()));
+      // requestWriteConfig(editors['channelAdjustment'].getValue());
+    }
+  }
+
+  // Update the channel adjustments
+  function updateChannelAdjustments() {
+    if (!globalThis.serverInfo.adjustment || globalThis.serverInfo.adjustment.length === 0) {
+      return;
+    }
+
+    debugMessage("Updating channel adjustments with: " + JSON.stringify(globalThis.serverInfo.adjustment[0]));
+
+    const values = globalThis.serverInfo.adjustment[0];
+    if (editors['channelAdjustment']?.ready) {
+      editors['channelAdjustment'].setValue({ channelAdjustment: values });
+    }
+  }
+
+  /// Input Source Management
+
+  const parsePriorityOrigin = (priorityEntry) => {
+    const origin = priorityEntry.origin ? priorityEntry.origin : "System";
+    const [originName, ip] = origin.split("@");
+    return { originName, ip };
+  };
+
+  function resolveOwnerText(componentId, owner, value) {
+    switch (componentId) {
+      case "EFFECT":
+        return $.i18n('remote_effects_label_effects') + " " + owner;
+      case "COLOR":
+        return $.i18n('remote_color_label_color') + ' ' +
+          `<div style="width:18px; height:18px; border-radius:20px; margin-bottom:-4px; border:1px grey solid; background-color: rgb(${value}); display:inline-block" title="RGB: (${value})"></div>`;
+      case "IMAGE":
+        return $.i18n('remote_effects_label_picture') + (owner ? `  ${owner}` : "");
+      case "GRABBER":
+      case "V4L":
+      case "AUDIO":
+        return `${$.i18n("general_comp_" + componentId)}: (${owner})`;
+      case "BOBLIGHTSERVER":
+      case "FLATBUFSERVER":
+      case "PROTOSERVER":
+        return $.i18n("general_comp_" + componentId);
+      default:
+        return owner;
+    }
+  }
+
+  function resolveButtonState(active, visible) {
+    if (visible) {
+      return {
+        btnType: "success",
+        btnText: $.i18n('remote_input_sourceactiv_btn'),
+        btnState: "disabled"
+      };
+    }
+
+    return {
+      btnType: active ? "primary" : "default",
+      btnText: $.i18n('remote_input_setsource_btn'),
+      btnState: "enabled"
+    };
+  }
+
+  function buildSourceButtonHtml(index, priority, btnState, btnType, btnText, componentId) {
+    let btn = `<button id="srcBtn${index}" type="button" ${btnState} class="btn btn-${btnType} btn_input_selection" onclick="requestSetSource(${priority});">${btnText}</button>`;
+
+    if (["EFFECT", "COLOR", "IMAGE"].includes(componentId) && priority < BG_PRIORITY) {
+      btn += `<button type="button" class="btn btn-sm btn-danger" style="margin-left:10px;" onclick="requestPriorityClear(${priority});"><i class="fa fa-close"></i></button>`;
+    }
+
+    return btn;
+  }
+
+  // Update input select options based on priorities
+  function updateInputSelect() {
+    // Clear existing elements
+    $('.sstbody').empty().html('');
+
+    const prios = globalThis.serverInfo.priorities;
+    let clearAll = false;
+
+    if (prios.length === 0) {
+      $('.sstbody').append(`<tr><td colspan="4" class="text-center text-muted">${$.i18n('remote_input_no_sources')}</td></tr>`);
+      $('#auto_btn').empty();
+      return;
+    }
+
+    // Iterate over priorities
+    prios.forEach((priorityEntry, index) => {
+      const { owner, active, visible, priority, componentId, duration_ms } = priorityEntry;
+
+      if (priority > BG_PRIORITY) {
+        return;
+      }
+
+      if (priority < BG_PRIORITY && ["EFFECT", "COLOR", "IMAGE"].includes(componentId)) {
+        clearAll = true;
+      }
+
+      const remoteInputDuration_s = duration_ms / 1000;
+      const { originName, ip } = parsePriorityOrigin(priorityEntry);
+      const origin = ip
+        ? `${originName}<br/><span style="font-size:80%; color:grey;">${$.i18n('remote_input_ip')} ${ip}</span>`
+        : originName;
+
+      const value = "value" in priorityEntry ? priorityEntry.value.RGB : "0,0,0";
+      let ownerText = resolveOwnerText(componentId, owner, value);
+
+      if (remoteInputDuration_s > 0 && !["GRABBER", "FLATBUFSERVER", "PROTOSERVER"].includes(componentId)) {
+        ownerText += `<br/><span style="font-size:80%; color:grey;">${$.i18n('remote_input_duration')} ${remoteInputDuration_s.toFixed(0)}${$.i18n('edt_append_s')}</span>`;
+      }
+
+      if (remoteInputDuration_s > 0 || remoteInputDuration_s === 0) {
+        const { btnType, btnText, btnState } = resolveButtonState(active, visible);
+        if (btnType !== 'default') {
+          const btn = buildSourceButtonHtml(index, priority, btnState, btnType, btnText, componentId);
+          $('.sstbody').append(createTableRow([origin, ownerText, priority, btn], false, true));
+        }
+      }
+    });
+
+    // Auto-select and Clear All buttons
+    const autoColor = globalThis.serverInfo.priorities_autoselect ? "btn-success" : "btn-danger";
+    const autoState = globalThis.serverInfo.priorities_autoselect ? "disabled" : "enabled";
+    const autoText = globalThis.serverInfo.priorities_autoselect ? $.i18n('general_btn_on') : $.i18n('general_btn_off');
+    const callState = clearAll ? "enabled" : "disabled";
+
+    $('#auto_btn').html(`
+        <button id="srcBtnAuto" type="button" ${autoState} class="btn ${autoColor}" style="margin-right:5px; display:inline-block;" 
+        onclick="requestSetSource('auto');">${$.i18n('remote_input_label_autoselect')} (${autoText})</button>
+    `);
+
+    $('#auto_btn').append(`
+        <button type="button" ${callState} class="btn btn-danger" style="display:inline-block;" 
+        onclick="requestClearAll();">${$.i18n('remote_input_clearall')}</button>
+    `);
+
+    // Adjust button widths
+    let maxWidth = 100;
+    $('.btn_input_selection').each(function () {
+      if ($(this).innerWidth() > maxWidth) maxWidth = $(this).innerWidth();
+    });
+    $('.btn_input_selection').css("min-width", maxWidth + "px");
+  }
+
+
+  /// Component Management
+  function shouldSkipComponent(componentName) {
+    // Define conditions to skip certain components
+    const skipConditions = {
+      "ALL": false,
+      "FORWARDER": globalThis.currentHyperionInstance !== globalThis.serverConfig.forwarder.instance,
+      "GRABBER": !globalThis.serverConfig.framegrabber.enable,
+      "V4L": !globalThis.serverConfig.grabberV4L2.enable,
+      "AUDIO": !globalThis.serverConfig.grabberAudio.enable
+    };
+
+    return skipConditions[componentName] || componentName === "ALL";
+  }
+
+  function createSwitchHtml(id, isChecked, isDisabled, componentName = null) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'form-check form-switch form-switch-md d-inline-flex align-items-center m-0 ps-0';
+    wrapper.style.minHeight = '1.5rem';
+
+    const input = document.createElement('input');
+    input.className = 'form-check-input m-0 align-self-center';
+    input.style.marginLeft = '0';
+    input.type = 'checkbox';
+    input.role = 'switch';
+    input.id = id;
+    input.defaultChecked = isChecked;
+    input.disabled = isDisabled;
+    if (componentName) {
+      input.dataset.name = componentName;
+    }
+    input.setAttribute('switch', '');
+
+    wrapper.appendChild(input);
+    return wrapper.outerHTML;
+  }
+
+  function createComponentRow(componentName, isEnabled) {
+    const tr = document.createElement('tr');
+    const switchId = `comp_btn_${componentName}`;
+
+    const tdComponent = document.createElement('td');
+    tdComponent.colSpan = 2;
+    tdComponent.style.verticalAlign = 'middle';
+    tdComponent.className = 'text-start py-2';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'd-flex align-items-center justify-content-start gap-4';
+
+    const switchWrap = document.createElement('div');
+    switchWrap.className = 'd-flex align-items-center flex-shrink-0';
+    switchWrap.innerHTML = createSwitchHtml(switchId, isEnabled, false, componentName);
+
+    const label = document.createElement('label');
+    label.className = 'mb-0 d-flex align-items-center ms-1';
+    label.setAttribute('for', switchId);
+    label.textContent = $.i18n(`general_comp_${componentName}`);
+
+    wrapper.appendChild(switchWrap);
+    wrapper.appendChild(label);
+    tdComponent.appendChild(wrapper);
+    tr.appendChild(tdComponent);
+
+    return tr.outerHTML;
+  }
+
+  function initComponents() {
+    const components = globalThis.comps;
+
+    const isInstanceEnabled = components.some((comp) => comp.name === "ALL" && comp.enabled);
+    const componentRows = components
+      .filter((element) => !shouldSkipComponent(element.name))
+      .map((element) => createComponentRow(element.name, isInstanceEnabled ? element.enabled : false))
+      .join('');
+    $('#components').html(componentRows);
+
+    components
+      .filter((comp) => !shouldSkipComponent(comp.name))
+      .forEach((comp) => {
+        const $switch = getComponentSwitch(comp.name);
+        if ($switch.length === 0) {
+          return;
+        }
+
+        setComponentSwitchState(comp.name, { disabled: !isInstanceEnabled });
+        $switch.off('change').on('change', (e) => {
+          requestSetComponentState(comp.name, e.currentTarget.checked);
+        });
+      });
+  }
+
+  function getComponentSwitchId(componentName) {
+    return `comp_btn_${componentName}`;
+  }
+
+  function getComponentSwitch(componentName) {
+    return $(`#${getComponentSwitchId(componentName)}`);
+  }
+
+  function setComponentSwitchState(componentName, { checked, disabled } = {}) {
+    const $switch = getComponentSwitch(componentName);
+    if ($switch.length === 0) {
+      return $switch;
+    }
+
+    if (checked !== undefined && $switch.prop('checked') !== checked) {
+      $switch.prop('checked', checked);
+    }
+
+    if (disabled !== undefined) {
+      $switch.prop('disabled', disabled);
+    }
+
+    return $switch;
+  }
+
+  function updateComponent(component) {
+    if (component.name === "ALL") {
+      updateAllComponents(component.enabled);
+    } else {
+      updateSingleComponent(component);
+    }
+  }
+
+  function updateAllComponents(enabled) {
+    globalThis.comps.forEach((comp) => {
+      if (comp.name === "ALL") return;
+
+      if (enabled) {
+        setComponentSwitchState(comp.name, { disabled: false });
+        updateSingleComponent(comp);
+      } else {
+        setComponentSwitchState(comp.name, { checked: false, disabled: true });
+      }
+    });
+  }
+
+  function updateSingleComponent(component) {
+    setComponentSwitchState(component.name, { checked: component.enabled });
+  }
+
+
+
+  // Update Video Mode
+  function updateVideoMode() {
+    const videoModes = ["2D", "3DSBS", "3DTAB"];
+    const currVideoMode = globalThis.serverInfo.videomode;
+
+    $('#videomodebtns').empty();
+    videoModes.forEach(mode => {
+      const btnStyle = currVideoMode === mode ? 'btn-success' : 'btn-primary';
+      const buttonHtml = `<button type="button" id="vModeBtn_${mode}" class="btn ${btnStyle}" 
+                          style="margin:3px;min-width:200px" 
+                          onclick="requestVideoMode('${mode}')">
+                          ${$.i18n('remote_videoMode_' + mode)}
+                        </button><br/>`;
+
+      $('#videomodebtns').append(buttonHtml);
+    });
+  }
+
+ 
   // Force First Update
   function forceFirstUpdate() {
     initComponents();
     updateInputSelect();
-    updateLedMapping();
+    //updateLedMapping();
     updateVideoMode();
-    updateChannelAdjustments();
-
+    //updateChannelAdjustments();
     if (EFFECTENGINE_ENABLED) {
       updateEffectlist();
     } else {
@@ -485,34 +703,34 @@ $(document).ready(function () {
 
   // Interval Updates and Event Handlers
   function setupEventListenersForUpdates() {
-    $(window.hyperion).on('components-updated', (e, comp) => updateComponent(comp));
+    $(globalThis.hyperion).on('components-updated', (e, comp) => updateComponent(comp));
 
-    $(window.hyperion).on("cmd-priorities-update", (event) => {
-      window.serverInfo.priorities = event.response.data.priorities;
-      window.serverInfo.priorities_autoselect = event.response.data.priorities_autoselect;
+    $(globalThis.hyperion).on("cmd-priorities-update", (event) => {
+      globalThis.serverInfo.priorities = event.response.data.priorities;
+      globalThis.serverInfo.priorities_autoselect = event.response.data.priorities_autoselect;
       updateInputSelect();
     });
 
-    $(window.hyperion).on("cmd-imageToLedMapping-update", (event) => {
-      window.serverInfo.imageToLedMappingType = event.response.data.imageToLedMappingType;
+    $(globalThis.hyperion).on("cmd-imageToLedMapping-update", (event) => {
+      globalThis.serverInfo.imageToLedMappingType = event.response.data.imageToLedMappingType;
       updateLedMapping();
     });
 
-    $(window.hyperion).on("cmd-videomode-update", (event) => {
-      window.serverInfo.videomode = event.response.data.videomode;
+    $(globalThis.hyperion).on("cmd-videomode-update", (event) => {
+      globalThis.serverInfo.videomode = event.response.data.videomode;
       updateVideoMode();
     });
 
-    $(window.hyperion).on("cmd-effects-update", (event) => {
-      window.serverInfo.effects = event.response.data.effects;
+    $(globalThis.hyperion).on("cmd-effects-update", (event) => {
+      globalThis.serverInfo.effects = event.response.data.effects;
       updateEffectlist();
     });
 
-    $(window.hyperion).on("cmd-settings-update", (event) => {
+    $(globalThis.hyperion).on("cmd-settings-update", (event) => {
       if (event.response.data.color) {
-        window.serverInfo.imageToLedMappingType = event.response.data.color.imageToLedMappingType;
+        globalThis.serverInfo.imageToLedMappingType = event.response.data.color.imageToLedMappingType;
         updateLedMapping();
-        window.serverInfo.adjustment = event.response.data.color.channelAdjustment;
+        globalThis.serverInfo.adjustment = event.response.data.color.channelAdjustment;
         updateChannelAdjustments();
       }
     });
@@ -522,7 +740,7 @@ $(document).ready(function () {
 
   // Initialize everything
   function init() {
-    initColorPickerAndEffects();
+    //initColorPickerAndEffects();
     forceFirstUpdate();
     setupEventListenersForUpdates();
   }
@@ -531,3 +749,80 @@ $(document).ready(function () {
 
 });
 
+function handleChannelAdjustmentChange(channelEditor) {
+
+  channelEditor.on('ready', () => {
+    const allEditors = Object.values(channelEditor.editors);
+
+    for (const editor of allEditors) {
+      if (!editor?.input) {
+        continue;
+      }
+
+      if (editor.input_type !== 'color' && editor.input.type !== 'color') {
+        continue;
+      }
+
+      const input = editor.input;
+
+      // add Bootstrap styling
+      //input.classList.add('form-control', 'form-control-color');
+      input.dataset.editorKey = editor.key;
+      input.dataset.editorPath = editor.path;
+
+      const sendColorAdjustment = (adjustmentKey, color) => {
+        const rgb = hexToRgb(color);
+        if (!rgb) {
+          return;
+        }
+
+        debugMessage('Color adjustment event. Color: ' + adjustmentKey + ' -> RGB: ' + JSON.stringify(rgb));
+        requestAdjustment(adjustmentKey, [rgb.r, rgb.g, rgb.b]);
+      };
+
+      const sendColorAdjustmentDebounced = debounce(sendColorAdjustment, 150);
+
+      input.addEventListener('input', (e) => {
+        const { editorKey } = input.dataset;
+        sendColorAdjustmentDebounced(editorKey, e.currentTarget.value);
+      });
+
+      input.addEventListener('change', () => {
+        const { editorKey, editorPath } = input.dataset;
+        const currentEditor = channelEditor.editors[editorPath];
+        if (!currentEditor) {
+          return;
+        }
+
+        const currentValue = currentEditor.getValue();
+        sendColorAdjustmentDebounced.cancel();
+        sendColorAdjustment(editorKey, currentValue);
+      });
+    }
+  });
+}
+
+function handleImageProcessingChange(editor) {
+
+  editor.watch('root.imageProcessing.imageToLedMappingType', () => {
+    if (!editor.ready) return;
+    const mappingType = editor.getEditor("root.imageProcessing.imageToLedMappingType").getValue();
+
+    debugMessage("Image to LED mapping type changed to: " + mappingType);
+  });
+
+  editor.watch('root.imageProcessing.accuracyLevel', () => {
+    if (!editor.ready) return;
+    const accuracyLevel = editor.getEditor("root.imageProcessing.accuracyLevel").getValue();
+
+    debugMessage("Accuracy level changed to: " + accuracyLevel);
+  });
+
+  editor.watch('root.imageProcessing.reducedPixelSetFactorFactor', () => {
+    if (!editor.ready) return;
+    const reducedPixelSetFactor = editor.getEditor("root.imageProcessing.reducedPixelSetFactorFactor").getValue();
+
+    debugMessage("Reduced pixel set factor changed to: " + reducedPixelSetFactor);
+  });
+
+}

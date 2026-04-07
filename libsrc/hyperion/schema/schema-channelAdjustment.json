@@ -1,0 +1,267 @@
+{
+	"type": "object",
+	"required": true,
+	"title": "edt_conf_color_channelAdjustment_header_itemtitle",
+	"format": "grid-strict",
+	"properties": {
+		"id": {
+			"type": "string",
+			"title": "edt_conf_color_id_title",
+			"required": true,
+			"default": "A userdefined name",
+			"propertyOrder": 1,
+			"options": {
+				"infoText": "edt_conf_color_id_expl",
+				"grid_columns": 12
+			}
+		},
+		"leds": {
+			"type": "string",
+			"title": "edt_conf_color_leds_title",
+			"required": true,
+			"default": "*",
+			"propertyOrder": 2,
+			"options": {
+				"infoText": "edt_conf_color_leds_expl",
+				"grid_columns": 12
+			}
+		},
+		"white": {
+			"type": "string",
+			"title": "edt_conf_color_white_title",
+			"format": "color",
+			"default": "#ffffff",
+			"required": true,
+			"propertyOrder": 2,
+			"options": {
+				"infoText": "edt_conf_color_white_expl",
+				"grid_columns": 3
+			}
+		},
+		"red": {
+			"type": "string",
+			"title": "edt_conf_color_red_title",
+			"format": "color",
+			"default": "#ff0000",
+			"required": true,
+			"propertyOrder": 3,
+			"options": {
+				"infoText": "edt_conf_color_red_expl",
+				"grid_columns": 3
+			}
+		},
+		"green": {
+			"type": "string",
+			"title": "edt_conf_color_green_title",
+			"format": "color",
+			"default": "#00ff00",
+			"required": true,
+			"propertyOrder": 4,
+			"options": {
+				"infoText": "edt_conf_color_green_expl",
+				"grid_columns": 3
+			}
+		},
+		"blue": {
+			"type": "string",
+			"title": "edt_conf_color_blue_title",
+			"format": "color",
+			"default": "#0000ff",
+			"required": true,
+			"propertyOrder": 5,
+			"options": {
+				"infoText": "edt_conf_color_blue_expl",
+				"grid_columns": 3
+			}
+		},
+		"cyan": {
+			"type": "string",
+			"title": "edt_conf_color_cyan_title",
+			"format": "color",
+			"default": "#00ffff",
+			"required": true,
+			"propertyOrder": 6,
+			"options": {
+				"infoText": "edt_conf_color_cyan_expl",
+				"grid_columns": 3
+			}
+		},
+		"magenta": {
+			"type": "string",
+			"title": "edt_conf_color_magenta_title",
+			"format": "color",
+			"default": "#ff00ff",
+			"required": true,
+			"propertyOrder": 7,
+			"options": {
+				"infoText": "edt_conf_color_magenta_expl",
+				"grid_columns": 3
+			}
+		},
+		"yellow": {
+			"type": "string",
+			"title": "edt_conf_color_yellow_title",
+			"format": "color",
+			"default": "#ffff00",
+			"required": true,
+			"propertyOrder": 8,
+			"options": {
+				"infoText": "edt_conf_color_yellow_expl",
+				"grid_columns": 3,
+				"grid_break": true
+			}
+		},
+		"saturationGain": {
+			"type": "number",
+			"format": "range",
+			"title": "edt_conf_color_saturationGain_title",
+			"required": true,
+			"minimum": 0.0,
+			"maximum": 10.0,
+			"step": 0.1,
+			"default": 1.0,
+			"propertyOrder": 11,
+			"options": {
+				"infoText": "edt_conf_color_saturationGain_expl",
+				"grid_columns": 12
+			}
+		},
+		"backlightThreshold": {
+			"type": "integer",
+			"format": "range",
+			"title": "edt_conf_color_backlightThreshold_title",
+			"required": true,
+			"minimum": 0,
+			"maximum": 100,
+			"step": 1,
+			"default": 0,
+			"append": "edt_append_percent",
+			"propertyOrder": 12,
+			"options": {
+				"infoText": "edt_conf_color_backlightThreshold_expl",
+				"grid_columns": 12
+			}
+		},
+		"backlightColored": {
+			"type": "boolean",
+			"format": "checkbox",
+			"title": "edt_conf_color_backlightColored_title",
+			"required": true,
+			"default": false,
+			"propertyOrder": 13,
+			"options": {
+				"infoText": "edt_conf_color_backlightColored_expl",
+				"grid_columns": 12
+			}
+		},
+		"brightness": {
+			"type": "integer",
+			"format": "range",
+			"title": "edt_conf_color_brightness_title",
+			"required": true,
+			"minimum": 0,
+			"maximum": 100,
+			"step": 1,
+			"default": 100,
+			"append": "edt_append_percent",
+			"propertyOrder": 14,
+			"options": {
+				"infoText": "edt_conf_color_brightness_expl",
+				"grid_columns": 12
+			}
+		},
+		"brightnessCompensation": {
+			"type": "integer",
+			"format": "range",
+			"title": "edt_conf_color_brightnessComp_title",
+			"required": true,
+			"minimum": 0,
+			"maximum": 100,
+			"step": 1,
+			"default": 0,
+			"append": "edt_append_percent",
+			"propertyOrder": 15,
+			"options": {
+				"infoText": "edt_conf_color_brightnessComp_expl",
+				"grid_columns": 12
+			}
+		},
+		"brightnessGain": {
+			"type": "number",
+			"format": "range",
+			"title": "edt_conf_color_brightnessGain_title",
+			"required": true,
+			"minimum": 0.1,
+			"maximum": 10.0,
+			"step": 0.1,
+			"default": 1.0,
+			"propertyOrder": 16,
+			"options": {
+				"infoText": "edt_conf_color_brightnessGain_expl",
+				"grid_columns": 12
+			}
+		},
+		"temperature": {
+			"type": "integer",
+			"format": "range",
+			"title": "edt_conf_color_temperature_title",
+			"required": true,
+			"minimum": 1000,
+			"maximum": 40000,
+			"step": 100,
+			"default": 6600,
+			"append": "edt_append_kelvin",
+			"propertyOrder": 17,
+			"options": {
+				"infoText": "edt_conf_color_temperature_expl",
+				"grid_columns": 12
+			}
+		},
+		"gammaRed": {
+			"type": "number",
+			"format": "range",
+			"title": "edt_conf_color_gammaRed_title",
+			"required": true,
+			"minimum": 0.1,
+			"maximum": 100.0,
+			"step": 0.05,
+			"default": 2.2,
+			"propertyOrder": 18,
+			"options": {
+				"infoText": "edt_conf_color_gammaRed_expl",
+				"grid_columns": 12
+			}
+		},
+		"gammaGreen": {
+			"type": "number",
+			"format": "range",
+			"title": "edt_conf_color_gammaGreen_title",
+			"required": true,
+			"minimum": 0.1,
+			"maximum": 100.0,
+			"step": 0.05,
+			"default": 2.2,
+			"propertyOrder": 19,
+			"options": {
+				"infoText": "edt_conf_color_gammaGreen_expl",
+				"grid_columns": 12
+			}
+		},
+		"gammaBlue": {
+			"type": "number",
+			"format": "range",
+			"title": "edt_conf_color_gammaBlue_title",
+			"required": true,
+			"minimum": 0.1,
+			"maximum": 100.0,
+			"step": 0.05,
+			"default": 2.2,
+			"propertyOrder": 20,
+			"options": {
+				"infoText": "edt_conf_color_gammaBlue_expl",
+				"grid_columns": 12
+			}
+		}
+	},
+	"additionalProperties": false
+}

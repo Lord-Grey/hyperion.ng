@@ -595,7 +595,7 @@ function ensureJsonEditorDefaultsConfigured() {
   return true;
 }
 
-function createJsonEditor(container, schema, setconfig, useCard, arrayre = undefined) {
+function createJsonEditor(container, schema, setconfig, useCard, options = undefined) {
   const JE = globalThis.JSONEditor;
   if (!JE) {
     throw new Error('JSONEditor failed to load before createJsonEditor()');
@@ -606,10 +606,12 @@ function createJsonEditor(container, schema, setconfig, useCard, arrayre = undef
   $('#' + container).off();
   $('#' + container).html("");
 
-  if (arrayre === undefined)
-    arrayre = true;
+  const hasOptionsObject = options != null && typeof options === 'object' && !Array.isArray(options);
+  const arrayre = hasOptionsObject ? options.arrayre : options;
+  const startvalOverride = hasOptionsObject ? options.startval : undefined;
+  const disableArrayReorder = arrayre === undefined ? true : arrayre;
 
-  const startval = setconfig && globalThis.serverConfig
+  const defaultStartval = setconfig && globalThis.serverConfig
     ? Object.keys(schema).reduce((values, key) => {
       if (Object.hasOwn(globalThis.serverConfig, key)) {
         values[key] = globalThis.serverConfig[key];
@@ -617,6 +619,8 @@ function createJsonEditor(container, schema, setconfig, useCard, arrayre = undef
       return values;
     }, {})
     : undefined;
+
+  const startval = startvalOverride === undefined ? defaultStartval : startvalOverride;
 
   let editor = new JE(document.getElementById(container),
     {
@@ -626,7 +630,7 @@ function createJsonEditor(container, schema, setconfig, useCard, arrayre = undef
       form_name_root: 'root',
       disable_edit_json: true,
       disable_properties: true,
-      disable_array_reorder: arrayre,
+      disable_array_reorder: disableArrayReorder,
       no_additional_properties: true,
       disable_array_delete_all_rows: true,
       disable_array_delete_last_row: true,
@@ -656,7 +660,8 @@ function createEditor(editors, container, schemaKey, changeHandler, options = {}
     onSubmit = null,
     setconfig = true,
     useCard = true,
-    arrayre = undefined
+    arrayre = undefined,
+    startval = undefined
   } = options;
 
   const schemaDefinition = (typeof schemaKey === 'string')
@@ -668,7 +673,7 @@ function createEditor(editors, container, schemaKey, changeHandler, options = {}
     schemaDefinition,
     setconfig,
     useCard,
-    arrayre
+    { arrayre, startval }
   );
 
   const editor = editors[container];

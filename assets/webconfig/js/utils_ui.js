@@ -705,43 +705,6 @@ function showNotification(type, message, title = "", addhtml = "") {
   });
 }
 
-function createCP(id, color, cb) {
-  // Ensure color is valid and handle cases where it's an array or undefined
-  if (Array.isArray(color)) {
-    color = rgbToHex(color);  // Convert array to hex
-  } else if (color === "undefined") {
-    color = "#AA3399";  // Default color
-  }
-
-  // Only proceed if the color is a valid hex color
-  if (color.startsWith("#")) {
-    // Initialize colorpicker with the given color
-    $(`#${id}`).colorpicker({
-      format: 'rgb',
-      customClass: 'colorpicker-2x',
-      color: color,
-      sliders: {
-        saturation: {
-          maxLeft: 200,
-          maxTop: 200
-        },
-        hue: {
-          maxTop: 200
-        },
-      }
-    });
-
-    // Handle color change events
-    $(`#${id}`).colorpicker().on('changeColor', (e) => {
-      const rgb = e.color.toRGB();
-      const hex = e.color.toHex();
-      cb(rgb, hex, e);  // Callback with updated color values
-    });
-  } else {
-    debugMessage('createCP: Given color is not legit');
-  }
-}
-
 // Function to create a table with thead and tbody elements
 // @param {string} hid - Class name for thead
 // @param {string} bid - Class name for tbody
@@ -824,7 +787,7 @@ function createRow(id) {
   return el;
 }
 
-function createOptPanel(phicon, phead, bodyid, footerid, css, panelId, type = 'card-default') {
+function createOptPanel(phicon, phead, bodyid, footerid, css, panelId, type = 'card-default', containerClass = '') {
   phead = '<i class="fa ' + phicon + ' fa-fw"></i>' + phead;
 
   let pfooter = document.createElement('button');
@@ -832,7 +795,7 @@ function createOptPanel(phicon, phead, bodyid, footerid, css, panelId, type = 'c
   pfooter.setAttribute("id", footerid);
   pfooter.innerHTML = '<i class="fa fa-fw fa-save"></i>' + $.i18n('general_button_savesettings');
 
-  return createPanel(phead, "", pfooter, bodyid, css, panelId, type);
+  return createPanel(phead, "", pfooter, bodyid, css, panelId, type, containerClass);
 }
 
 function compareValues(varA, varB) {
@@ -1035,8 +998,8 @@ function createPanelWide(head, body, footer, bodyid, css, panelId, type = 'card-
   return createPanelInternal({ head, body, footer, bodyid, css, panelId, type });
 }
 
-function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-default') {
-  return createPanelInternal({ head, body, footer, bodyid, css, panelId, type, containerClass: 'col-lg-6' });
+function createPanel(head, body, footer, bodyid, css, panelId, type = 'card-default', containerClass = 'col-lg-6') {
+  return createPanelInternal({ head, body, footer, bodyid, css, panelId, type, containerClass  });
 }
 
 function resolvePanelStyle(panelStyle = 'card-default') {
@@ -1047,16 +1010,24 @@ function resolvePanelStyle(panelStyle = 'card-default') {
   return { css: panelStyle, type: 'card-default' };
 }
 
-function createSection(id, titleKey, schemaProps, icon, introTitleKey, helpPanelId = null, panelType = 'card-default') {
+function createSection(id, titleKey, schemaProps, icon, introTitleKey, helpPanelId = null, panelType = 'card-default', containerClass = 'col-lg-6') {
   const containerId = `conf_cont_${id}`;
   const bodyContainerId = `editor_body_${id}`;
   const editorContainerId = `editor_container_${id}`;
   const { css, type } = resolvePanelStyle(panelType);
+  const isHelpPanelOptions = typeof helpPanelId === 'object' && helpPanelId !== null;
+  const resolvedHelpPanelId = isHelpPanelOptions ? helpPanelId.helpPanelId : helpPanelId;
+  const shouldAppendHelpPanel = isHelpPanelOptions
+    ? Boolean(helpPanelId.helpPanelId)
+    : helpPanelId !== false;
   $('#conf_cont').append(createRow(containerId));
 
-  $(`#${containerId}`)
-    .append(createOptPanel(icon, $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, css, undefined, type))
-    .append(createHelpTable(schemaProps, $.i18n(titleKey), helpPanelId));
+  const sectionContainer = $(`#${containerId}`);
+  sectionContainer.append(createOptPanel(icon, $.i18n(titleKey), bodyContainerId, `btn_submit_${id}`, css, undefined, type, containerClass));
+
+  if (shouldAppendHelpPanel) {
+    sectionContainer.append(createHelpTable(schemaProps, $.i18n(titleKey), resolvedHelpPanelId, containerClass));
+  }
 
   if (globalThis.showOptHelp) {
     createHint("intro", $.i18n(introTitleKey), bodyContainerId);
@@ -1258,3 +1229,23 @@ function reverseTransformConfig(serverConfig, instanceId) {
   return legacyConfig;
 }
 
+function debounce(fn, delay = 100) {
+  let timerId = null;
+
+  const debounced = (...args) => {
+    clearTimeout(timerId);
+    timerId = setTimeout(() => {
+      timerId = null;
+      fn(...args);
+    }, delay);
+  };
+
+  debounced.cancel = () => {
+    if (timerId !== null) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+  };
+
+  return debounced;
+}
