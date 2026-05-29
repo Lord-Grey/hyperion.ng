@@ -27,7 +27,24 @@ const char DEFAULT_SEED_CUSTOM[] = "dtls_client";
 const int DEFAULT_HANDSHAKE_ATTEMPTS = 5;
 const int DEFAULT_HANDSHAKE_TIMEOUT_MIN = 300;
 const int DEFAULT_HANDSHAKE_TIMEOUT_MAX = 1000;
+
+void mbedtlsDebugCallback(void *ctx, int level, const char * /*file*/, int /*line*/, const char *str)
+{
+	Logger *log = static_cast<Logger *>(ctx);
+	QString const msg = QString(str).trimmed();
+	if (level == 1)
+	{
+		Warning(log, "mbedTLS: %s", QSTRING_CSTR(msg));
+	}
+	else
+	{
+		Debug(log, "mbedTLS [%d]: %s", level, QSTRING_CSTR(msg));
+	}
 }
+
+} // end of constants namespace
+
+Q_LOGGING_CATEGORY(leddevice_dtls, "hyperion.leddevice.dtls")
 
 
 ProviderUdpSSL::ProviderUdpSSL(const QJsonObject &deviceConfig)
@@ -225,6 +242,13 @@ bool ProviderUdpSSL::setupStructure()
 	mbedtls_ssl_conf_ciphersuites(&conf, ciphersuites);
 	mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
 
+	if (leddevice_dtls().isEnabled(QtDebugMsg))
+	{
+		mbedtls_ssl_conf_dbg(&conf, mbedtlsDebugCallback, _log.get());
+		mbedtls_debug_set_threshold(2);
+		Debug(_log, "DTLS mbedTLS debug tracing enabled (level 2: errors + state changes)");
+	}
+
 	if ((ret = mbedtls_ssl_setup(&ssl, &conf)) != 0)
 	{
 		Error(_log, "%s", QSTRING_CSTR(QString("mbedtls_ssl_setup FAILED %1").arg(errorMsg(ret))));
@@ -245,6 +269,11 @@ bool ProviderUdpSSL::startConnection()
 			mbedtls_net_free(&client_fd);
 			mbedtls_net_init(&client_fd);
 		}
+
+		Debug(_log, "DTLS connection attempt %d/%d to [%s]:%d (PSK identity: '%s')",
+			attempt, _handshake_attempts,
+			QSTRING_CSTR(_hostName), _ssl_port,
+			QSTRING_CSTR(_psk_identity));
 
 		int ret = mbedtls_net_connect(&client_fd, _hostName.toUtf8(), std::to_string(_ssl_port).c_str(), MBEDTLS_NET_PROTO_UDP);
 		if (ret != 0)
@@ -302,6 +331,10 @@ bool ProviderUdpSSL::startSSLHandshake()
 		Warning(_log, "%s", QSTRING_CSTR(QString("mbedtls_ssl_handshake FAILED. Reason: %1").arg(errorMsg(ret))));
 		return false;
 	}
+
+	Debug(_log, "DTLS handshake succeeded. Cipher suite: %s, Protocol: %s",
+		mbedtls_ssl_get_ciphersuite(&ssl),
+		mbedtls_ssl_get_version(&ssl));
 
 	if (mbedtls_ssl_get_verify_result(&ssl) != 0)
 	{
