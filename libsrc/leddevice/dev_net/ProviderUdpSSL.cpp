@@ -236,20 +236,37 @@ bool ProviderUdpSSL::setupStructure()
 
 bool ProviderUdpSSL::startConnection()
 {
-	mbedtls_ssl_session_reset(&ssl);
-
-	int ret = mbedtls_net_connect(&client_fd, _hostName.toUtf8(), std::to_string(_ssl_port).c_str(), MBEDTLS_NET_PROTO_UDP);
-
-	if (ret != 0)
+	for (int attempt = 1; attempt <= _handshake_attempts; ++attempt)
 	{
-		Error(_log, "%s", QSTRING_CSTR(QString("mbedtls_net_connect FAILED %1").arg(errorMsg(ret))));
-		return false;
+		mbedtls_ssl_session_reset(&ssl);
+
+		if (attempt > 1)
+		{
+			mbedtls_net_free(&client_fd);
+			mbedtls_net_init(&client_fd);
+		}
+
+		int ret = mbedtls_net_connect(&client_fd, _hostName.toUtf8(), std::to_string(_ssl_port).c_str(), MBEDTLS_NET_PROTO_UDP);
+		if (ret != 0)
+		{
+			Error(_log, "%s", QSTRING_CSTR(QString("mbedtls_net_connect FAILED %1").arg(errorMsg(ret))));
+			return false;
+		}
+
+		mbedtls_ssl_set_bio(&ssl, &client_fd, mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout);
+		mbedtls_ssl_set_timer_cb(&ssl, &timer, mbedtls_timing_set_delay, mbedtls_timing_get_delay);
+
+		if (startSSLHandshake())
+		{
+			return true;
+		}
+
+		Warning(_log, "%s", QSTRING_CSTR(QString("mbedtls_ssl_handshake attempt %1/%2 FAILED. Retrying...").arg(attempt).arg(_handshake_attempts)));
+		QThread::msleep(200);
 	}
 
-	mbedtls_ssl_set_bio(&ssl, &client_fd, mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout);
-	mbedtls_ssl_set_timer_cb(&ssl, &timer, mbedtls_timing_set_delay, mbedtls_timing_get_delay);
-
-	return startSSLHandshake();
+	Error(_log, "mbedtls_ssl_handshake FAILED after all %d attempts", _handshake_attempts);
+	return false;
 }
 
 bool ProviderUdpSSL::setupPSK()
@@ -274,25 +291,15 @@ bool ProviderUdpSSL::setupPSK()
 bool ProviderUdpSSL::startSSLHandshake()
 {
 	int ret = 0;
-	for (int attempt = 1; attempt <= _handshake_attempts; ++attempt)
+
+	do
 	{
-		do
-		{
-			ret = mbedtls_ssl_handshake(&ssl);
-		} while (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE);
-
-		if (ret == 0)
-		{
-			break;
-		}
-
-		Warning(_log, "%s", QSTRING_CSTR(QString("mbedtls_ssl_handshake attempt %1/%2 FAILED. Reason: %3").arg(attempt).arg(_handshake_attempts).arg(errorMsg(ret))));
-		QThread::msleep(200);
-	}
+		ret = mbedtls_ssl_handshake(&ssl);
+	} while (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE);
 
 	if (ret != 0)
 	{
-		Error(_log, "%s", QSTRING_CSTR(QString("mbedtls_ssl_handshake FAILED %1").arg(errorMsg(ret))));
+		Warning(_log, "%s", QSTRING_CSTR(QString("mbedtls_ssl_handshake FAILED. Reason: %1").arg(errorMsg(ret))));
 		return false;
 	}
 
@@ -343,11 +350,6 @@ void ProviderUdpSSL::writeBytes(QByteArray data, bool flush)
 
 void ProviderUdpSSL::writeBytes(unsigned int size, const uint8_t* data, bool flush)
 {
-	if (!_streamReady || _streamPaused)
-	{
-		return;
-	}
-
 	if (!_streamReady || _streamPaused)
 	{
 		return;
