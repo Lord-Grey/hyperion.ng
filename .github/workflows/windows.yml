@@ -127,7 +127,7 @@ jobs:
         timeout-minutes: 45
         run: |
            powershell -Command "Start-Job -ScriptBlock { while ($true) { Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, Name, CommandLine | Format-Table -AutoSize | Out-File -FilePath process_trace.log -Append; Start-Sleep -Seconds 30 } }"
-           cmake --preset windows-${{ env.BUILD_TYPE }} ${{ steps.dependencies.outputs.cmakeArgs }} -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
+           cmake --preset windows-${{ env.BUILD_TYPE }} ${{ steps.dependencies.outputs.cmakeArgs }}
            cmake --build --preset windows-${{ env.BUILD_TYPE }} -v
         env:
           BUILD_TYPE: ${{ inputs.event_name == 'pull_request' && 'relwithdebinfo' || 'release' }}
