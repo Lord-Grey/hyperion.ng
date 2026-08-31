@@ -27,7 +27,7 @@ jobs:
         language: [ python, javascript, cpp ]
 
     container:
-      image: ghcr.io/hyperion-project/debian:bullseye-qt6
+      image: ghcr.io/hyperion-project/debian:bookworm-qt6
 
     steps:
       - name: ⬇ Checkout
@@ -56,7 +56,7 @@ jobs:
         id: dependencies
         uses: ./.github/actions/download-pre-built-deps
         with:
-          os: 'debian_bullseye'
+          os: 'debian_bookworm'
           architecture: 'amd64'
           qt_version: '6'
           build_type: ${{ github.event_name == 'pull_request' && 'debug' || 'release' }}
