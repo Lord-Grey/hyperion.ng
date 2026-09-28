@@ -56,7 +56,7 @@ jobs:
           patterns: |
             -**/dependencies/**
             -**/moc_*.cpp
-            -**/build/**
+            -**/build/** 
           input: sarif-results/${{ matrix.language }}.sarif
           output: sarif-results/${{ matrix.language }}.sarif
 
